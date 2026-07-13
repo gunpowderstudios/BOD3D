@@ -531,7 +531,7 @@ function tileSVG(tile){
  const floorKeys=['Straight','Corner','T-Junction','Crossroad','Spike Trap','Healing Pool','Exit','Start'];
  const name=tileAssetName(tile.kind);
  const userSrc=USER_ASSETS[assetKey(name)];
- const src=floorKeys.includes(name)?userSrc:assetSrc(name);
+ const src=assetSrc(name);
  if(src){
    const deg=(tile.rot||0)*90;
    return `<img class="tileAsset" src="${src}" alt="${name}" style="transform:rotate(${deg}deg)">`;
