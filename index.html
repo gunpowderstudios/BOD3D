@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v9.3</title>
+<title>Bag of Dungeon 3D v9.4</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -333,6 +333,7 @@ Changes:
 <!-- v9.1: Softened the v9.0 darkness. The hero area is brighter, tiles remain clear to about three spaces, fade gently through four and five spaces, and only become heavily obscured beyond that. Exposure, ambient light and the hero-following light were raised while dramatic shadows remain. -->
 <!-- v9.2: Rebalanced lighting around the adventurer. The hero and tiles within three spaces are now well lit, followed by a gradual atmospheric drop-off rather than near-black darkness. Exposure, ambient fill and the hero-following light were increased, distant tiles and monsters remain readable, and the heavy vignette was reduced. -->
 <!-- v9.3: Added live Lighting Controls. Adjust torch brightness, radius, falloff, ambient light, shadow strength, softness, exposure, colour and hero-following behaviour. Includes four presets and automatic browser saving. -->
+<!-- v9.4: Fixed Lighting Controls startup. v9.3 referenced the Three.js TILE constant before it was declared, preventing the 3D lighting module from initialising. Controls now initialise safely after the DOM is ready and show a live status readout. -->
 </head>
 <body>
 
@@ -385,7 +386,7 @@ Changes:
     <button data-light-preset="torch">Torchlight</button>
     <button data-light-preset="dark">Very Dark</button>
   </div>
-  <div class="lightHint">Settings save automatically in this browser.</div>
+  <div id="lightingStatus" class="lightHint">Settings save automatically in this browser.</div>
 </div>
 
   </main>
@@ -399,7 +400,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v9.3';
+const VERSION='v9.4';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1357,7 +1358,7 @@ sun.shadow.camera.top=16;
 sun.shadow.camera.bottom=-16;
 scene.add(sun);
 
-const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness,lighting.radius*TILE+9,1.45);
+const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness,lighting.radius*2.05+9,1.45);
 heroLight.position.set(0,4.2,0);
 heroLight.castShadow=true;
 heroLight.shadow.mapSize.set(2048,2048);
@@ -1736,14 +1737,17 @@ async function renderBoard(state){
 function applyLightingSettings(redraw=true){
  renderer.toneMappingExposure=lighting.exposure;
  ambientLight.intensity=lighting.ambient/100;
- sun.intensity=1.2+(lighting.shadow/100)*2.2;
+ sun.intensity=.8+(lighting.shadow/100)*2.8;
  sun.shadow.radius=lighting.softness;
  heroLight.intensity=lighting.brightness;
  heroLight.distance=lighting.radius*TILE+9;
+ heroLight.decay=1.35;
  heroLight.color.set(lighting.colour);
  heroLight.castShadow=lighting.shadow>5;
  saveLighting();
  syncLightingUI();
+ const status=document.getElementById('lightingStatus');
+ if(status)status.textContent=`Live: radius ${lighting.radius} tiles · brightness ${lighting.brightness}`;
  if(redraw&&latestState)renderBoard(latestState);
 }
 function syncLightingUI(){
@@ -1819,8 +1823,15 @@ function wireLightingControls(){
  };
  document.getElementById('lightingClose').onclick=closeLightingPanel;
 }
-wireLightingControls();
-applyLightingSettings(false);
+if(document.readyState==='loading'){
+ document.addEventListener('DOMContentLoaded',()=>{
+  wireLightingControls();
+  applyLightingSettings(false);
+ });
+}else{
+ wireLightingControls();
+ applyLightingSettings(false);
+}
 
 function resize(){
  const rect=canvas.getBoundingClientRect();
