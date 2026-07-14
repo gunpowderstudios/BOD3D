@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v8.8</title>
+<title>Bag of Dungeon 3D v9.0</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -207,6 +207,22 @@ body.threeMode #viewport.dragging{cursor:grabbing}
   margin-bottom:4px;
 }
 
+
+body.threeMode #viewport::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  background:radial-gradient(
+    circle at 50% 52%,
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,.08) 38%,
+    rgba(0,0,0,.58) 77%,
+    rgba(0,0,0,.92) 100%
+  );
+}
+
 </style>
 <!--
 8BITBOD
@@ -271,6 +287,7 @@ Changes:
 <!-- v8.4: The hero now smoothly slides from tile to tile while turning to face the direction travelled. Same-direction travel preserves orientation; left/right turns animate 90 degrees and reversals animate 180 degrees. -->
 <!-- v8.7: Revealed GLB monsters now face the hero while remaining locked to the exact centre of their tile. Rotation is applied to a centred pivot group so models no longer orbit away from the floor tile. -->
 <!-- v8.8: Added Bag of Dungeon 3D branding and automatic Rest at zero AP. Monsters remain centred while facing the hero. Existing renderer, tile paths, GLB paths and movement code are otherwise unchanged. -->
+<!-- v9.0: Added a strong hero-centred darkness system. Tiles are clear nearby, heavily shaded at three to four spaces, and fully black beyond four spaces. Monsters and markers are hidden outside the visible radius. Lighting and exposure are substantially darker, with a warm light following the hero. -->
 </head>
 <body>
 
@@ -309,7 +326,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v8.8';
+const VERSION='v9.0';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1204,10 +1221,12 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=.55;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x050403);
-scene.fog=new THREE.Fog(0x050403,22,48);
+scene.background=new THREE.Color(0x010100);
+scene.fog=new THREE.FogExp2(0x010100,.065);
 
 const camera=new THREE.PerspectiveCamera(38,1,.1,100);
 camera.position.set(8.5,11,12);
@@ -1222,16 +1241,26 @@ controls.maxDistance=34;
 controls.minPolarAngle=THREE.MathUtils.degToRad(20);
 controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
 
-scene.add(new THREE.HemisphereLight(0xe8d8aa,0x14100b,2.2));
-const sun=new THREE.DirectionalLight(0xffe4ae,4.5);
-sun.position.set(8,16,9);
+scene.add(new THREE.HemisphereLight(0x273044,0x000000,.12));
+
+const sun=new THREE.DirectionalLight(0xffffff,1.7);
+sun.position.set(6,14,5);
 sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=18;sun.shadow.camera.bottom=-18;
+sun.shadow.mapSize.set(4096,4096);
+sun.shadow.bias=-.00035;
+sun.shadow.normalBias=.035;
+sun.shadow.camera.left=-16;
+sun.shadow.camera.right=16;
+sun.shadow.camera.top=16;
+sun.shadow.camera.bottom=-16;
 scene.add(sun);
-const warm=new THREE.PointLight(0xff9f32,18,20,2);
-warm.position.set(-4,6,3);
-scene.add(warm);
+
+const heroLight=new THREE.PointLight(0xffaa55,24,9.5,2);
+heroLight.position.set(0,3.6,0);
+heroLight.castShadow=true;
+heroLight.shadow.mapSize.set(2048,2048);
+heroLight.shadow.bias=-.0003;
+scene.add(heroLight);
 
 const table=new THREE.Mesh(
  new THREE.PlaneGeometry(70,70),
@@ -1262,6 +1291,23 @@ let heroMove=null;
 const HERO_TURN_MS=180;
 const HERO_MOVE_MS=220;
 const TILE=2.05;
+
+function tileDistanceFromHero(x,y){
+ if(!latestState||!latestState.player)return 0;
+ const dx=x-latestState.player.x;
+ const dy=y-latestState.player.y;
+ return Math.sqrt(dx*dx+dy*dy);
+}
+function darknessForTile(x,y){
+ const d=tileDistanceFromHero(x,y);
+ if(d<=2.15)return 0;
+ if(d<=3.0)return THREE.MathUtils.lerp(0,.52,(d-2.15)/.85);
+ if(d<=4.0)return THREE.MathUtils.lerp(.52,.88,d-3.0);
+ return 1;
+}
+function objectVisibleAtTile(x,y){
+ return tileDistanceFromHero(x,y)<4.05;
+}
 
 const tileFiles={
  start:'start.png',exit:'exit.png',straight:'straight.png',corner:'corner.png',
@@ -1360,6 +1406,25 @@ async function addTile(key,t,token){
  markClickable(mesh,'tile',key);
  boardGroup.add(mesh);
 
+ const darkness=darknessForTile(x,y);
+ if(darkness>0){
+  const shadeMaterial=new THREE.MeshBasicMaterial({
+   color:0x000000,
+   transparent:true,
+   opacity:darkness,
+   depthWrite:false,
+   side:THREE.DoubleSide
+  });
+  const shade=new THREE.Mesh(
+   new THREE.PlaneGeometry(TILE-.015,TILE-.015),
+   shadeMaterial
+  );
+  shade.rotation.x=-Math.PI/2;
+  shade.position.set(x*TILE,.018,y*TILE);
+  shade.renderOrder=20;
+  boardGroup.add(shade);
+ }
+
  if(t.itemPending&&!t.itemUsed)await addSprite('assets/ui/item.png',x,y,.66,.05,'items',key,token);
  if(t.hasRing)await addSprite('assets/ui/ring.png',x,y,.62,.08,null,key,token);
  if(t.droppedItems&&t.droppedItems.length){
@@ -1390,6 +1455,9 @@ async function addSprite(path,x,y,size,height,type,key,token){
  const s=new THREE.Sprite(mat);
  s.scale.set(size,size,1);
  s.position.set(x*TILE,height+size*.5,y*TILE);
+ const darkness=darknessForTile(x,y);
+ s.visible=objectVisibleAtTile(x,y);
+ s.material.opacity=Math.max(.08,1-darkness);
  if(type)markClickable(s,type,key);
  boardGroup.add(s);
 }
@@ -1431,6 +1499,18 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
  pivot.position.set(x*TILE,0,y*TILE);
  pivot.rotation.y=rotationY;
  pivot.add(model);
+ pivot.visible=objectVisibleAtTile(x,y);
+ const darkness=darknessForTile(x,y);
+ model.traverse(o=>{
+  if(!o.material)return;
+  const materials=Array.isArray(o.material)?o.material:[o.material];
+  materials.forEach(material=>{
+   if(material.emissive)material.emissive.setHex(0x000000);
+   material.transparent=darkness>.01;
+   material.opacity=Math.max(.08,1-darkness);
+   material.needsUpdate=true;
+  });
+ });
 
  markClickable(pivot,type,key);
  boardGroup.add(pivot);
@@ -1537,7 +1617,14 @@ async function renderBoard(state){
  const jobs=Object.entries(state.tiles||{}).map(([k,t])=>addTile(k,t,token));
  jobs.push(addHero(state.charDef,state.player,token));
  await Promise.all(jobs);
- if(token===renderToken)fitCamera(state);
+ if(token===renderToken){
+  fitCamera(state);
+  heroLight.position.set(
+   state.player.x*TILE+.7,
+   3.6,
+   state.player.y*TILE+.6
+  );
+ }
 }
 function resize(){
  const rect=canvas.getBoundingClientRect();
