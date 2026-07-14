@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v8.4 Sliding Directional Hero</title>
+<title>Bag of Dungeon 3D v8.8</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -191,6 +191,22 @@ body:not(.threeMode) #threeBoard{display:none}
 body.threeMode #viewport{cursor:grab}
 body.threeMode #viewport.dragging{cursor:grabbing}
 
+
+.brand3DTitle{
+  margin:0 auto 8px;
+  text-align:center;
+  font-size:30px;
+  line-height:1;
+  font-weight:bold;
+  letter-spacing:8px;
+  color:var(--ink);
+}
+#charSelect .brand3DTitle{
+  font-size:34px;
+  margin-top:-4px;
+  margin-bottom:4px;
+}
+
 </style>
 <!--
 8BITBOD
@@ -253,12 +269,14 @@ Changes:
 }
 </script>
 <!-- v8.4: The hero now smoothly slides from tile to tile while turning to face the direction travelled. Same-direction travel preserves orientation; left/right turns animate 90 degrees and reversals animate 180 degrees. -->
+<!-- v8.7: Revealed GLB monsters now face the hero while remaining locked to the exact centre of their tile. Rotation is applied to a centred pivot group so models no longer orbit away from the floor tile. -->
+<!-- v8.8: Added Bag of Dungeon 3D branding and automatic Rest at zero AP. Monsters remain centred while facing the hero. Existing renderer, tile paths, GLB paths and movement code are otherwise unchanged. -->
 </head>
 <body>
 
 <div id="charSelect">
   <img class="selectLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-  <h1>8BITBOD</h1>
+  <div class="brand3DTitle">3D</div>
   <div class="intro">Choose your adventurer before entering the dungeon.</div>
   <div id="charGrid"></div>
 </div>
@@ -267,8 +285,7 @@ Changes:
   <aside id="side">
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div class="logo">8BITBOD</div>
-      <div class="version">Bag of Dungeon © Gunpowder Studios</div>
+      <div class="brand3DTitle">3D</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -292,7 +309,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v8.4';
+const VERSION='v8.8';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -559,7 +576,7 @@ function createTileDeck(){
 
   return shuffle(deck);
 }
-function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:3,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to 8BITBOD '+VERSION+'.','system');render();setTimeout(()=>setOpeningCamera(),0);}
+function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:3,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>setOpeningCamera(),0);}
 
 const INVENTORY_LIMIT=8;
 const BACKPACK_LIMIT=4;
@@ -813,12 +830,24 @@ function teleportToTile(tileKey,event){
  playSound('teleport');playTileEffect(tileKey,'teleport',1000);log('Teleported to '+tileKey+'.','system');render();centreOnHero(false);
 }
 function removeNamed(arr,name){const i=arr.findIndex(x=>x.name===name);if(i>=0)arr.splice(i,1);}
-function endTurn(){const p=state.player;state.turns=(state.turns||1)+1;p.ap=p.maxAp;p.flags.torchFreeLay=false;Object.values(state.tiles).forEach(t=>{if(t.monster&&t.monster.health>0)t.monster.health=t.monster.maxHealth;});log('Turn ends. AP restored. Surviving monsters heal to full.','system');render();}
+function endTurn(automatic=false){
+ const p=state.player;
+ if(p.flags)p.flags.autoRestScheduled=false;
+ state.turns=(state.turns||1)+1;
+ p.ap=p.maxAp;
+ p.flags.torchFreeLay=false;
+ Object.values(state.tiles).forEach(t=>{
+  if(t.monster&&t.monster.health>0)t.monster.health=t.monster.maxHealth;
+ });
+ if(automatic)toast('YOU REST');
+ log('You rest. AP restored. Surviving monsters heal to full.','system');
+ render();
+}
 function heartLine(h,m){const n=Math.max(0,Math.ceil((h/m)*10));return '♥'.repeat(n)+'♡'.repeat(10-n)}
 function addBtn(w,text,cls,fn,disabled=false){const b=document.createElement('button');b.textContent=text;if(cls)b.className=cls;b.disabled=disabled;b.onclick=fn;w.appendChild(b);return b;}
 
 function openAbout(){
-  showModal('About 8BITBOD','',[
+  showModal('About Bag of Dungeon 3D','',[
     {text:'Close',fn:closeModal}
   ]);
   document.getElementById('modalBody').innerHTML=`
@@ -937,7 +966,41 @@ window.BOD3DAction=function(type,tileKey){
  if(type==='items'){showTileItems(tileKey);return;}
  if(type==='tile'&&teleportItem){teleportToTile(tileKey);return;}
 };
-function renderControls(){const wrap=document.getElementById('controls');wrap.innerHTML='';if(state.gameOver)return;if(teleportItem){addBtn(wrap,'Cancel Teleport','red',cancelTeleport);return;}if(rangedMode){addBtn(wrap,'Cancel Ranged Attack','red',cancelRangedAttack);return;}const p=state.player;if(p.equipment.bow)addBtn(wrap,p.equipment.bow.name+' — Range 1-3 (3 AP)','blue',()=>startRangedAttack('bow'),p.ap<3);if(p.equipment.staff)addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),p.ap<4);const canPayLay=p.ap>=1||!!(p.equipment.torch&&p.flags.torchFreeLay);['N','E','S','W'].forEach(dir=>{if(canMove(dir))addBtn(wrap,'Move '+dir,'green',()=>move(dir),p.ap<1);else if(canLay(dir))addBtn(wrap,'Lay '+dir,'gold',()=>startPlace(dir),!canPayLay);});addBtn(wrap,'End Turn','blue',endTurn);}
+function renderControls(){
+ const wrap=document.getElementById('controls');
+ wrap.innerHTML='';
+ if(state.gameOver)return;
+ if(teleportItem){addBtn(wrap,'Cancel Teleport','red',cancelTeleport);return;}
+ if(rangedMode){addBtn(wrap,'Cancel Ranged Attack','red',cancelRangedAttack);return;}
+ const p=state.player;
+ if(p.equipment.bow)addBtn(wrap,p.equipment.bow.name+' — Range 1-3 (3 AP)','blue',()=>startRangedAttack('bow'),p.ap<3);
+ if(p.equipment.staff)addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),p.ap<4);
+ const canPayLay=p.ap>=1||!!(p.equipment.torch&&p.flags.torchFreeLay);
+ ['N','E','S','W'].forEach(dir=>{
+  if(canMove(dir))addBtn(wrap,'Move '+dir,'green',()=>move(dir),p.ap<1);
+  else if(canLay(dir))addBtn(wrap,'Lay '+dir,'gold',()=>startPlace(dir),!canPayLay);
+ });
+ addBtn(wrap,'Rest','blue',()=>endTurn(false));
+
+ if(p.ap<=0&&!p.flags.autoRestScheduled){
+  p.flags.autoRestScheduled=true;
+  setTimeout(()=>{
+   if(
+    state &&
+    !state.gameOver &&
+    !combat &&
+    !placement &&
+    !teleportItem &&
+    !rangedMode &&
+    state.player.ap<=0
+   ){
+    endTurn(true);
+   }else if(state&&state.player&&state.player.flags){
+    state.player.flags.autoRestScheduled=false;
+   }
+  },450);
+ }
+}
 function applyView3D(){
  document.body.classList.toggle('threeMode',view3d.enabled);
  const btn=document.getElementById('viewBtn');
@@ -1225,6 +1288,15 @@ function facingRadians(facing){
  return ({S:0,W:-Math.PI/2,N:Math.PI,E:Math.PI/2})[facing]??0;
 }
 
+function monsterFacingRadians(monsterX,monsterY,player){
+ // Assumes monster GLBs face South (+Z) at rotation 0.
+ if(!player)return 0;
+ const dx=player.x-monsterX;
+ const dz=player.y-monsterY;
+ if(dx===0&&dz===0)return 0;
+ return Math.atan2(dx,dz);
+}
+
 function shortestAngleDelta(from,to){
  let delta=(to-from)%(Math.PI*2);
  if(delta>Math.PI)delta-=Math.PI*2;
@@ -1296,7 +1368,16 @@ async function addTile(key,t,token){
  }
  if((t.monsterPending)||(t.monster&&t.monster.health>0)){
   if(t.monster&&(t.monster.revealed||t.monster.peeked)){
-   await addMiniature('assets/models/'+monsterFile(t.monster.name),monsterPng(t.monster.name),x,y,'monster',key,token);
+   await addMonsterMiniature(
+    'assets/models/'+monsterFile(t.monster.name),
+    monsterPng(t.monster.name),
+    x,
+    y,
+    'monster',
+    key,
+    token,
+    monsterFacingRadians(x,y,latestState&&latestState.player)
+   );
   }else{
    await addSprite('assets/ui/hiddenmonster.png',x,y,.9,.1,'hidden',key,token);
   }
@@ -1312,6 +1393,50 @@ async function addSprite(path,x,y,size,height,type,key,token){
  if(type)markClickable(s,type,key);
  boardGroup.add(s);
 }
+async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
+ const source=await loadModel(modelPath);
+ if(token!==renderToken)return;
+ if(!source){
+  await addSprite(pngPath,x,y,1.05,.05,type,key,token);
+  return;
+ }
+
+ const model=source.clone(true);
+ model.traverse(o=>{
+  if(o.isMesh){
+   o.castShadow=true;
+   o.receiveShadow=true;
+  }
+ });
+
+ // Scale first.
+ const originalBox=new THREE.Box3().setFromObject(model);
+ const originalSize=originalBox.getSize(new THREE.Vector3());
+ const scale=1.62/Math.max(originalSize.y,.001);
+ model.scale.setScalar(scale);
+ model.updateMatrixWorld(true);
+
+ // Centre the GLB around a local pivot.
+ const scaledBox=new THREE.Box3().setFromObject(model);
+ const centre=scaledBox.getCenter(new THREE.Vector3());
+ model.position.set(
+  -centre.x,
+  -scaledBox.min.y+.025,
+  -centre.z
+ );
+
+ // The pivot stays exactly at the centre of the dungeon tile.
+ // Only the child model turns, so it cannot orbit away from the tile.
+ const pivot=new THREE.Group();
+ pivot.position.set(x*TILE,0,y*TILE);
+ pivot.rotation.y=rotationY;
+ pivot.add(model);
+
+ markClickable(pivot,type,key);
+ boardGroup.add(pivot);
+ return pivot;
+}
+
 async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
  const source=await loadModel(modelPath);
  if(token!==renderToken)return;
