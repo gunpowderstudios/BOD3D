@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v9.0</title>
+<title>Bag of Dungeon 3D v9.1</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -288,6 +288,7 @@ Changes:
 <!-- v8.7: Revealed GLB monsters now face the hero while remaining locked to the exact centre of their tile. Rotation is applied to a centred pivot group so models no longer orbit away from the floor tile. -->
 <!-- v8.8: Added Bag of Dungeon 3D branding and automatic Rest at zero AP. Monsters remain centred while facing the hero. Existing renderer, tile paths, GLB paths and movement code are otherwise unchanged. -->
 <!-- v9.0: Added a strong hero-centred darkness system. Tiles are clear nearby, heavily shaded at three to four spaces, and fully black beyond four spaces. Monsters and markers are hidden outside the visible radius. Lighting and exposure are substantially darker, with a warm light following the hero. -->
+<!-- v9.1: Softened the v9.0 darkness. The hero area is brighter, tiles remain clear to about three spaces, fade gently through four and five spaces, and only become heavily obscured beyond that. Exposure, ambient light and the hero-following light were raised while dramatic shadows remain. -->
 </head>
 <body>
 
@@ -326,7 +327,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v9.0';
+const VERSION='v9.1';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1222,7 +1223,7 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=.55;
+renderer.toneMappingExposure=.82;
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x010100);
@@ -1241,9 +1242,9 @@ controls.maxDistance=34;
 controls.minPolarAngle=THREE.MathUtils.degToRad(20);
 controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
 
-scene.add(new THREE.HemisphereLight(0x273044,0x000000,.12));
+scene.add(new THREE.HemisphereLight(0x3f4a63,0x050301,.32));
 
-const sun=new THREE.DirectionalLight(0xffffff,1.7);
+const sun=new THREE.DirectionalLight(0xffffff,2.25);
 sun.position.set(6,14,5);
 sun.castShadow=true;
 sun.shadow.mapSize.set(4096,4096);
@@ -1255,7 +1256,7 @@ sun.shadow.camera.top=16;
 sun.shadow.camera.bottom=-16;
 scene.add(sun);
 
-const heroLight=new THREE.PointLight(0xffaa55,24,9.5,2);
+const heroLight=new THREE.PointLight(0xffb86b,28,12.5,1.75);
 heroLight.position.set(0,3.6,0);
 heroLight.castShadow=true;
 heroLight.shadow.mapSize.set(2048,2048);
@@ -1300,13 +1301,14 @@ function tileDistanceFromHero(x,y){
 }
 function darknessForTile(x,y){
  const d=tileDistanceFromHero(x,y);
- if(d<=2.15)return 0;
- if(d<=3.0)return THREE.MathUtils.lerp(0,.52,(d-2.15)/.85);
- if(d<=4.0)return THREE.MathUtils.lerp(.52,.88,d-3.0);
- return 1;
+ if(d<=3.0)return 0;
+ if(d<=4.0)return THREE.MathUtils.lerp(0,.28,d-3.0);
+ if(d<=5.0)return THREE.MathUtils.lerp(.28,.62,d-4.0);
+ if(d<=5.75)return THREE.MathUtils.lerp(.62,.88,(d-5.0)/.75);
+ return .94;
 }
 function objectVisibleAtTile(x,y){
- return tileDistanceFromHero(x,y)<4.05;
+ return tileDistanceFromHero(x,y)<6.0;
 }
 
 const tileFiles={
@@ -1411,7 +1413,7 @@ async function addTile(key,t,token){
   const shadeMaterial=new THREE.MeshBasicMaterial({
    color:0x000000,
    transparent:true,
-   opacity:darkness,
+   opacity:Math.min(.88,darkness),
    depthWrite:false,
    side:THREE.DoubleSide
   });
