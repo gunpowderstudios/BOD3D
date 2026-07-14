@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v9.6</title>
+<title>Bag of Dungeon 3D v10.0</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -309,6 +309,87 @@ body.threeMode #viewport::after{
   .compassNeedle{font-size:22px!important}
 }
 
+
+/* ===== Persistent board compass v10.0 ===== */
+#compass{
+  position:absolute!important;
+  right:18px!important;
+  bottom:78px!important;
+  top:auto!important;
+  z-index:95!important;
+  width:106px!important;
+  height:106px!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  cursor:pointer;
+  user-select:none;
+}
+.compassDial{
+  position:relative;
+  width:100%;
+  height:100%;
+  border:4px solid #d7b665;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(72,52,25,.98),rgba(17,12,7,.98) 70%);
+  color:#f7e7b4;
+  box-shadow:0 8px 24px rgba(0,0,0,.8),inset 0 0 0 3px rgba(0,0,0,.8);
+}
+.compassDial span{
+  position:absolute;
+  z-index:3;
+  font:bold 17px Georgia,serif;
+  line-height:1;
+  text-shadow:0 2px 3px #000;
+}
+.compassDial .compassN{top:7px;left:50%;transform:translateX(-50%);color:#ffd05c}
+.compassDial .compassS{bottom:7px;left:50%;transform:translateX(-50%)}
+.compassDial .compassE{right:9px;top:50%;transform:translateY(-50%)}
+.compassDial .compassW{left:9px;top:50%;transform:translateY(-50%)}
+.compassArrow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:42px;
+  height:70px;
+  margin-left:-21px;
+  margin-top:-35px;
+  transform-origin:50% 50%;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:1px;
+  color:#e44b37;
+  font:bold 34px/1 Georgia,serif;
+  text-shadow:0 2px 3px #000;
+  transition:transform .06s linear;
+}
+.compassCentre{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:13px;
+  height:13px;
+  transform:translate(-50%,-50%);
+  border:2px solid #111;
+  border-radius:50%;
+  background:#e3bd63;
+  z-index:4;
+}
+#compass:hover .compassDial{filter:brightness(1.15)}
+@media(max-width:800px){
+  #compass{
+    width:82px!important;
+    height:82px!important;
+    right:8px!important;
+    bottom:68px!important;
+  }
+  .compassDial span{font-size:13px}
+  .compassArrow{font-size:27px;width:34px;height:54px;margin-left:-17px;margin-top:-27px}
+}
+
 </style>
 <!--
 8BITBOD
@@ -380,6 +461,7 @@ Changes:
 <!-- v9.4: Fixed Lighting Controls startup. v9.3 referenced the Three.js TILE constant before it was declared, preventing the 3D lighting module from initialising. Controls now initialise safely after the DOM is ready and show a live status readout. -->
 <!-- v9.5: Lighting controls now have a much stronger visible range. Torch brightness is amplified, radius and falloff control both the real hero light and tile darkness, ambient light has a wider range, and shadow strength is more pronounced. Fixed Centre so it places the character at the centre of the Three.js view while preserving the current camera angle and zoom. -->
 <!-- v9.6: Smoothed camera behaviour by removing automatic board re-fitting after every move; the camera now stays where the player leaves it, and Centre is the only command that deliberately recentres on the hero. Lighting is brighter and higher-contrast with a stronger hero light, brighter key light and gentler distance darkness. Added a rotating compass and a North Up button for orientation. -->
+<!-- v10.0: Hero-locked camera mode. The adventurer remains in the centre while the dungeon glides smoothly beneath during movement; rotation, tilt and zoom still orbit around the hero. Added a guaranteed visible, clickable bottom-right compass with fixed N/E/S/W labels and a rotating north arrow. Clicking it resets to North Up. -->
 </head>
 <body>
 
@@ -407,6 +489,18 @@ Changes:
     </div>
     <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
     <div id="controls"></div>
+
+
+<div id="compass" title="Click for North Up" role="button" tabindex="0" aria-label="Compass — click for North Up">
+  <div class="compassDial">
+    <span class="compassN">N</span>
+    <span class="compassE">E</span>
+    <span class="compassS">S</span>
+    <span class="compassW">W</span>
+    <div id="compassArrow" class="compassArrow">▲</div>
+    <div class="compassCentre"></div>
+  </div>
+</div>
 
 <div id="lightingPanel" aria-hidden="true">
   <div class="lightPanelHead">
@@ -446,7 +540,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v9.6';
+const VERSION='v10.0';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1258,12 +1352,34 @@ document.getElementById('zoomIn').onclick=()=>{const r=vp.getBoundingClientRect(
 document.getElementById('zoomOut').onclick=()=>{const r=vp.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,pan.scale/1.18)};
 document.getElementById('centreBtn').onclick=()=>{
  if(document.body.classList.contains('threeMode')&&window.BOD3D){
+  cameraLockedToHero=true;
   window.BOD3D.centreOnHero();
+  resetCameraHeroTracking();
  }else{
   centreOnHero();
  }
 };
-document.getElementById('northUpBtn').onclick=()=>{if(window.BOD3D)window.BOD3D.northUp();};
+document.getElementById('northUpBtn').onclick=()=>{
+ if(window.BOD3D){
+  window.BOD3D.northUp();
+  resetCameraHeroTracking();
+ }
+};
+const compassEl=document.getElementById('compass');
+if(compassEl){
+ compassEl.onclick=()=>{
+  if(window.BOD3D){
+   window.BOD3D.northUp();
+   resetCameraHeroTracking();
+  }
+ };
+ compassEl.onkeydown=e=>{
+  if(e.key==='Enter'||e.key===' '){
+   e.preventDefault();
+   compassEl.click();
+  }
+ };
+}
 document.getElementById('menuBtn').onclick=openMenu;
 
 function keyboardDirection(e){
@@ -1443,6 +1559,8 @@ const pointer=new THREE.Vector2();
 let enabled=true;
 let latestState=null;
 let cameraInitialised=false;
+let cameraLockedToHero=true;
+let lastCameraHeroPosition=null;
 let renderToken=0;
 let heroModel=null;
 let heroRotationCurrent=null;
@@ -1794,6 +1912,36 @@ function centreCameraOnHero(){
  camera.position.copy(target).add(offset);
  controls.update();
 }
+function lockCameraToWorldPosition(position){
+ if(!cameraLockedToHero||!position)return;
+ const target=new THREE.Vector3(position.x,.45,position.z);
+ if(!lastCameraHeroPosition){
+  lastCameraHeroPosition=target.clone();
+ }
+ const delta=target.clone().sub(lastCameraHeroPosition);
+ if(delta.lengthSq()>0){
+  controls.target.add(delta);
+  camera.position.add(delta);
+  lastCameraHeroPosition.copy(target);
+ }
+}
+function resetCameraHeroTracking(){
+ if(heroPositionCurrent){
+  lastCameraHeroPosition=new THREE.Vector3(
+   heroPositionCurrent.x,
+   .45,
+   heroPositionCurrent.z
+  );
+ }else if(latestState&&latestState.player){
+  lastCameraHeroPosition=new THREE.Vector3(
+   latestState.player.x*TILE,
+   .45,
+   latestState.player.y*TILE
+  );
+ }else{
+  lastCameraHeroPosition=null;
+ }
+}
 function northUp(){
  if(!latestState||!latestState.player)return;
  const target=new THREE.Vector3(
@@ -1808,12 +1956,12 @@ function northUp(){
  controls.update();
 }
 function updateCompass(){
- const rose=document.getElementById('compassRose');
- if(!rose)return;
+ const arrow=document.getElementById('compassArrow');
+ if(!arrow)return;
  const direction=new THREE.Vector3();
  camera.getWorldDirection(direction);
  const angle=Math.atan2(direction.x,direction.z);
- rose.style.transform=`rotate(${THREE.MathUtils.radToDeg(angle)}deg)`;
+ arrow.style.transform=`rotate(${-THREE.MathUtils.radToDeg(angle)}deg)`;
 }
 async function renderBoard(state){
  latestState=state;
@@ -1825,6 +1973,7 @@ async function renderBoard(state){
  if(token===renderToken){
   if(!cameraInitialised){
    centreCameraOnHero();
+   resetCameraHeroTracking();
    cameraInitialised=true;
   }
   if(lighting.follow){
@@ -2013,6 +2162,12 @@ function animate(now){
   }
  }
 
+ // Move the camera by exactly the same world-space amount as the hero.
+ // This keeps the miniature fixed at the centre while the dungeon glides underneath.
+ if(heroPositionCurrent){
+  lockCameraToWorldPosition(heroPositionCurrent);
+ }
+
  if(heroTurn&&heroTurn.model===heroModel){
   const t=Math.min(1,(now-heroTurn.started)/heroTurn.duration);
   const eased=1-Math.pow(1-t,3);
@@ -2040,7 +2195,7 @@ window.BOD3D={
  resetCamera,
  centreOnHero:centreCameraOnHero,
  northUp,
- resetHeroFacing(){heroRotationCurrent=null;heroTurn=null;heroPositionCurrent=null;heroMove=null;}
+ resetHeroFacing(){heroRotationCurrent=null;heroTurn=null;heroPositionCurrent=null;heroMove=null;lastCameraHeroPosition=null;cameraInitialised=false;}
 };
 const currentState=window.getBODState?window.getBODState():null;
 if(currentState)renderBoard(currentState);
