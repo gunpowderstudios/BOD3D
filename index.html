@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v9.2</title>
+<title>Bag of Dungeon 3D v9.3</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -223,6 +223,48 @@ body.threeMode #viewport::after{
   );
 }
 
+
+#lightingPanel{
+  position:absolute;
+  top:58px;
+  right:12px;
+  z-index:80;
+  width:min(360px,calc(100vw - 24px));
+  max-height:calc(100vh - 90px);
+  overflow:auto;
+  display:none;
+  padding:12px;
+  background:rgba(18,14,9,.96);
+  color:#f5e7bd;
+  border:3px solid #c7a45b;
+  border-radius:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.7);
+}
+#lightingPanel.open{display:block}
+#lightingPanel h3{margin:0 0 10px;text-align:center;color:#ffd45f}
+.lightRow{
+  display:grid;
+  grid-template-columns:132px 1fr 48px;
+  gap:8px;
+  align-items:center;
+  margin:8px 0;
+  font-size:14px;
+}
+.lightRow input[type="range"]{width:100%}
+.lightValue{text-align:right;font-variant-numeric:tabular-nums}
+.lightColourRow{display:grid;grid-template-columns:132px 1fr;gap:8px;align-items:center;margin:9px 0}
+.lightColourRow input{width:100%;height:34px;border:0;padding:0;background:none}
+.lightChecks{display:flex;justify-content:space-between;align-items:center;margin:9px 0}
+.lightPresetGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.lightPresetGrid button,#lightingPanel .lightAction{background:#241b10;color:#f5e7bd;border-color:#c7a45b;box-shadow:none}
+.lightPanelHead{display:flex;align-items:center;justify-content:space-between}
+.lightPanelHead button{padding:3px 8px;box-shadow:none}
+.lightHint{font-size:12px;opacity:.75;margin-top:8px;text-align:center}
+@media(max-width:800px){
+  #lightingPanel{top:50px;right:6px;width:calc(100vw - 12px);max-height:55vh}
+  .lightRow{grid-template-columns:120px 1fr 42px}
+}
+
 </style>
 <!--
 8BITBOD
@@ -290,6 +332,7 @@ Changes:
 <!-- v9.0: Added a strong hero-centred darkness system. Tiles are clear nearby, heavily shaded at three to four spaces, and fully black beyond four spaces. Monsters and markers are hidden outside the visible radius. Lighting and exposure are substantially darker, with a warm light following the hero. -->
 <!-- v9.1: Softened the v9.0 darkness. The hero area is brighter, tiles remain clear to about three spaces, fade gently through four and five spaces, and only become heavily obscured beyond that. Exposure, ambient light and the hero-following light were raised while dramatic shadows remain. -->
 <!-- v9.2: Rebalanced lighting around the adventurer. The hero and tiles within three spaces are now well lit, followed by a gradual atmospheric drop-off rather than near-black darkness. Exposure, ambient fill and the hero-following light were increased, distant tiles and monsters remain readable, and the heavy vignette was reduced. -->
+<!-- v9.3: Added live Lighting Controls. Adjust torch brightness, radius, falloff, ambient light, shadow strength, softness, exposure, colour and hero-following behaviour. Includes four presets and automatic browser saving. -->
 </head>
 <body>
 
@@ -313,10 +356,38 @@ Changes:
   <main id="main">
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
-      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="menuBtn">☰ Menu</button></div>
+      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="lightingBtn">☀ Lighting</button><button id="menuBtn">☰ Menu</button></div>
     </div>
     <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
     <div id="controls"></div>
+
+<div id="lightingPanel" aria-hidden="true">
+  <div class="lightPanelHead">
+    <h3>Lighting Controls</h3>
+    <button id="lightingClose" aria-label="Close lighting controls">×</button>
+  </div>
+
+  <div class="lightRow"><label for="lightBrightness">Torch brightness</label><input id="lightBrightness" type="range" min="0" max="100" step="1"><span id="lightBrightnessValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightRadius">Bright radius</label><input id="lightRadius" type="range" min="1" max="7" step=".25"><span id="lightRadiusValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightFalloff">Falloff width</label><input id="lightFalloff" type="range" min=".5" max="6" step=".25"><span id="lightFalloffValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightAmbient">Ambient light</label><input id="lightAmbient" type="range" min="0" max="100" step="1"><span id="lightAmbientValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightShadow">Shadow strength</label><input id="lightShadow" type="range" min="0" max="100" step="1"><span id="lightShadowValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightSoftness">Shadow softness</label><input id="lightSoftness" type="range" min="0" max="10" step=".5"><span id="lightSoftnessValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightExposure">Exposure</label><input id="lightExposure" type="range" min=".45" max="1.8" step=".05"><span id="lightExposureValue" class="lightValue"></span></div>
+
+  <div class="lightColourRow"><label for="lightColour">Torch colour</label><input id="lightColour" type="color"></div>
+  <div class="lightChecks"><label for="lightFollow">Torch follows hero</label><input id="lightFollow" type="checkbox"></div>
+
+  <button id="lightReset" class="lightAction">Reset Lighting</button>
+  <div class="lightPresetGrid">
+    <button data-light-preset="bright">Bright Tabletop</button>
+    <button data-light-preset="dungeon">Dungeon</button>
+    <button data-light-preset="torch">Torchlight</button>
+    <button data-light-preset="dark">Very Dark</button>
+  </div>
+  <div class="lightHint">Settings save automatically in this browser.</div>
+</div>
+
   </main>
 </div>
 
@@ -328,7 +399,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v9.2';
+const VERSION='v9.3';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1217,6 +1288,34 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+const LIGHTING_STORAGE_KEY='bod3dLightingV93';
+const DEFAULT_LIGHTING={
+ brightness:46,
+ radius:3,
+ falloff:3,
+ ambient:58,
+ shadow:70,
+ softness:4,
+ exposure:1.08,
+ colour:'#ffc27a',
+ follow:true
+};
+const LIGHT_PRESETS={
+ bright:{brightness:40,radius:4.5,falloff:4,ambient:78,shadow:42,softness:6,exposure:1.28,colour:'#fff0cf',follow:true},
+ dungeon:{brightness:42,radius:3.25,falloff:3.25,ambient:45,shadow:72,softness:4,exposure:1.0,colour:'#ffc27a',follow:true},
+ torch:{brightness:62,radius:2.75,falloff:2.25,ambient:28,shadow:82,softness:3,exposure:.94,colour:'#ff9d45',follow:true},
+ dark:{brightness:38,radius:2.25,falloff:1.75,ambient:16,shadow:92,softness:2,exposure:.72,colour:'#ff8a38',follow:true}
+};
+function loadLighting(){
+ try{
+  return {...DEFAULT_LIGHTING,...JSON.parse(localStorage.getItem(LIGHTING_STORAGE_KEY)||'{}')};
+ }catch(e){return {...DEFAULT_LIGHTING};}
+}
+let lighting=loadLighting();
+function saveLighting(){
+ localStorage.setItem(LIGHTING_STORAGE_KEY,JSON.stringify(lighting));
+}
+
 const canvas=document.getElementById('threeBoard');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -1224,7 +1323,7 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.08;
+renderer.toneMappingExposure=lighting.exposure;
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x010100);
@@ -1243,9 +1342,10 @@ controls.maxDistance=34;
 controls.minPolarAngle=THREE.MathUtils.degToRad(20);
 controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
 
-scene.add(new THREE.HemisphereLight(0x66728a,0x120a04,.58));
+const ambientLight=new THREE.HemisphereLight(0x66728a,0x120a04,lighting.ambient/100);
+scene.add(ambientLight);
 
-const sun=new THREE.DirectionalLight(0xffffff,2.7);
+const sun=new THREE.DirectionalLight(0xffffff,1.2+(lighting.shadow/100)*2.2);
 sun.position.set(6,14,5);
 sun.castShadow=true;
 sun.shadow.mapSize.set(4096,4096);
@@ -1257,11 +1357,12 @@ sun.shadow.camera.top=16;
 sun.shadow.camera.bottom=-16;
 scene.add(sun);
 
-const heroLight=new THREE.PointLight(0xffc27a,46,15.5,1.45);
+const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness,lighting.radius*TILE+9,1.45);
 heroLight.position.set(0,4.2,0);
 heroLight.castShadow=true;
 heroLight.shadow.mapSize.set(2048,2048);
 heroLight.shadow.bias=-.0003;
+heroLight.shadow.radius=lighting.softness;
 scene.add(heroLight);
 
 const table=new THREE.Mesh(
@@ -1302,17 +1403,12 @@ function tileDistanceFromHero(x,y){
 }
 function darknessForTile(x,y){
  const d=tileDistanceFromHero(x,y);
-
- // Hero and the first three tiles stay clearly illuminated.
- if(d<=3.0)return 0;
-
- // Gentle falloff immediately outside the three-tile light radius.
- if(d<=4.0)return THREE.MathUtils.lerp(0,.14,d-3.0);
- if(d<=5.0)return THREE.MathUtils.lerp(.14,.30,d-4.0);
- if(d<=6.0)return THREE.MathUtils.lerp(.30,.46,d-5.0);
-
- // Distant explored tiles remain visible, just atmospheric.
- return .52;
+ const radius=Math.max(1,lighting.radius);
+ const falloff=Math.max(.5,lighting.falloff);
+ if(d<=radius)return 0;
+ const t=THREE.MathUtils.clamp((d-radius)/falloff,0,1);
+ const ambientFloor=THREE.MathUtils.lerp(.68,.18,lighting.ambient/100);
+ return t*t*ambientFloor;
 }
 function objectVisibleAtTile(x,y){
  return true;
@@ -1628,13 +1724,104 @@ async function renderBoard(state){
  await Promise.all(jobs);
  if(token===renderToken){
   fitCamera(state);
-  heroLight.position.set(
-   state.player.x*TILE+.45,
-   4.2,
-   state.player.y*TILE+.35
-  );
+  if(lighting.follow){
+   heroLight.position.set(
+    state.player.x*TILE+.45,
+    4.2,
+    state.player.y*TILE+.35
+   );
+  }
  }
 }
+function applyLightingSettings(redraw=true){
+ renderer.toneMappingExposure=lighting.exposure;
+ ambientLight.intensity=lighting.ambient/100;
+ sun.intensity=1.2+(lighting.shadow/100)*2.2;
+ sun.shadow.radius=lighting.softness;
+ heroLight.intensity=lighting.brightness;
+ heroLight.distance=lighting.radius*TILE+9;
+ heroLight.color.set(lighting.colour);
+ heroLight.castShadow=lighting.shadow>5;
+ saveLighting();
+ syncLightingUI();
+ if(redraw&&latestState)renderBoard(latestState);
+}
+function syncLightingUI(){
+ const fields={
+  lightBrightness:['brightness',v=>String(Math.round(v))],
+  lightRadius:['radius',v=>Number(v).toFixed(2).replace(/\.00$/,'')+' tiles'],
+  lightFalloff:['falloff',v=>Number(v).toFixed(2).replace(/\.00$/,'')+' tiles'],
+  lightAmbient:['ambient',v=>Math.round(v)+'%'],
+  lightShadow:['shadow',v=>Math.round(v)+'%'],
+  lightSoftness:['softness',v=>Number(v).toFixed(1)],
+  lightExposure:['exposure',v=>Number(v).toFixed(2)]
+ };
+ Object.entries(fields).forEach(([id,[key,format]])=>{
+  const input=document.getElementById(id);
+  const output=document.getElementById(id+'Value');
+  if(input)input.value=lighting[key];
+  if(output)output.textContent=format(lighting[key]);
+ });
+ const colour=document.getElementById('lightColour');
+ const follow=document.getElementById('lightFollow');
+ if(colour)colour.value=lighting.colour;
+ if(follow)follow.checked=!!lighting.follow;
+}
+function openLightingPanel(){
+ const panel=document.getElementById('lightingPanel');
+ panel.classList.add('open');
+ panel.setAttribute('aria-hidden','false');
+ syncLightingUI();
+}
+function closeLightingPanel(){
+ const panel=document.getElementById('lightingPanel');
+ panel.classList.remove('open');
+ panel.setAttribute('aria-hidden','true');
+}
+function wireLightingControls(){
+ const bindings={
+  lightBrightness:['brightness',Number],
+  lightRadius:['radius',Number],
+  lightFalloff:['falloff',Number],
+  lightAmbient:['ambient',Number],
+  lightShadow:['shadow',Number],
+  lightSoftness:['softness',Number],
+  lightExposure:['exposure',Number]
+ };
+ Object.entries(bindings).forEach(([id,[key,convert]])=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>{
+   lighting[key]=convert(el.value);
+   applyLightingSettings(true);
+  });
+ });
+ document.getElementById('lightColour').addEventListener('input',e=>{
+  lighting.colour=e.target.value;
+  applyLightingSettings(false);
+ });
+ document.getElementById('lightFollow').addEventListener('change',e=>{
+  lighting.follow=e.target.checked;
+  applyLightingSettings(false);
+ });
+ document.getElementById('lightReset').onclick=()=>{
+  lighting={...DEFAULT_LIGHTING};
+  applyLightingSettings(true);
+ };
+ document.querySelectorAll('[data-light-preset]').forEach(btn=>{
+  btn.onclick=()=>{
+   lighting={...lighting,...LIGHT_PRESETS[btn.dataset.lightPreset]};
+   applyLightingSettings(true);
+  };
+ });
+ document.getElementById('lightingBtn').onclick=()=>{
+  const panel=document.getElementById('lightingPanel');
+  panel.classList.contains('open')?closeLightingPanel():openLightingPanel();
+ };
+ document.getElementById('lightingClose').onclick=closeLightingPanel;
+}
+wireLightingControls();
+applyLightingSettings(false);
+
 function resize(){
  const rect=canvas.getBoundingClientRect();
  if(!rect.width||!rect.height)return;
