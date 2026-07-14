@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v7.17</title>
+<title>8BITBOD v7.19</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -132,7 +132,8 @@ Changes:
 <!-- v7.5: Enlarged and centred item artwork in equipment and backpack slots; increased slot height and improved long-name wrapping. -->
 <!-- v7.15: Backpack list now shows each item effect beneath its name, with artwork retained on the right. -->
 <!-- v7.16: Removed visible build labels from the title and character-selection screens; version remains in About. -->
-<!-- v7.17: Item locations keep their random floor tile and use item.png as a transparent overlay. -->
+<!-- v7.18: Item locations keep their random floor tile and use item.png as a transparent overlay. -->
+<!-- v7.19: Asset Manager now exposes Item Marker (assets/ui/item.png), removes the old Item Tile entry, migrates old browser overrides, and cache-busts assets.js. -->
 <!-- v7.6: Backpack item artwork and labels use separate centred layout areas. -->
 <!-- v7.13: Backpack changed to a vertical list with artwork on the right. Character selection cards now use large full-height hero artwork on the right and text on the left. -->
 <!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
@@ -175,9 +176,9 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js"></script>
+<script src="assets/assets.js?v=7.19"></script>
 <script>
-const VERSION='v7.17';
+const VERSION='v7.19';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -260,11 +261,14 @@ const BUILTIN_ASSET_PATHS={
  'Crossroad':'assets/tiles/crossroad.png',
  'Spike Trap':'assets/tiles/spiketrap.png',
  'Healing Pool':'assets/tiles/healingpool.png',
- 'Item Tile':'assets/tiles/item.png',
+ 'Item Marker':'assets/ui/item.png',
  'Ring':'assets/ui/ring.png',
  'Hidden Monster':'assets/ui/hiddenmonster.png'
 };
 const DEFAULT_ASSETS={...BUILTIN_ASSET_PATHS,...(window.ASSET_PATHS||{})};
+// Backwards compatibility only: old builds called this an Item Tile.
+// The player-facing Asset Manager now shows only Item Marker and loads assets/ui/item.png.
+DEFAULT_ASSETS['Item Tile']=DEFAULT_ASSETS['Item Marker'];
 // Effect files may be static transparent PNGs or animated APNGs.
 // Optional window.EFFECT_PATHS entries in assets/assets.js can point to GIF/WebP files instead.
 const DEFAULT_EFFECT_PATHS={
@@ -296,7 +300,15 @@ MONSTER_MASTER.forEach(monster=>{if(!DEFAULT_ASSETS[monster.name])DEFAULT_ASSETS
 if(!DEFAULT_ASSETS['Red Dragon'])DEFAULT_ASSETS['Red Dragon']='assets/monsters/dragon.png';
 let USER_ASSETS={};
 function assetKey(name){return String(name||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
-function loadAssets(){try{USER_ASSETS=JSON.parse(localStorage.getItem('bodDigitalAssetsV25')||'{}')}catch(e){USER_ASSETS={}}}
+function loadAssets(){
+ try{USER_ASSETS=JSON.parse(localStorage.getItem('bodDigitalAssetsV25')||'{}')}catch(e){USER_ASSETS={}}
+ // Migrate any old uploaded Item Tile artwork to the new Item Marker name.
+ if(USER_ASSETS['item-tile']&&!USER_ASSETS['item-marker']){
+  USER_ASSETS['item-marker']=USER_ASSETS['item-tile'];
+  delete USER_ASSETS['item-tile'];
+  saveAssets();
+ }
+}
 function saveAssets(){localStorage.setItem('bodDigitalAssetsV25',JSON.stringify(USER_ASSETS))}
 function assetSrc(name){const k=assetKey(name);return USER_ASSETS[k]||DEFAULT_ASSETS[name]||DEFAULT_ASSETS[k]||''}
 function iconHTML(name,fallback){const src=assetSrc(name);const fb=String(fallback||'?').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');return src?`<span class="spriteWrap"><img class="spriteIcon" src="${src}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span style="display:none">${fb}</span></span>`:(fallback||'?')}
@@ -305,7 +317,7 @@ function assetNames(){
  CHARACTERS.forEach(x=>names.push(x.name));
  MONSTER_MASTER.forEach(x=>names.push(x.name));
  ITEM_MASTER.forEach(x=>names.push(x.name));
- ['Hero','Hidden Monster','Red Dragon','Start','Exit','Spike Trap','Healing Pool','Item Tile','Ring','Straight','Corner','T-Junction','Crossroad'].forEach(x=>names.push(x));
+ ['Hero','Hidden Monster','Item Marker','Red Dragon','Start','Exit','Spike Trap','Healing Pool','Ring','Straight','Corner','T-Junction','Crossroad'].forEach(x=>names.push(x));
  return [...new Set(names)];
 }
 function openAssetManager(){
@@ -324,7 +336,7 @@ function defaultFallback(name){
  const ch=CHARACTERS.find(x=>x.name===name); if(ch)return ch.glyph;
  const mo=MONSTER_MASTER.find(x=>x.name===name); if(mo)return mo.glyph;
  const it=ITEM_MASTER.find(x=>x.name===name); if(it)return it.icon;
- const map={'hero':'🧑','hidden monster':'M','start':'🏁','exit':'🚪','spike trap':'▲','healing pool':'💧','item tile':'Item','ring':'◎','straight':'═','corner':'╚','t-junction':'╦','crossroad':'╬'};
+ const map={'hero':'🧑','hidden monster':'M','start':'🏁','exit':'🚪','spike trap':'▲','healing pool':'💧','item marker':'Item','ring':'◎','straight':'═','corner':'╚','t-junction':'╦','crossroad':'╬'};
  return map[lower]||'?';
 }
 function pickAsset(key,name){
@@ -361,26 +373,41 @@ function resetAllSounds(){if(confirm('Reset all custom sounds?')){USER_SOUNDS={}
 loadSounds();
 window.addEventListener('pointerdown',()=>{try{audio()}catch(e){}},{once:true});
 function createTileDeck(){
-  // Start is face up and Exit is set aside. These 38 floor tiles form the shuffled dungeon stack.
+  // Start is face up and Exit is set aside. These 38 ordinary floor tiles form the shuffled dungeon stack.
   const deck=[...Array(15)].map(()=>({kind:'straight'}))
     .concat([...Array(14)].map(()=>({kind:'corner'})),[...Array(2)].map(()=>({kind:'t'})),[...Array(5)].map(()=>({kind:'cross'})),[{kind:'spike'},{kind:'pool'}]);
 
-  // Guarantee exactly eleven distinct monster locations: M2, M3 ... M12.
-  // Only ordinary floor shapes may become M tiles. Monsters themselves are still drawn randomly on entry.
-  const candidateIndexes=shuffle(deck.map((t,i)=>({t,i})).filter(x=>!['spike','pool'].includes(x.t.kind))).slice(0,11);
-  candidateIndexes.forEach((entry,index)=>{entry.t.monsterMarker=true;entry.t.mNumber=index+2;});
+  const ordinaryFloors=()=>deck.filter(t=>!['spike','pool'].includes(t.kind));
 
-  // Item tiles never replace or overlap an M tile.
-  const itemCandidates=shuffle(deck.filter(t=>!t.monsterMarker&&!['spike','pool'].includes(t.kind))).slice(0,2);
-  itemCandidates.forEach(t=>{t.itemTile=true;});
+  // Guarantee exactly eleven distinct monster locations: M2 through M12.
+  // The monsters themselves remain random draws when their markers are revealed.
+  shuffle(ordinaryFloors()).slice(0,11).forEach((tile,index)=>{
+    tile.monsterMarker=true;
+    tile.mNumber=index+2;
+  });
 
-  // Defensive validation: repair any accidental future deck-edit error before play begins.
-  const mTiles=deck.filter(t=>t.monsterMarker).sort((a,b)=>a.mNumber-b.mNumber);
-  const valid=mTiles.length===11&&mTiles.every((t,i)=>t.mNumber===i+2);
-  if(!valid){
-    deck.forEach(t=>{delete t.monsterMarker;delete t.mNumber;});
-    shuffle(deck.filter(t=>!['spike','pool'].includes(t.kind))).slice(0,11).forEach((t,i)=>{t.monsterMarker=true;t.mNumber=i+2;});
+  // Defensive validation in case the deck composition is edited later.
+  let mTiles=deck.filter(t=>t.monsterMarker).sort((a,b)=>a.mNumber-b.mNumber);
+  const validM=mTiles.length===11&&mTiles.every((tile,index)=>tile.mNumber===index+2);
+  if(!validM){
+    deck.forEach(tile=>{delete tile.monsterMarker;delete tile.mNumber;});
+    shuffle(ordinaryFloors()).slice(0,11).forEach((tile,index)=>{
+      tile.monsterMarker=true;
+      tile.mNumber=index+2;
+    });
   }
+
+  // Exactly two item locations are placed in every game.
+  // They are transparent item.png overlays on otherwise normal random floor tiles,
+  // never separate item tiles and never overlapping M2-M12, traps or the healing pool.
+  deck.forEach(tile=>delete tile.itemMarker);
+  const itemLocations=shuffle(ordinaryFloors().filter(tile=>!tile.monsterMarker)).slice(0,2);
+  itemLocations.forEach(tile=>{tile.itemMarker=true;});
+
+  if(deck.filter(tile=>tile.itemMarker).length!==2){
+    throw new Error('Dungeon setup failed: exactly two item markers are required.');
+  }
+
   return shuffle(deck);
 }
 function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:3,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to 8BITBOD '+VERSION+'.','system');render();setTimeout(()=>setOpeningCamera(),0);}
@@ -437,16 +464,16 @@ function pDice(){return state.player.baseDice+(state.player.equipment.bear?1:0)+
 function drawMonster(){let m=state.monsterDeck.pop();if(!m)return null;if(m.name==='Mirror Monster'){m.maxHealth=state.player.health;m.health=state.player.health;m.dice=pDice();m.mod=pCombatMod();} else m.health=m.maxHealth; m.revealed=false; return m;}
 function drawItem(){const it=state.itemDeck.pop();if(!it)return null;return {...it};}
 function awardItem(item=drawItem()){if(!item)return log('No items left in the item deck.','system');log('Found '+item.name+'.','loot');addToInventory(item,getTile(state.player.x,state.player.y));}
-function maybePopulate(tile){ if(tile.monsterMarker) tile.monsterPending=true; if(tile.itemTile) tile.itemPending=true; }
+function maybePopulate(tile){ if(tile.monsterMarker) tile.monsterPending=true; if(tile.itemMarker) tile.itemPending=true; }
 function startPlace(dir){const p=state.player;const freeTorchLay=!!(p.equipment.torch&&p.flags.torchFreeLay);if(p.ap<1&&!freeTorchLay)return;const raw=state.tileDeck.pop();if(!raw){log('No dungeon tiles left.','system');return;}placement={dir,kind:raw.kind,rot:0,raw};showPlacement();}
 function showPlacement(){const need=DIRS[placement.dir].opp;document.getElementById('placeInfo').textContent='Drawn: '+TILE_LABEL[placement.kind]+' — placing to the '+placement.dir+'.';document.getElementById('tilePreview').innerHTML=tileSVG({kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot)});document.getElementById('placeBtn').disabled=!openings(placement.kind,placement.rot)[need];document.getElementById('placement').classList.add('open');}
 document.getElementById('rotBtn').onclick=()=>{placement.rot=(placement.rot+1)%4;showPlacement();};
 document.getElementById('cancelPlace').onclick=()=>{if(placement){state.tileDeck.push(placement.raw);shuffle(state.tileDeck);}placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
-document.getElementById('placeBtn').onclick=()=>{const p=state.player,d=DIRS[placement.dir],nx=p.x+d.dx,ny=p.y+d.dy;const tile={kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot),visited:false,monsterMarker:placement.raw.monsterMarker,mNumber:placement.raw.mNumber||null,itemTile:placement.raw.itemTile};maybePopulate(tile);state.tiles[key(nx,ny)]=tile;
+document.getElementById('placeBtn').onclick=()=>{const p=state.player,d=DIRS[placement.dir],nx=p.x+d.dx,ny=p.y+d.dy;const tile={kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot),visited:false,monsterMarker:placement.raw.monsterMarker,mNumber:placement.raw.mNumber||null,itemMarker:placement.raw.itemMarker};maybePopulate(tile);state.tiles[key(nx,ny)]=tile;
  const usedFreeTorchLay=!!(p.equipment.torch&&p.flags.torchFreeLay);
  if(usedFreeTorchLay){p.flags.torchFreeLay=false;log('Torch: second dungeon tile placed for no extra AP.','system');}
  else {p.ap-=1;if(p.equipment.torch&&state.tileDeck.length>0){p.flags.torchFreeLay=true;log('Torch: your next tile placement costs 0 AP.','system');}}
- sndTile();log('Placed '+TILE_LABEL[tile.kind]+(tile.itemTile?' Item tile':'')+' to the '+placement.dir+'.','system');if(state.tileDeck.length===0&&!state.exitPlaced)placeExitAndRing(nx,ny,tile);placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
+ sndTile();log('Placed '+TILE_LABEL[tile.kind]+(tile.itemMarker?' with item marker':'')+' to the '+placement.dir+'.','system');if(state.tileDeck.length===0&&!state.exitPlaced)placeExitAndRing(nx,ny,tile);placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
 function placeExitAndRing(x,y,fromTile){
  state.exitPlaced=true;
  let exitKey=null, placed=false;
@@ -729,7 +756,7 @@ function beginDroppedPickup(tileKey,idx){
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
 function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}const t=state.tiles[tileKey],m=t&&t.monster;if(!m||(m.health<=0)||!(m.revealed||m.peeked))return;playSound('click');const status=m.revealed?'Revealed':'Viewed with Magic Sword';const ringNote=t.hasRing?'<div style="margin-top:12px;font-weight:bold">This monster is guarding the Ring of Creation.</div>':'';showModal(m.name,'',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div style="font-size:72px;line-height:1;margin-bottom:12px">${iconHTML(m.name,m.glyph||'👹')}</div><div><b>Health:</b> ${m.health} / ${m.maxHealth}</div><div><b>Combat:</b> ${m.dice}d6+${m.mod}</div><div><b>Status:</b> ${status}</div>${m.special?`<div style="margin-top:8px"><b>Special:</b> ${m.special}</div>`:''}${ringNote}`;}
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Tile','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?`<span class="mark monsterGlyph${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-monster-key="${k}" aria-label="View ${t.monster.name} stats" title="Click to view ${t.monster.name} stats">${iconHTML(t.monster.name,t.monster.glyph)}</span>`:`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?`<span class="mark monsterGlyph${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-monster-key="${k}" aria-label="View ${t.monster.name} stats" title="Click to view ${t.monster.name} stats">${iconHTML(t.monster.name,t.monster.glyph)}</span>`:`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);
  const monsterButton=d.querySelector('.monsterGlyph');
  if(monsterButton){
   monsterButton.addEventListener('click',e=>rangedMode?fireRangedAt(monsterButton.dataset.monsterKey,e):showMonsterStats(monsterButton.dataset.monsterKey,e));
