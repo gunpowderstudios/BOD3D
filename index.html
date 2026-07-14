@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v7.10</title>
+<title>8BITBOD v7.12</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -132,6 +132,8 @@ Changes:
 <!-- v7.5: Enlarged and centred item artwork in equipment and backpack slots; increased slot height and improved long-name wrapping. -->
 <!-- v7.6: Backpack item artwork and labels use separate centred layout areas. -->
 <!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
+<!-- v7.11: Removed player-facing Developer, Save and Load menu buttons. Added hidden tester save/load keyboard shortcuts. -->
+<!-- v7.12: Removed Asset and Sound Manager buttons from the player menu, added hidden tester shortcuts, and added an About/Credits panel with website link. -->
 </head>
 <body>
 
@@ -140,7 +142,7 @@ Changes:
   <h1>8BITBOD</h1>
   <div class="intro">Choose your adventurer before entering the dungeon.</div>
   <div id="charGrid"></div>
-  <div class="small">v7.10</div>
+  <div class="small">v7.12</div>
 </div>
 
 <div id="app">
@@ -148,7 +150,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="logo">8BITBOD</div>
-      <div class="version">Bag of Dungeon © Gunpowder Studios<span class="buildVersion">Version v7.10 Alpha</span></div>
+      <div class="version">Bag of Dungeon © Gunpowder Studios<span class="buildVersion">Version v7.12 Alpha</span></div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -172,7 +174,7 @@ Changes:
 
 <script src="assets/assets.js"></script>
 <script>
-const VERSION='v7.10';
+const VERSION='v7.12';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -630,15 +632,29 @@ function endTurn(){const p=state.player;state.turns=(state.turns||1)+1;p.ap=p.ma
 function heartLine(h,m){const n=Math.max(0,Math.ceil((h/m)*10));return '♥'.repeat(n)+'♡'.repeat(10-n)}
 function addBtn(w,text,cls,fn,disabled=false){const b=document.createElement('button');b.textContent=text;if(cls)b.className=cls;b.disabled=disabled;b.onclick=fn;w.appendChild(b);return b;}
 
+function openAbout(){
+  showModal('About 8BITBOD','',[
+    {text:'Close',fn:closeModal}
+  ]);
+  document.getElementById('modalBody').innerHTML=`
+    <div style="text-align:center;line-height:1.35">
+      <div style="font-size:24px;font-weight:bold;margin-bottom:4px">8BITBOD</div>
+      <div style="font-size:14px;margin-bottom:14px">Version ${VERSION} Alpha</div>
+      <div style="font-size:18px;font-weight:bold;margin-bottom:7px">Credits</div>
+      <div><b>Original game design</b><br>Tim Sharville, Paul Sharville &amp; Russ Law</div>
+      <div style="margin-top:11px"><b>Digital adaptation &amp; artwork</b><br>Gunpowder Studios</div>
+      <p style="margin:14px 0 8px"><b>8BITBOD</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</p>
+      <p style="margin:8px 0">Visit our website to see the full range:<br>
+        <a href="https://www.gunpowderstudios.co.uk" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a>
+      </p>
+      <p style="margin:14px 0 5px">© Gunpowder Studios Ltd. All rights reserved.</p>
+      <p style="font-weight:bold;margin:12px 0 0">Thanks for playing, your journey continues over at our website.</p>
+    </div>`;
+}
 function openMenu(){
-  const devLabel = devOpen ? 'Hide Developer' : 'Developer Mode';
-  showModal('Menu','Save/load, graphics and custom sounds use this browser only while testing.',[
+  showModal('Menu','Game options.',[
     {text:'Resume',fn:closeModal},
-    {text:'Save Game',cls:'green',fn:()=>{saveGame();closeModal();}},
-    {text:'Load Game',fn:()=>{loadGame();closeModal();}},
-    {text:'Asset Manager',fn:()=>{closeModal();openAssetManager();}},
-    {text:'Sound Manager',fn:()=>{closeModal();openSoundManager();}},
-    {text:devLabel,fn:()=>{toggleDev();closeModal();}},
+    {text:'About',fn:()=>{closeModal();openAbout();}},
     {text:'New Game',cls:'red',fn:()=>{closeModal();if(confirm('Start a new dungeon?'))showCharSelect();}}
   ]);
 }
@@ -835,7 +851,33 @@ function anyGameOverlayOpen(){
  return document.getElementById('modal').classList.contains('open')||document.getElementById('combat').classList.contains('open');
 }
 function handleGameKeyboard(e){
- if(e.key==='F9'){e.preventDefault();toggleDev();return;}
+ // Hidden tester shortcuts. These are intentionally absent from the player-facing menu.
+ // Mac: Control + Option + Shift. Windows: Ctrl + Alt + Shift.
+ // S = save, L = load, A = Asset Manager, M = Sound Manager.
+ if(e.ctrlKey&&e.altKey&&e.shiftKey&&!e.metaKey){
+  if(e.code==='KeyS'){
+   e.preventDefault();
+   if(state)saveGame();else toast('No active game to save.');
+   return;
+  }
+  if(e.code==='KeyL'){
+   e.preventDefault();
+   loadGame();
+   return;
+  }
+  if(e.code==='KeyA'){
+   e.preventDefault();
+   if(document.getElementById('placement').classList.contains('open')||document.getElementById('combat').classList.contains('open'))return;
+   closeModal();openAssetManager();
+   return;
+  }
+  if(e.code==='KeyM'){
+   e.preventDefault();
+   if(document.getElementById('placement').classList.contains('open')||document.getElementById('combat').classList.contains('open'))return;
+   closeModal();openSoundManager();
+   return;
+  }
+ }
  const target=e.target;
  if(target&&(/INPUT|TEXTAREA|SELECT/.test(target.tagName)||target.isContentEditable))return;
  if(!state||!document.getElementById('charSelect').classList.contains('hidden'))return;
