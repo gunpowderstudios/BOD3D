@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v7.12</title>
+<title>8BITBOD v7.15</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -71,9 +71,9 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #charSelect .selectLogo{display:block;width:min(420px,82vw);max-height:180px;object-fit:contain;margin:4px auto 0;image-rendering:auto}
 #charSelect h1{margin:0;font-size:34px;text-align:center;letter-spacing:1px}
 #charSelect .intro{max-width:760px;text-align:center;font-size:18px;line-height:1.25;border:3px solid var(--ink);padding:10px;background:#fff6d8}
-#charGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;width:min(980px,100%)}
-.charCard{background:#fff6d8;border:4px solid var(--ink);box-shadow:4px 4px 0 #000;padding:10px;cursor:pointer;text-align:left}
-.charCard:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #000}.charCard h3{margin:0 0 6px;font-size:19px}.charStats{font-weight:bold;margin:6px 0}.charSpecial{border-top:2px solid var(--ink);padding-top:6px;font-size:16px}.charGlyph{font-size:34px;float:right}
+#charGrid{display:grid;grid-template-columns:1fr;gap:12px;width:min(720px,100%)}
+.charCard{background:#fff6d8;border:4px solid var(--ink);box-shadow:4px 4px 0 #000;padding:14px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;min-height:300px;overflow:hidden}
+.charCard:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #000}.charCard h3{margin:8px 0 6px;font-size:24px}.charDesc{max-width:560px;font-size:17px}.charStats{font-weight:bold;margin:8px 0;font-size:18px}.charSpecial{border-top:2px solid var(--ink);padding-top:8px;font-size:17px;width:min(560px,100%)}.charGlyph{order:-1;width:100%;height:145px;display:flex;align-items:center;justify-content:center;overflow:hidden}.charGlyph .spriteWrap,.charGlyph .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;object-position:center;display:flex}
 
 
 .assetRow{display:grid;grid-template-columns:54px 1fr auto auto;gap:8px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}
@@ -85,10 +85,10 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 .hiddenFile{display:none}
 
 
-.slotGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.equipSlot,.backpackSlot{border:2px solid var(--ink);background:#fff6d8;padding:6px;text-align:center;position:relative;overflow:hidden}.equipSlot{min-height:142px;display:flex;flex-direction:column}.equipSlot.wide{grid-column:1/3}.slotLabel{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;border-bottom:1px solid #000;margin-bottom:5px;flex:0 0 auto}.slotItem{font-size:14px;line-height:1.08;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:0;text-align:center;word-break:normal;overflow-wrap:anywhere}.equipSlot .slotItem .spriteWrap{width:82px;height:82px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;flex:0 0 auto}.backpackSlot .slotItem .spriteWrap{width:58px;height:58px;display:flex;align-items:center;justify-content:center;margin:0 auto 4px}.slotItem .spriteIcon{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;image-rendering:pixelated}.slotEmpty{font-size:13px;opacity:.55;display:flex;align-items:center;justify-content:center;flex:1;min-height:52px}.backpackGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.backpackSlot{min-width:0;min-height:108px;display:flex;align-items:stretch;justify-content:center}.backpackSlot .slotItem{width:100%;height:100%;display:grid;grid-template-rows:1fr auto;place-items:center;padding:6px 3px}.slotArt{width:100%;display:flex;align-items:center;justify-content:center;min-width:0}.slotName{width:100%;text-align:center;line-height:1.08;overflow-wrap:anywhere}.backpackSlot .slotArt{min-height:62px}.backpackSlot .slotArt .spriteWrap{margin:0 auto}.twoHandedBadge{font-size:10px;background:#000;color:#fff;padding:1px 3px}.peekBtn{font-size:12px;padding:5px 7px;margin:2px}.inventoryWarning{font-weight:bold;color:var(--red);margin:4px 0}
+.slotGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.equipSlot,.backpackSlot{border:2px solid var(--ink);background:#fff6d8;padding:6px;text-align:center;position:relative;overflow:hidden}.equipSlot{min-height:142px;display:flex;flex-direction:column}.equipSlot.wide{grid-column:1/3}.slotLabel{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;border-bottom:1px solid #000;margin-bottom:5px;flex:0 0 auto}.slotItem{font-size:14px;line-height:1.08;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:0;text-align:center;word-break:normal;overflow-wrap:anywhere}.equipSlot .slotItem .spriteWrap{width:82px;height:82px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;flex:0 0 auto}.slotItem .spriteIcon{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;image-rendering:pixelated}.slotEmpty{font-size:13px;opacity:.55;display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 8px}.backpackGrid{display:flex;flex-direction:column;gap:5px}.backpackSlot{min-width:0;min-height:54px;display:flex;align-items:stretch}.backpackSlot .slotItem{width:100%;min-height:72px;display:grid;grid-template-columns:minmax(0,1fr) 58px;grid-template-rows:auto auto;align-items:center;column-gap:10px;row-gap:2px;padding:8px 9px;text-align:left}.backpackSlot .slotName{grid-column:1;grid-row:1;width:100%;text-align:left;line-height:1.15;overflow-wrap:normal;font-weight:bold}.backpackSlot .slotDesc{grid-column:1;grid-row:2;width:100%;text-align:left;font-size:12px;line-height:1.18;font-weight:normal;opacity:.82}.backpackSlot .slotArt{grid-column:2;grid-row:1/3;width:58px;height:58px;display:flex;align-items:center;justify-content:center}.backpackSlot .slotArt .spriteWrap,.backpackSlot .slotArt .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;object-position:center;margin:0}.twoHandedBadge{font-size:10px;background:#000;color:#fff;padding:1px 3px}.peekBtn{font-size:12px;padding:5px 7px;margin:2px}.inventoryWarning{font-weight:bold;color:var(--red);margin:4px 0}
 
 .soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.75}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
-@media(max-width:800px){#app{grid-template-columns:1fr;grid-template-rows:1fr 240px}#side{grid-row:2;border-right:none;border-top:5px solid var(--ink);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px}#brandHeader{display:none}#log{max-height:105px;min-height:80px}.box{padding:6px}.sectionTitle{margin:3px 0}.itemBtn{width:38px;height:38px;font-size:21px}#inventory{grid-column:1/3}#topbar{font-size:13px}.badge{padding:6px}.tile{--tile:128px}.combatGrid{grid-template-columns:1fr}.card{max-height:90vh;overflow:auto}}
+@media(max-width:800px){#app{grid-template-columns:1fr;grid-template-rows:1fr 240px}#side{grid-row:2;border-right:none;border-top:5px solid var(--ink);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px}#brandHeader{display:none}#log{max-height:105px;min-height:80px}.box{padding:6px}.sectionTitle{margin:3px 0}.itemBtn{width:38px;height:38px;font-size:21px}#inventory{grid-column:1/3}#topbar{font-size:13px}.badge{padding:6px}.tile{--tile:128px}.combatGrid{grid-template-columns:1fr}.card{max-height:90vh;overflow:auto}.charCard{min-height:270px;padding:12px}.charGlyph{height:125px}.charCard h3{font-size:22px}}
 </style>
 <!--
 8BITBOD
@@ -130,7 +130,9 @@ Changes:
 <!-- v6.8: Fixed monster layering on special tiles. The Red Dragon now renders above the Exit artwork instead of behind it. -->
 <!-- v7.3: The collected Ring now appears as artwork in the character panel. Combat now shows heart health for both hero and monster. -->
 <!-- v7.5: Enlarged and centred item artwork in equipment and backpack slots; increased slot height and improved long-name wrapping. -->
+<!-- v7.15: Backpack list now shows each item effect beneath its name, with artwork retained on the right. -->
 <!-- v7.6: Backpack item artwork and labels use separate centred layout areas. -->
+<!-- v7.13: Backpack changed to a vertical list with artwork on the right. Character selection cards now use large full-height hero artwork on the right and text on the left. -->
 <!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
 <!-- v7.11: Removed player-facing Developer, Save and Load menu buttons. Added hidden tester save/load keyboard shortcuts. -->
 <!-- v7.12: Removed Asset and Sound Manager buttons from the player menu, added hidden tester shortcuts, and added an About/Credits panel with website link. -->
@@ -142,7 +144,7 @@ Changes:
   <h1>8BITBOD</h1>
   <div class="intro">Choose your adventurer before entering the dungeon.</div>
   <div id="charGrid"></div>
-  <div class="small">v7.12</div>
+  <div class="small">v7.15</div>
 </div>
 
 <div id="app">
@@ -150,7 +152,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="logo">8BITBOD</div>
-      <div class="version">Bag of Dungeon © Gunpowder Studios<span class="buildVersion">Version v7.12 Alpha</span></div>
+      <div class="version">Bag of Dungeon © Gunpowder Studios<span class="buildVersion">Version v7.15 Alpha</span></div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -174,7 +176,7 @@ Changes:
 
 <script src="assets/assets.js"></script>
 <script>
-const VERSION='v7.12';
+const VERSION='v7.15';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -186,7 +188,7 @@ const CHARACTERS=[
  {id:'alendra',name:'Alendra the Elf',glyph:'🏹',desc:'Fleet-footed and keen-eyed.',maxHealth:9,maxAp:6,baseDice:2,baseMod:1,special:'Dead-eye',specialDesc:'Natural 6 in combat gives an instant kill.'},
  {id:'galhorn',name:'Galhorn the Elf',glyph:'🏹',desc:'Master archer, quick and sharp.',maxHealth:9,maxAp:6,baseDice:2,baseMod:1,special:'Dead-eye',specialDesc:'Natural 6 in combat gives an instant kill.'}
 ];
-function renderCharSelect(){const grid=document.getElementById('charGrid');grid.innerHTML='';CHARACTERS.forEach(c=>{const card=document.createElement('div');card.className='charCard';card.innerHTML=`<div class="charGlyph">${iconHTML(c.name,c.glyph)}</div><h3>${c.name}</h3><div>${c.desc}</div><div class="charStats">Health ${c.maxHealth} · AP ${c.maxAp} · Combat ${c.baseDice}d6+${c.baseMod}</div><div class="charSpecial"><b>${c.special}</b><br>${c.specialDesc}</div>`;card.onclick=()=>startGame(c);grid.appendChild(card);});}
+function renderCharSelect(){const grid=document.getElementById('charGrid');grid.innerHTML='';CHARACTERS.forEach(c=>{const card=document.createElement('div');card.className='charCard';card.innerHTML=`<h3>${c.name}</h3><div class="charDesc">${c.desc}</div><div class="charStats">Health ${c.maxHealth} · AP ${c.maxAp} · Combat ${c.baseDice}d6+${c.baseMod}</div><div class="charSpecial"><b>${c.special}</b><br>${c.specialDesc}</div><div class="charGlyph">${iconHTML(c.name,c.glyph)}</div>`;card.onclick=()=>startGame(c);grid.appendChild(card);});}
 function startGame(c){audio();document.getElementById('charSelect').classList.add('hidden');newGame(c);}
 function showCharSelect(){closeModal();closeCombat();document.getElementById('charSelect').classList.remove('hidden');renderCharSelect();}
 
@@ -693,7 +695,7 @@ function render(){if(!state)return;document.getElementById('stats').innerHTML=`<
 
 function slotHTML(label,item,slot){return `<div class="equipSlot"><span class="slotLabel">${label}</span>${item?`<div class="slotItem" onclick="inspectCarried('${slot}')"><div class="slotArt">${iconHTML(item.name,item.icon||'?')}</div><div class="slotName">${item.name}${isTwoHanded(item)?'<br><span class="twoHandedBadge">TWO-HANDED</span>':''}</div></div>`:'<div class="slotEmpty">Empty</div>'}</div>`;}
 function renderInventory(){const p=state.player,el=document.getElementById('inventory');const left=p.slots.left,right=p.slots.right;let html=`<div class="sectionTitle">Inventory ${occupiedSpaceCount()}/8</div><div class="small">Equipment is active only while placed in the correct slot.</div><div class="slotGrid">${slotHTML('Left Hand',left,'left')}${slotHTML('Right Hand',right,'right')}${slotHTML('Armour',p.slots.armour,'armour')}${slotHTML('Boots',p.slots.boots,'boots')}</div><div class="sectionTitle">Backpack ${p.backpack.length}/4</div><div class="backpackGrid">`;
- for(let i=0;i<BACKPACK_LIMIT;i++){const it=p.backpack[i];html+=`<div class="backpackSlot">${it?`<div class="slotItem" onclick="inspectBackpack(${i})"><div class="slotArt">${iconHTML(it.name,it.icon||'?')}</div><div class="slotName">${it.name}</div></div>`:'<div class="slotEmpty">Empty</div>'}</div>`;}html+='</div>';
+ for(let i=0;i<BACKPACK_LIMIT;i++){const it=p.backpack[i];html+=`<div class="backpackSlot">${it?`<div class="slotItem" onclick="inspectBackpack(${i})"><div class="slotArt">${iconHTML(it.name,it.icon||'?')}</div><div class="slotName">${it.name}</div><div class="slotDesc">${it.desc||'No effect description.'}</div></div>`:'<div class="slotEmpty">Empty</div>'}</div>`;}html+='</div>';
  if(p.companionBear)html+=`<div class="sectionTitle">Companion</div><button class="itemBtn equipped" onclick="inspectBear()">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</button> <span class="small">Loyal Bear (no space)</span>`;
  const t=getTile(p.x,p.y);if(t&&t.droppedItems&&t.droppedItems.length)html+='<div class="sectionTitle">On this tile</div><div class="invgrid">'+t.droppedItems.map((x,i)=>`<button class="itemBtn" onclick="pickupDropped(${i})" title="Pick up ${x.name}">${iconHTML(x.name,x.icon||'?')}<span class="dropMark">+</span></button>`).join('')+'</div>';
  if(p.equipment.weapon&&p.equipment.weapon.name==='Magic Sword')html+=magicSwordPeekHTML();el.innerHTML=html;}
