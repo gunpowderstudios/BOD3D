@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v7.15</title>
+<title>8BITBOD v7.17</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -55,7 +55,7 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #world{position:absolute;left:0;top:0;transform-origin:0 0;}#world.cameraSmooth{transition:transform .28s ease-out;}
 .tile{position:absolute;width:var(--tile);height:var(--tile);background:var(--cream);border:2px solid var(--ink);box-shadow:none;display:flex;align-items:center;justify-content:center;}
 .tile svg{position:absolute;inset:0;width:100%;height:100%}.tileAsset{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;transform-origin:50% 50%;display:block}.tile .mark{position:absolute;font-size:40px;text-shadow:1px 1px #fff;z-index:3}.tileOverlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.tileOverlay .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.tileOverlay .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.tile .tiny{position:absolute;right:4px;top:2px;font-size:20px;z-index:4}.tile.teleportTarget{cursor:pointer;outline:4px solid #fff2a8;outline-offset:-6px}.tile.teleportTarget:hover{filter:brightness(1.25)}.hero{position:absolute;width:128px;height:128px;border:none;background:transparent;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:36px;z-index:15;box-shadow:none;transition:left .18s,top .18s;pointer-events:none}.hero .spriteWrap,.hero .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block}
-.hiddenMonster{position:absolute;inset:0;font-size:44px;color:var(--red);font-weight:bold;text-shadow:2px 2px 0 #000;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.hiddenMonster.rangedTarget,.monsterGlyph.rangedTarget{cursor:crosshair;pointer-events:auto;outline:6px solid #ffd84d;outline-offset:-7px;filter:drop-shadow(0 0 8px #ffd84d)}.hiddenMonster .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.hiddenMonster .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.monsterGlyph{position:absolute;inset:0;font-size:44px;z-index:8!important;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;pointer-events:auto}.monsterGlyph .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.monsterGlyph .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}
+.hiddenMonster{position:absolute;inset:0;font-size:44px;color:var(--red);font-weight:bold;text-shadow:2px 2px 0 #000;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.hiddenMonster.rangedTarget,.monsterGlyph.rangedTarget{cursor:crosshair;pointer-events:auto;outline:6px solid #ffd84d;outline-offset:-7px;filter:drop-shadow(0 0 8px #ffd84d)}.hiddenMonster .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.hiddenMonster .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.itemLocationMarker{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.itemLocationMarker .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.itemLocationMarker .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.monsterGlyph{position:absolute;inset:0;font-size:44px;z-index:8!important;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;pointer-events:auto}.monsterGlyph .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.monsterGlyph .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}
 .effectLayer{position:absolute;inset:0;z-index:40;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:visible}.effectLayer img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.screenEffect{position:fixed;inset:0;z-index:180;pointer-events:none;display:flex;align-items:center;justify-content:center}.screenEffect img{width:min(70vw,600px);height:min(70vh,600px);object-fit:contain;image-rendering:pixelated}
 .ringMark{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none}.ringMark .spriteWrap,.ringMark .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block;image-rendering:pixelated}.tile.ringReveal{z-index:12;animation:ringRevealPulse .7s ease-in-out 4;box-shadow:0 0 0 5px #fff2a8,0 0 26px 12px #ffd84d}.tile.ringReveal::after{content:'✦';position:absolute;inset:-18px;display:flex;align-items:center;justify-content:center;font-size:72px;color:#fff2a8;text-shadow:0 0 8px #ffd84d;z-index:20;pointer-events:none;animation:ringSparkle .7s ease-in-out 4}@keyframes ringRevealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}@keyframes ringSparkle{0%,100%{opacity:.25;transform:rotate(0deg) scale(.8)}50%{opacity:1;transform:rotate(25deg) scale(1.15)}}
 #controls{position:absolute;bottom:10px;left:10px;right:10px;display:flex;flex-wrap:wrap;gap:8px;z-index:30;justify-content:center;pointer-events:auto}.red{background:#f7d2c9}.green,.blue,.gold{background:var(--cream)}
@@ -131,6 +131,8 @@ Changes:
 <!-- v7.3: The collected Ring now appears as artwork in the character panel. Combat now shows heart health for both hero and monster. -->
 <!-- v7.5: Enlarged and centred item artwork in equipment and backpack slots; increased slot height and improved long-name wrapping. -->
 <!-- v7.15: Backpack list now shows each item effect beneath its name, with artwork retained on the right. -->
+<!-- v7.16: Removed visible build labels from the title and character-selection screens; version remains in About. -->
+<!-- v7.17: Item locations keep their random floor tile and use item.png as a transparent overlay. -->
 <!-- v7.6: Backpack item artwork and labels use separate centred layout areas. -->
 <!-- v7.13: Backpack changed to a vertical list with artwork on the right. Character selection cards now use large full-height hero artwork on the right and text on the left. -->
 <!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
@@ -144,7 +146,6 @@ Changes:
   <h1>8BITBOD</h1>
   <div class="intro">Choose your adventurer before entering the dungeon.</div>
   <div id="charGrid"></div>
-  <div class="small">v7.15</div>
 </div>
 
 <div id="app">
@@ -152,7 +153,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="logo">8BITBOD</div>
-      <div class="version">Bag of Dungeon © Gunpowder Studios<span class="buildVersion">Version v7.15 Alpha</span></div>
+      <div class="version">Bag of Dungeon © Gunpowder Studios</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -176,7 +177,7 @@ Changes:
 
 <script src="assets/assets.js"></script>
 <script>
-const VERSION='v7.15';
+const VERSION='v7.17';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -666,10 +667,9 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
 function tileAssetName(tile){
- // Item locations use their own artwork. M2-M12 remain internal game data only;
- // their floor tiles display no number overlays.
+ // Item and monster locations keep their randomly drawn floor artwork.
+ // Their markers are rendered separately as transparent overlays.
  if(!tile)return '';
- if(tile.itemTile)return 'Item Tile';
  // Start was previously returned as lowercase "start", which did not match the
  // built-in asset key "Start" and therefore showed the SVG fallback crossroad.
  if(tile.kind==='start')return 'Start';
@@ -729,7 +729,7 @@ function beginDroppedPickup(tileKey,idx){
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
 function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}const t=state.tiles[tileKey],m=t&&t.monster;if(!m||(m.health<=0)||!(m.revealed||m.peeked))return;playSound('click');const status=m.revealed?'Revealed':'Viewed with Magic Sword';const ringNote=t.hasRing?'<div style="margin-top:12px;font-weight:bold">This monster is guarding the Ring of Creation.</div>':'';showModal(m.name,'',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div style="font-size:72px;line-height:1;margin-bottom:12px">${iconHTML(m.name,m.glyph||'👹')}</div><div><b>Health:</b> ${m.health} / ${m.maxHealth}</div><div><b>Combat:</b> ${m.dice}d6+${m.mod}</div><div><b>Status:</b> ${status}</div>${m.special?`<div style="margin-top:8px"><b>Special:</b> ${m.special}</div>`:''}${ringNote}`;}
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+='<span class="tiny">Item</span>';if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?`<span class="mark monsterGlyph${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-monster-key="${k}" aria-label="View ${t.monster.name} stats" title="Click to view ${t.monster.name} stats">${iconHTML(t.monster.name,t.monster.glyph)}</span>`:`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Tile','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?`<span class="mark monsterGlyph${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-monster-key="${k}" aria-label="View ${t.monster.name} stats" title="Click to view ${t.monster.name} stats">${iconHTML(t.monster.name,t.monster.glyph)}</span>`:`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);
  const monsterButton=d.querySelector('.monsterGlyph');
  if(monsterButton){
   monsterButton.addEventListener('click',e=>rangedMode?fireRangedAt(monsterButton.dataset.monsterKey,e):showMonsterStats(monsterButton.dataset.monsterKey,e));
