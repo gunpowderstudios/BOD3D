@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>8BITBOD v7.19</title>
+<title>8BITBOD v8.4 Sliding Directional Hero</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -51,8 +51,25 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #main{position:relative;overflow:hidden;background:#000;touch-action:none;}
 #topbar{position:absolute;left:10px;right:10px;top:10px;z-index:20;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
 #topbar .cluster{display:flex;gap:8px;pointer-events:auto;flex-wrap:wrap}.badge{background:var(--cream);border:3px solid var(--ink);padding:8px 10px;box-shadow:2px 2px 0 var(--shadow);font-weight:bold}
-#viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none}#viewport.dragging{cursor:grabbing}
-#world{position:absolute;left:0;top:0;transform-origin:0 0;}#world.cameraSmooth{transition:transform .28s ease-out;}
+#viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;perspective:1200px}#viewport.dragging{cursor:grabbing}
+#camera3d{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 50%;pointer-events:none}
+#camera3d.view3d{transform:rotateX(var(--viewTilt,55deg)) rotateZ(var(--viewSpin,-3deg));}
+#camera3d.cameraViewSmooth{transition:transform .22s ease-out;}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;transform-style:preserve-3d;pointer-events:auto;}#world.cameraSmooth{transition:transform .28s ease-out;}
+/* Upright board-game pieces. The floor remains flat while figures face the viewer. */
+#camera3d.view3d .hero{
+  transform-origin:50% 82%;
+  transform:translateY(-25%) rotateZ(calc(var(--viewSpin,-3deg) * -1)) rotateX(calc(var(--viewTilt,55deg) * -1)) translateZ(34px) scale(.82);
+  filter:drop-shadow(0 18px 8px rgba(0,0,0,.72));
+}
+#camera3d.view3d .monsterGlyph .spriteWrap,
+#camera3d.view3d .hiddenMonster .spriteWrap{
+  transform-origin:50% 82%;
+  transform:translateY(-20%) rotateZ(calc(var(--viewSpin,-3deg) * -1)) rotateX(calc(var(--viewTilt,55deg) * -1)) translateZ(30px) scale(.86);
+  filter:drop-shadow(0 16px 7px rgba(0,0,0,.68));
+}
+#camera3d.view3d .tile{box-shadow:0 10px 12px rgba(0,0,0,.42);}
+
 .tile{position:absolute;width:var(--tile);height:var(--tile);background:var(--cream);border:2px solid var(--ink);box-shadow:none;display:flex;align-items:center;justify-content:center;}
 .tile svg{position:absolute;inset:0;width:100%;height:100%}.tileAsset{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;transform-origin:50% 50%;display:block}.tile .mark{position:absolute;font-size:40px;text-shadow:1px 1px #fff;z-index:3}.tileOverlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.tileOverlay .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.tileOverlay .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.tile .tiny{position:absolute;right:4px;top:2px;font-size:20px;z-index:4}.tile.teleportTarget{cursor:pointer;outline:4px solid #fff2a8;outline-offset:-6px}.tile.teleportTarget:hover{filter:brightness(1.25)}.hero{position:absolute;width:128px;height:128px;border:none;background:transparent;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:36px;z-index:15;box-shadow:none;transition:left .18s,top .18s;pointer-events:none}.hero .spriteWrap,.hero .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block}
 .hiddenMonster{position:absolute;inset:0;font-size:44px;color:var(--red);font-weight:bold;text-shadow:2px 2px 0 #000;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.hiddenMonster.rangedTarget,.monsterGlyph.rangedTarget{cursor:crosshair;pointer-events:auto;outline:6px solid #ffd84d;outline-offset:-7px;filter:drop-shadow(0 0 8px #ffd84d)}.hiddenMonster .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.hiddenMonster .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.itemLocationMarker{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.itemLocationMarker .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.itemLocationMarker .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.monsterGlyph{position:absolute;inset:0;font-size:44px;z-index:8!important;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;pointer-events:auto}.monsterGlyph .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.monsterGlyph .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}
@@ -89,6 +106,91 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 
 .soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.75}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
 @media(max-width:800px){#app{grid-template-columns:1fr;grid-template-rows:1fr 240px}#side{grid-row:2;border-right:none;border-top:5px solid var(--ink);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px}#brandHeader{display:none}#log{max-height:105px;min-height:80px}.box{padding:6px}.sectionTitle{margin:3px 0}.itemBtn{width:38px;height:38px;font-size:21px}#inventory{grid-column:1/3}#topbar{font-size:13px}.badge{padding:6px}.tile{--tile:128px}.combatGrid{grid-template-columns:1fr}.card{max-height:90vh;overflow:auto}.charCard{min-height:270px;padding:12px}.charGlyph{height:125px}.charCard h3{font-size:22px}}
+
+/* ===== GLB monster layer v7.21 ===== */
+.glbMonsterWrap{
+  position:absolute;
+  inset:-22%;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  overflow:visible;
+}
+.glbMonsterWrap model-viewer{
+  width:145%;
+  height:145%;
+  background:transparent;
+  --poster-color:transparent;
+  pointer-events:none;
+}
+.glbMonsterWrap.modelReady + .monsterPngFallback{display:none}
+.monsterPngFallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#camera3d.view3d .glbMonsterWrap{
+  transform-origin:50% 82%;
+  transform:
+    translateY(-18%)
+    rotateZ(calc(var(--viewSpin,-3deg) * -1))
+    rotateX(calc(var(--viewTilt,55deg) * -1))
+    translateZ(34px);
+  filter:drop-shadow(0 17px 8px rgba(0,0,0,.7));
+}
+#camera3d:not(.view3d) .glbMonsterWrap{inset:-5%}
+
+.glbHeroWrap{
+  position:absolute;
+  inset:-24%;
+  z-index:16;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  overflow:visible;
+}
+.glbHeroWrap model-viewer{
+  width:150%;
+  height:150%;
+  background:transparent;
+  --poster-color:transparent;
+  pointer-events:none;
+}
+.glbHeroWrap.modelReady + .heroPngFallback{display:none}
+.heroPngFallback{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#camera3d.view3d .glbHeroWrap{
+  transform-origin:50% 82%;
+  transform:
+    translateY(-18%)
+    rotateZ(calc(var(--viewSpin,-3deg) * -1))
+    rotateX(calc(var(--viewTilt,55deg) * -1))
+    translateZ(38px);
+  filter:drop-shadow(0 18px 8px rgba(0,0,0,.72));
+}
+#camera3d:not(.view3d) .glbHeroWrap{inset:-7%}
+
+
+/* ===== True Three.js tabletop renderer v8.0 ===== */
+#threeBoard{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+#camera3d{z-index:2}
+body.threeMode #camera3d{display:none}
+body:not(.threeMode) #threeBoard{display:none}
+body.threeMode #viewport{cursor:grab}
+body.threeMode #viewport.dragging{cursor:grabbing}
+
 </style>
 <!--
 8BITBOD
@@ -139,6 +241,18 @@ Changes:
 <!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
 <!-- v7.11: Removed player-facing Developer, Save and Load menu buttons. Added hidden tester save/load keyboard shortcuts. -->
 <!-- v7.12: Removed Asset and Sound Manager buttons from the player menu, added hidden tester shortcuts, and added an About/Credits panel with website link. -->
+<!-- v7.20: Early 2.5D conversion. Existing game rules and tile placement remain unchanged. Added a perspective camera layer, upright hero/monster sprites, View toggle, and Shift/right-drag camera rotation. -->
+<!-- v7.21: Added GLB monster support. Revealed Goblins load assets/models/monsters/goblin.glb, with the existing PNG automatically retained as a fallback. -->
+<!-- v8.0: New true Three.js tabletop renderer. PNG tiles are rendered as 3D floor planes and GLB miniatures sit in the same scene with lighting and shadows. Models use short filenames such as sirrus.glb and goblin.glb. The original DOM renderer remains available as the 2D fallback view. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<!-- v8.4: The hero now smoothly slides from tile to tile while turning to face the direction travelled. Same-direction travel preserves orientation; left/right turns animate 90 degrees and reversals animate 180 degrees. -->
 </head>
 <body>
 
@@ -163,9 +277,9 @@ Changes:
   <main id="main">
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
-      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="menuBtn">☰ Menu</button></div>
+      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="menuBtn">☰ Menu</button></div>
     </div>
-    <div id="viewport"><div id="world"></div></div>
+    <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
     <div id="controls"></div>
   </main>
 </div>
@@ -176,9 +290,9 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=7.19"></script>
+<script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v7.19';
+const VERSION='v8.4';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -291,6 +405,38 @@ function monsterAssetFilename(name){
  if(name==='Red Dragon')return 'dragon.png';
  return String(name||'').toLowerCase().replace(/[’']/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png';
 }
+
+// GLB models are optional. Monsters not listed here continue to use their PNG artwork.
+// Add future models by adding another line, for example:
+// 'Skeleton':'assets/models/monsters/skeleton.glb'
+// All GLB models live in one folder: assets/models/
+// Short filenames are used deliberately.
+// Character IDs already provide the short names: sirrus.glb, tamara.glb, duric.glb, etc.
+const MONSTER_MODEL_FILES={
+ 'Goblin':'goblin.glb',
+ 'Zombie':'zombie.glb',
+ 'Mummy':'mummy.glb',
+ 'Monk':'monk.glb',
+ 'Mud Monster':'mud-monster.glb',
+ 'Werewolf':'werewolf.glb',
+ 'Troll':'troll.glb',
+ 'Minotaur':'minotaur.glb',
+ 'Skeleton':'skeleton.glb',
+ 'Giant Snake':'giant-snake.glb',
+ 'Reacher':'reacher.glb',
+ 'Mirror Monster':'mirror-monster.glb',
+ 'Red Dragon':'dragon.glb'
+};
+function monsterModelFile(name){return MONSTER_MODEL_FILES[name]||'';}
+function characterModelFile(character){return character&&character.id?character.id+'.glb':'';}
+function modelPath(file){return file?'assets/models/'+file:'';}
+
+function monsterBoardHTML(monster,rangedClass='',tileKey=''){
+ return `<span class="mark monsterGlyph${rangedClass}" role="button" tabindex="0" data-monster-key="${tileKey}" aria-label="View ${monster.name} stats" title="Click to view ${monster.name} stats">${iconHTML(monster.name,monster.glyph)}</span>`;
+}
+function heroBoardHTML(character){return iconHTML(character.name,character.glyph);}
+function wireBoardModels(){}
+
 function heroAssetFilename(name){
  return String(name||'').toLowerCase().replace(/[’']/g,'').replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png';
 }
@@ -352,6 +498,9 @@ loadAssets();
 function expanded(list){const a=[];list.forEach(x=>{for(let i=0;i<x.copies;i++)a.push({...x,id:x.name+'-'+i});});return shuffle(a)}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a}
 let state,pan={x:0,y:0,scale:1},placement=null,combat=null,lastPointer=null,devOpen=false,teleportItem=null,rangedMode=null;
+window.getBODState=()=>state;
+let view3d={enabled:true};
+let cameraRotateDrag=null;
 let audioCtx=null,soundOn=true;
 const SOUND_DEFS=[
  ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click']
@@ -410,7 +559,7 @@ function createTileDeck(){
 
   return shuffle(deck);
 }
-function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:3,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to 8BITBOD '+VERSION+'.','system');render();setTimeout(()=>setOpeningCamera(),0);}
+function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:3,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to 8BITBOD '+VERSION+'.','system');render();setTimeout(()=>setOpeningCamera(),0);}
 
 const INVENTORY_LIMIT=8;
 const BACKPACK_LIMIT=4;
@@ -534,7 +683,7 @@ function collectRingIfSafe(tileKey){
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
 
-function move(dir){const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
+function move(dir){const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
  if(t.kind==='spike'){promptOldSpikey(t);render();centreOnHero(false);return;}
  if(t.kind==='pool'&&!t.poolUsed){promptHealingPool(t);}
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
@@ -624,7 +773,7 @@ function runAway(){const p=state.player,charged=!!combat?.rangedEngagement;p.hea
 
 function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,armour:null,boots:null};p.backpack=[];p.companionBear=null;p.flags.bootsBonus=false;p.maxAp=state.charDef.maxAp;p.ap=Math.min(p.ap,p.maxAp);syncEquipment();}
 function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='pool')||null;}
-function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(p.flags.insurance||acme){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();render();centreOnHero();}
+function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(p.flags.insurance||acme){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();render();centreOnHero();}
 function closeCombat(){document.getElementById('combat').classList.remove('open');combat=null;if(state?.player)state.player.temp={};}
 function useInventoryItem(list,idx){ /* legacy alias */ if(list==='inventory')useInventoryIndex(idx); }
 function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let used=false,msg='';
@@ -653,7 +802,13 @@ function teleportToTile(tileKey,event){
  const t=state.tiles[tileKey];if(!t)return;
  const [x,y]=tileKey.split(',').map(Number);
  const crystal=teleportItem;teleportItem=null;
+ {
+ const oldX=state.player.x,oldY=state.player.y;
+ const dx=x-oldX,dy=y-oldY;
+ if(Math.abs(dx)>=Math.abs(dy)&&dx!==0)state.player.facing=dx>0?'E':'W';
+ else if(dy!==0)state.player.facing=dy>0?'S':'N';
  state.player.x=x;state.player.y=y;state.player.prevX=x;state.player.prevY=y;
+}
  removeFromCurrentLocation(crystal);state.itemDiscard.push(crystal);syncEquipment();
  playSound('teleport');playTileEffect(tileKey,'teleport',1000);log('Teleported to '+tileKey+'.','system');render();centreOnHero(false);
 }
@@ -756,7 +911,7 @@ function beginDroppedPickup(tileKey,idx){
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
 function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}const t=state.tiles[tileKey],m=t&&t.monster;if(!m||(m.health<=0)||!(m.revealed||m.peeked))return;playSound('click');const status=m.revealed?'Revealed':'Viewed with Magic Sword';const ringNote=t.hasRing?'<div style="margin-top:12px;font-weight:bold">This monster is guarding the Ring of Creation.</div>':'';showModal(m.name,'',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div style="font-size:72px;line-height:1;margin-bottom:12px">${iconHTML(m.name,m.glyph||'👹')}</div><div><b>Health:</b> ${m.health} / ${m.maxHealth}</div><div><b>Combat:</b> ${m.dice}d6+${m.mod}</div><div><b>Status:</b> ${status}</div>${m.special?`<div style="margin-top:8px"><b>Special:</b> ${m.special}</div>`:''}${ringNote}`;}
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?`<span class="mark monsterGlyph${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-monster-key="${k}" aria-label="View ${t.monster.name} stats" title="Click to view ${t.monster.name} stats">${iconHTML(t.monster.name,t.monster.glyph)}</span>`:`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){const topItem=t.droppedItems[0];d.innerHTML+=`<span class="tileItemMarker" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${iconHTML(topItem.name,topItem.icon||'?')}${t.droppedItems.length>1?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`;}if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?monsterBoardHTML(t.monster,rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':'',k):`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);wireBoardModels(d);
  const monsterButton=d.querySelector('.monsterGlyph');
  if(monsterButton){
   monsterButton.addEventListener('click',e=>rangedMode?fireRangedAt(monsterButton.dataset.monsterKey,e):showMonsterStats(monsterButton.dataset.monsterKey,e));
@@ -770,8 +925,37 @@ function renderWorld(){const world=document.getElementById('world');world.innerH
   itemButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showTileItems(itemButton.dataset.itemKey,e);}});
  }
  if(teleportItem){d.addEventListener('click',e=>teleportToTile(k,e));}
-}const h=document.createElement('div');h.className='hero';h.innerHTML=state.charDef?iconHTML(state.charDef.name,state.charDef.glyph):iconHTML('Hero','🧑');const heroSize=TILE;const heroOffset=0;h.style.left=(state.player.x*STEP+heroOffset)+'px';h.style.top=(state.player.y*STEP+heroOffset)+'px';world.appendChild(h);applyPan();}
+}const h=document.createElement('div');h.className='hero';h.innerHTML=state.charDef?iconHTML(state.charDef.name,state.charDef.glyph):iconHTML('Hero','🧑');const heroSize=TILE;const heroOffset=0;h.style.left=(state.player.x*STEP+heroOffset)+'px';h.style.top=(state.player.y*STEP+heroOffset)+'px';world.appendChild(h);wireBoardModels(h);applyPan();applyView3D();if(window.BOD3D&&view3d.enabled)window.BOD3D.render(state);}
+window.BOD3DAction=function(type,tileKey){
+ if(!state)return;
+ if(type==='monster'){
+  if(rangedMode)fireRangedAt(tileKey);
+  else showMonsterStats(tileKey);
+  return;
+ }
+ if(type==='hidden'&&rangedMode){fireRangedAt(tileKey);return;}
+ if(type==='items'){showTileItems(tileKey);return;}
+ if(type==='tile'&&teleportItem){teleportToTile(tileKey);return;}
+};
 function renderControls(){const wrap=document.getElementById('controls');wrap.innerHTML='';if(state.gameOver)return;if(teleportItem){addBtn(wrap,'Cancel Teleport','red',cancelTeleport);return;}if(rangedMode){addBtn(wrap,'Cancel Ranged Attack','red',cancelRangedAttack);return;}const p=state.player;if(p.equipment.bow)addBtn(wrap,p.equipment.bow.name+' — Range 1-3 (3 AP)','blue',()=>startRangedAttack('bow'),p.ap<3);if(p.equipment.staff)addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),p.ap<4);const canPayLay=p.ap>=1||!!(p.equipment.torch&&p.flags.torchFreeLay);['N','E','S','W'].forEach(dir=>{if(canMove(dir))addBtn(wrap,'Move '+dir,'green',()=>move(dir),p.ap<1);else if(canLay(dir))addBtn(wrap,'Lay '+dir,'gold',()=>startPlace(dir),!canPayLay);});addBtn(wrap,'End Turn','blue',endTurn);}
+function applyView3D(){
+ document.body.classList.toggle('threeMode',view3d.enabled);
+ const btn=document.getElementById('viewBtn');
+ if(btn)btn.textContent=view3d.enabled?'2D View':'3D View';
+ if(window.BOD3D){
+  window.BOD3D.setEnabled(view3d.enabled);
+  if(view3d.enabled&&state)window.BOD3D.render(state);
+ }
+}
+function toggleView3D(){
+ view3d.enabled=!view3d.enabled;
+ applyView3D();
+}
+function resetView3D(){
+ view3d.enabled=true;
+ applyView3D();
+ if(window.BOD3D)window.BOD3D.resetCamera();
+}
 function applyPan(){document.getElementById('world').style.transform=`translate(${pan.x}px,${pan.y}px) scale(${pan.scale})`;}
 function openingScale(){
   const rect=document.getElementById('viewport').getBoundingClientRect();
@@ -801,6 +985,7 @@ const vp=document.getElementById('viewport');
 const activePointers=new Map();
 let dragOrigin=null,pinchStart=null,lastTap=0;
 vp.addEventListener('pointerdown',e=>{
+  if(view3d.enabled)return;
   // Revealed monsters are interactive. Do not let map dragging capture their click/tap.
   if(e.target.closest&&e.target.closest('.monsterGlyph, .hiddenMonster.rangedTarget, .tileItemMarker, .teleportTarget'))return;
   activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -814,6 +999,7 @@ vp.addEventListener('pointerdown',e=>{
   }
 });
 vp.addEventListener('pointermove',e=>{
+  if(view3d.enabled)return;
   if(!activePointers.has(e.pointerId))return;
   activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(activePointers.size===2&&pinchStart){
@@ -826,6 +1012,7 @@ vp.addEventListener('pointermove',e=>{
   }
 });
 function endPointer(e){
+  if(view3d.enabled)return;
   activePointers.delete(e.pointerId);
   if(activePointers.size===0){vp.classList.remove('dragging');dragOrigin=null;pinchStart=null;}
   else if(activePointers.size===1){const p=[...activePointers.values()][0];dragOrigin={x:p.x,y:p.y,panX:pan.x,panY:pan.y};pinchStart=null;}
@@ -833,8 +1020,10 @@ function endPointer(e){
 vp.addEventListener('pointerup',endPointer);vp.addEventListener('pointercancel',endPointer);
 vp.addEventListener('dblclick',e=>{e.preventDefault();centreOnHero(true);});
 vp.addEventListener('touchend',e=>{if(e.touches.length)return;const now=Date.now();if(now-lastTap<320)centreOnHero(true);lastTap=now;},{passive:true});
+vp.addEventListener('contextmenu',e=>{if(view3d.enabled)e.preventDefault();});
 vp.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,pan.scale*(e.deltaY<0?1.12:0.89));},{passive:false});
 window.addEventListener('resize',()=>{if(state)centreOnHero(false);});
+document.getElementById('viewBtn').onclick=()=>{audio();toggleView3D();};
 function migrateSave(){if(!state||!state.player)return;const p=state.player;p.slots=p.slots||{left:null,right:null,armour:null,boots:null};p.backpack=p.backpack||[];p.flags=p.flags||{};p.flags.bootsBonus=!!p.flags.bootsBonus;p.flags.torchFreeLay=!!p.flags.torchFreeLay;if(Array.isArray(p.inventory)&&!p.backpack.length){p.inventory.slice(0,4).forEach(x=>p.backpack.push(x));}p.companionBear=p.companionBear||null;p.inventory=[];syncEquipment();}
 
 
@@ -940,5 +1129,380 @@ function win(){state.gameOver=true;sndWin();closeCombat();showModal('YOU ESCAPED
 function lose(){state.gameOver=true;sndLose();closeCombat();showModal('GAME OVER','The dungeon claims another adventurer.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
 renderCharSelect();
 </script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const canvas=document.getElementById('threeBoard');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x050403);
+scene.fog=new THREE.Fog(0x050403,22,48);
+
+const camera=new THREE.PerspectiveCamera(38,1,.1,100);
+camera.position.set(8.5,11,12);
+
+const controls=new OrbitControls(camera,canvas);
+controls.target.set(0,.4,0);
+controls.enableDamping=true;
+controls.dampingFactor=.08;
+controls.enablePan=true;
+controls.minDistance=5;
+controls.maxDistance=34;
+controls.minPolarAngle=THREE.MathUtils.degToRad(20);
+controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
+
+scene.add(new THREE.HemisphereLight(0xe8d8aa,0x14100b,2.2));
+const sun=new THREE.DirectionalLight(0xffe4ae,4.5);
+sun.position.set(8,16,9);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=18;sun.shadow.camera.bottom=-18;
+scene.add(sun);
+const warm=new THREE.PointLight(0xff9f32,18,20,2);
+warm.position.set(-4,6,3);
+scene.add(warm);
+
+const table=new THREE.Mesh(
+ new THREE.PlaneGeometry(70,70),
+ new THREE.MeshStandardMaterial({color:0x17120d,roughness:.97})
+);
+table.rotation.x=-Math.PI/2;
+table.position.y=-.06;
+table.receiveShadow=true;
+scene.add(table);
+
+const boardGroup=new THREE.Group();
+scene.add(boardGroup);
+
+const textureLoader=new THREE.TextureLoader();
+const gltfLoader=new GLTFLoader();
+const textureCache=new Map();
+const modelCache=new Map();
+const raycaster=new THREE.Raycaster();
+const pointer=new THREE.Vector2();
+let enabled=true;
+let latestState=null;
+let renderToken=0;
+let heroModel=null;
+let heroRotationCurrent=null;
+let heroTurn=null;
+let heroPositionCurrent=null;
+let heroMove=null;
+const HERO_TURN_MS=180;
+const HERO_MOVE_MS=220;
+const TILE=2.05;
+
+const tileFiles={
+ start:'start.png',exit:'exit.png',straight:'straight.png',corner:'corner.png',
+ t:'tjunction.png',cross:'crossroad.png',spike:'spiketrap.png',pool:'healingpool.png'
+};
+
+function slug(name){
+ return String(name||'').toLowerCase().replace(/[’']/g,'').replace(/&/g,'and')
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+function monsterFile(name){
+ const special={'Red Dragon':'dragon.glb'};
+ return special[name]||slug(name)+'.glb';
+}
+function monsterPng(name){
+ if(name==='Red Dragon')return 'assets/monsters/dragon.png';
+ return 'assets/monsters/'+slug(name)+'.png';
+}
+function heroPng(character){return 'assets/heroes/'+slug(character.name)+'.png';}
+
+function facingRadians(facing){
+ // Assumes the exported character faces South (+Z) at rotation 0.
+ // Each movement direction rotates the miniature by exactly 90 degrees.
+ return ({S:0,W:-Math.PI/2,N:Math.PI,E:Math.PI/2})[facing]??0;
+}
+
+function shortestAngleDelta(from,to){
+ let delta=(to-from)%(Math.PI*2);
+ if(delta>Math.PI)delta-=Math.PI*2;
+ if(delta<-Math.PI)delta+=Math.PI*2;
+ return delta;
+}
+
+function loadTexture(path){
+ if(textureCache.has(path))return textureCache.get(path);
+ const promise=new Promise(resolve=>{
+  textureLoader.load(path,t=>{
+   t.colorSpace=THREE.SRGBColorSpace;
+   t.anisotropy=renderer.capabilities.getMaxAnisotropy();
+   resolve(t);
+  },undefined,()=>resolve(null));
+ });
+ textureCache.set(path,promise);
+ return promise;
+}
+function loadModel(path){
+ if(modelCache.has(path))return modelCache.get(path);
+ const promise=new Promise(resolve=>{
+  gltfLoader.load(path,g=>resolve(g.scene),undefined,()=>resolve(null));
+ });
+ modelCache.set(path,promise);
+ return promise;
+}
+function clearBoard(){
+ heroModel=null;
+ heroTurn=null;
+ heroMove=null;
+ while(boardGroup.children.length){
+  const obj=boardGroup.children.pop();
+  obj.traverse?.(o=>{
+   if(o.geometry&&!o.userData.cached)o.geometry.dispose?.();
+   if(o.material&&!o.userData.cached){
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>m.dispose?.());
+   }
+  });
+ }
+}
+function markClickable(obj,type,key){
+ obj.userData.actionType=type;
+ obj.userData.tileKey=key;
+ obj.traverse?.(o=>{o.userData.actionType=type;o.userData.tileKey=key;});
+}
+async function addTile(key,t,token){
+ const [x,y]=key.split(',').map(Number);
+ const file=tileFiles[t.kind]||'crossroad.png';
+ const tex=await loadTexture('assets/tiles/'+file);
+ if(token!==renderToken)return;
+ const mat=new THREE.MeshStandardMaterial({
+  map:tex||null,color:tex?0xffffff:0xd8c79a,roughness:.86,metalness:0,side:THREE.DoubleSide
+ });
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(TILE-.025,TILE-.025),mat);
+ mesh.rotation.x=-Math.PI/2;
+ mesh.rotation.z=-(t.rot||0)*Math.PI/2;
+ mesh.position.set(x*TILE,0,y*TILE);
+ mesh.receiveShadow=true;
+ markClickable(mesh,'tile',key);
+ boardGroup.add(mesh);
+
+ if(t.itemPending&&!t.itemUsed)await addSprite('assets/ui/item.png',x,y,.66,.05,'items',key,token);
+ if(t.hasRing)await addSprite('assets/ui/ring.png',x,y,.62,.08,null,key,token);
+ if(t.droppedItems&&t.droppedItems.length){
+  const item=t.droppedItems[0];
+  await addSprite('assets/items/'+slug(item.name)+'.png',x,y,.58,.1,'items',key,token);
+ }
+ if((t.monsterPending)||(t.monster&&t.monster.health>0)){
+  if(t.monster&&(t.monster.revealed||t.monster.peeked)){
+   await addMiniature('assets/models/'+monsterFile(t.monster.name),monsterPng(t.monster.name),x,y,'monster',key,token);
+  }else{
+   await addSprite('assets/ui/hiddenmonster.png',x,y,.9,.1,'hidden',key,token);
+  }
+ }
+}
+async function addSprite(path,x,y,size,height,type,key,token){
+ const tex=await loadTexture(path);
+ if(token!==renderToken||!tex)return;
+ const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+ const s=new THREE.Sprite(mat);
+ s.scale.set(size,size,1);
+ s.position.set(x*TILE,height+size*.5,y*TILE);
+ if(type)markClickable(s,type,key);
+ boardGroup.add(s);
+}
+async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
+ const source=await loadModel(modelPath);
+ if(token!==renderToken)return;
+ if(!source){await addSprite(pngPath,x,y,1.05,.05,type,key,token);return;}
+ const model=source.clone(true);
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+ const box=new THREE.Box3().setFromObject(model);
+ const size=box.getSize(new THREE.Vector3());
+ const scale=1.62/Math.max(size.y,.001);
+ model.scale.setScalar(scale);
+ model.updateMatrixWorld(true);
+ const scaled=new THREE.Box3().setFromObject(model);
+ const centre=scaled.getCenter(new THREE.Vector3());
+ model.position.set(x*TILE-centre.x,-scaled.min.y+.025,y*TILE-centre.z);
+ model.rotation.y=rotationY;
+ markClickable(model,type,key);
+ boardGroup.add(model);
+ return model;
+}
+async function addHero(character,player,token){
+ const path='assets/models/'+character.id+'.glb';
+ const targetRotation=facingRadians(player.facing||'S');
+ const startRotation=heroRotationCurrent===null?targetRotation:heroRotationCurrent;
+
+ const model=await addMiniature(
+  path,
+  heroPng(character),
+  player.x,
+  player.y,
+  null,
+  'hero',
+  token,
+  startRotation
+ );
+ if(!model||token!==renderToken)return;
+
+ heroModel=model;
+
+ // addMiniature has already calculated the exact centred target position.
+ const targetPosition={
+  x:model.position.x,
+  y:model.position.y,
+  z:model.position.z
+ };
+ const startPosition=heroPositionCurrent
+  ? {...heroPositionCurrent}
+  : {...targetPosition};
+
+ model.position.set(startPosition.x,startPosition.y,startPosition.z);
+
+ const rotationDelta=shortestAngleDelta(startRotation,targetRotation);
+ if(Math.abs(rotationDelta)<0.001){
+  model.rotation.y=targetRotation;
+  heroRotationCurrent=targetRotation;
+  heroTurn=null;
+ }else{
+  heroTurn={
+   model,
+   start:startRotation,
+   delta:rotationDelta,
+   started:performance.now(),
+   duration:HERO_TURN_MS,
+   target:targetRotation
+  };
+ }
+
+ const moved=
+  Math.abs(targetPosition.x-startPosition.x)>.001 ||
+  Math.abs(targetPosition.z-startPosition.z)>.001;
+
+ if(!moved){
+  model.position.set(targetPosition.x,targetPosition.y,targetPosition.z);
+  heroPositionCurrent={...targetPosition};
+  heroMove=null;
+ }else{
+  heroMove={
+   model,
+   start:startPosition,
+   target:targetPosition,
+   started:performance.now(),
+   duration:HERO_MOVE_MS
+  };
+ }
+}
+function fitCamera(state){
+ const keys=Object.keys(state.tiles||{});
+ if(!keys.length)return;
+ const pts=keys.map(k=>k.split(',').map(Number));
+ const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ const cx=(Math.min(...xs)+Math.max(...xs))*TILE/2;
+ const cz=(Math.min(...ys)+Math.max(...ys))*TILE/2;
+ controls.target.set(cx,.35,cz);
+}
+async function renderBoard(state){
+ latestState=state;
+ const token=++renderToken;
+ clearBoard();
+ const jobs=Object.entries(state.tiles||{}).map(([k,t])=>addTile(k,t,token));
+ jobs.push(addHero(state.charDef,state.player,token));
+ await Promise.all(jobs);
+ if(token===renderToken)fitCamera(state);
+}
+function resize(){
+ const rect=canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ renderer.setSize(rect.width,rect.height,false);
+ camera.aspect=rect.width/rect.height;
+ camera.updateProjectionMatrix();
+}
+function resetCamera(){
+ camera.position.set(8.5,11,12);
+ controls.target.set(0,.4,0);
+ controls.update();
+ if(latestState)fitCamera(latestState);
+}
+canvas.addEventListener('pointerup',e=>{
+ if(!enabled)return;
+ const rect=canvas.getBoundingClientRect();
+ pointer.x=((e.clientX-rect.left)/rect.width)*2-1;
+ pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
+ raycaster.setFromCamera(pointer,camera);
+ const hits=raycaster.intersectObjects(boardGroup.children,true);
+ const hit=hits.find(h=>h.object.userData.actionType);
+ if(hit&&window.BOD3DAction){
+  window.BOD3DAction(hit.object.userData.actionType,hit.object.userData.tileKey);
+ }
+});
+window.addEventListener('resize',resize);
+new ResizeObserver(resize).observe(canvas);
+function animate(now){
+ requestAnimationFrame(animate);
+
+ if(heroMove&&heroMove.model===heroModel){
+  const t=Math.min(1,(now-heroMove.started)/heroMove.duration);
+  const eased=t<.5
+   ? 2*t*t
+   : 1-Math.pow(-2*t+2,2)/2;
+
+  heroMove.model.position.x=
+   heroMove.start.x+(heroMove.target.x-heroMove.start.x)*eased;
+  heroMove.model.position.y=
+   heroMove.start.y+(heroMove.target.y-heroMove.start.y)*eased;
+  heroMove.model.position.z=
+   heroMove.start.z+(heroMove.target.z-heroMove.start.z)*eased;
+
+  heroPositionCurrent={
+   x:heroMove.model.position.x,
+   y:heroMove.model.position.y,
+   z:heroMove.model.position.z
+  };
+
+  if(t>=1){
+   heroMove.model.position.set(
+    heroMove.target.x,
+    heroMove.target.y,
+    heroMove.target.z
+   );
+   heroPositionCurrent={...heroMove.target};
+   heroMove=null;
+  }
+ }
+
+ if(heroTurn&&heroTurn.model===heroModel){
+  const t=Math.min(1,(now-heroTurn.started)/heroTurn.duration);
+  const eased=1-Math.pow(1-t,3);
+  heroTurn.model.rotation.y=heroTurn.start+heroTurn.delta*eased;
+  heroRotationCurrent=heroTurn.model.rotation.y;
+  if(t>=1){
+   heroTurn.model.rotation.y=heroTurn.target;
+   heroRotationCurrent=heroTurn.target;
+   heroTurn=null;
+  }
+ }
+
+ if(enabled){
+  controls.update();
+  renderer.render(scene,camera);
+ }
+}
+animate();
+resize();
+
+window.BOD3D={
+ render:renderBoard,
+ setEnabled(value){enabled=!!value;controls.enabled=enabled;resize();},
+ resetCamera,
+ resetHeroFacing(){heroRotationCurrent=null;heroTurn=null;heroPositionCurrent=null;heroMove=null;}
+};
+const currentState=window.getBODState?window.getBODState():null;
+if(currentState)renderBoard(currentState);
+</script>
+
 </body>
 </html>
