@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v9.4</title>
+<title>Bag of Dungeon 3D v9.5</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -334,6 +334,7 @@ Changes:
 <!-- v9.2: Rebalanced lighting around the adventurer. The hero and tiles within three spaces are now well lit, followed by a gradual atmospheric drop-off rather than near-black darkness. Exposure, ambient fill and the hero-following light were increased, distant tiles and monsters remain readable, and the heavy vignette was reduced. -->
 <!-- v9.3: Added live Lighting Controls. Adjust torch brightness, radius, falloff, ambient light, shadow strength, softness, exposure, colour and hero-following behaviour. Includes four presets and automatic browser saving. -->
 <!-- v9.4: Fixed Lighting Controls startup. v9.3 referenced the Three.js TILE constant before it was declared, preventing the 3D lighting module from initialising. Controls now initialise safely after the DOM is ready and show a live status readout. -->
+<!-- v9.5: Lighting controls now have a much stronger visible range. Torch brightness is amplified, radius and falloff control both the real hero light and tile darkness, ambient light has a wider range, and shadow strength is more pronounced. Fixed Centre so it places the character at the centre of the Three.js view while preserving the current camera angle and zoom. -->
 </head>
 <body>
 
@@ -400,7 +401,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v9.4';
+const VERSION='v9.5';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1208,7 +1209,16 @@ Kills: ${p.killed.length}
 Turns: ${state.turns||1}`;}
 function adventureStats(){const p=state.player;const mins=Math.max(0,Math.round((Date.now()-(state.startedAt||Date.now()))/60000));return `Turns: ${state.turns||1}\nTime: ${mins} mins\nKills: ${p.killed.length}\nItems left: ${state.itemDeck.length}\nMonster deck left: ${state.monsterDeck.length}`;}
 
-document.getElementById('zoomIn').onclick=()=>{const r=vp.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,pan.scale*1.18)};document.getElementById('zoomOut').onclick=()=>{const r=vp.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,pan.scale/1.18)};document.getElementById('centreBtn').onclick=()=>centreOnHero();document.getElementById('menuBtn').onclick=openMenu;
+document.getElementById('zoomIn').onclick=()=>{const r=vp.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,pan.scale*1.18)};
+document.getElementById('zoomOut').onclick=()=>{const r=vp.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,pan.scale/1.18)};
+document.getElementById('centreBtn').onclick=()=>{
+ if(document.body.classList.contains('threeMode')&&window.BOD3D){
+  window.BOD3D.centreOnHero();
+ }else{
+  centreOnHero();
+ }
+};
+document.getElementById('menuBtn').onclick=openMenu;
 
 function keyboardDirection(e){
  const code=e.code||'';
@@ -1358,7 +1368,7 @@ sun.shadow.camera.top=16;
 sun.shadow.camera.bottom=-16;
 scene.add(sun);
 
-const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness,lighting.radius*2.05+9,1.45);
+const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness*3.2,(lighting.radius+lighting.falloff)*2.05+3,1.45);
 heroLight.position.set(0,4.2,0);
 heroLight.castShadow=true;
 heroLight.shadow.mapSize.set(2048,2048);
@@ -1407,9 +1417,17 @@ function darknessForTile(x,y){
  const radius=Math.max(1,lighting.radius);
  const falloff=Math.max(.5,lighting.falloff);
  if(d<=radius)return 0;
+
  const t=THREE.MathUtils.clamp((d-radius)/falloff,0,1);
- const ambientFloor=THREE.MathUtils.lerp(.68,.18,lighting.ambient/100);
- return t*t*ambientFloor;
+
+ // Low ambient can now create genuinely dark distant tiles,
+ // while high ambient keeps the whole board readable.
+ const maximumDarkness=THREE.MathUtils.lerp(.88,.12,lighting.ambient/100);
+
+ // Higher torch brightness slightly softens the dark edge.
+ const brightnessRelief=THREE.MathUtils.lerp(1,.72,lighting.brightness/100);
+
+ return t*t*maximumDarkness*brightnessRelief;
 }
 function objectVisibleAtTile(x,y){
  return true;
@@ -1716,6 +1734,22 @@ function fitCamera(state){
  const cz=(Math.min(...ys)+Math.max(...ys))*TILE/2;
  controls.target.set(cx,.35,cz);
 }
+function centreCameraOnHero(){
+ if(!latestState||!latestState.player)return;
+
+ const target=new THREE.Vector3(
+  latestState.player.x*TILE,
+  .45,
+  latestState.player.y*TILE
+ );
+
+ // Keep the current viewing angle and distance, but move the whole
+ // camera rig so the adventurer becomes the centre of the screen.
+ const offset=camera.position.clone().sub(controls.target);
+ controls.target.copy(target);
+ camera.position.copy(target).add(offset);
+ controls.update();
+}
 async function renderBoard(state){
  latestState=state;
  const token=++renderToken;
@@ -1736,18 +1770,27 @@ async function renderBoard(state){
 }
 function applyLightingSettings(redraw=true){
  renderer.toneMappingExposure=lighting.exposure;
- ambientLight.intensity=lighting.ambient/100;
- sun.intensity=.8+(lighting.shadow/100)*2.8;
+
+ // Expand the useful range so the controls visibly affect the scene.
+ ambientLight.intensity=.05+(lighting.ambient/100)*1.35;
+ sun.intensity=.45+(lighting.shadow/100)*3.35;
  sun.shadow.radius=lighting.softness;
- heroLight.intensity=lighting.brightness;
- heroLight.distance=lighting.radius*TILE+9;
- heroLight.decay=1.35;
+
+ // Point-light intensity is deliberately amplified for a clear torch pool.
+ heroLight.intensity=lighting.brightness*3.2;
+ heroLight.distance=(lighting.radius+lighting.falloff)*TILE+3;
+ heroLight.decay=1.45;
  heroLight.color.set(lighting.colour);
  heroLight.castShadow=lighting.shadow>5;
+
  saveLighting();
  syncLightingUI();
+
  const status=document.getElementById('lightingStatus');
- if(status)status.textContent=`Live: radius ${lighting.radius} tiles · brightness ${lighting.brightness}`;
+ if(status){
+  status.textContent=`Live: ${lighting.radius} tile radius · ${lighting.brightness}% brightness`;
+ }
+
  if(redraw&&latestState)renderBoard(latestState);
 }
 function syncLightingUI(){
@@ -1841,10 +1884,19 @@ function resize(){
  camera.updateProjectionMatrix();
 }
 function resetCamera(){
- camera.position.set(8.5,11,12);
- controls.target.set(0,.4,0);
+ if(latestState&&latestState.player){
+  const target=new THREE.Vector3(
+   latestState.player.x*TILE,
+   .45,
+   latestState.player.y*TILE
+  );
+  controls.target.copy(target);
+  camera.position.set(target.x+8.5,11,target.z+12);
+ }else{
+  camera.position.set(8.5,11,12);
+  controls.target.set(0,.4,0);
+ }
  controls.update();
- if(latestState)fitCamera(latestState);
 }
 canvas.addEventListener('pointerup',e=>{
  if(!enabled)return;
@@ -1917,6 +1969,7 @@ window.BOD3D={
  render:renderBoard,
  setEnabled(value){enabled=!!value;controls.enabled=enabled;resize();},
  resetCamera,
+ centreOnHero:centreCameraOnHero,
  resetHeroFacing(){heroRotationCurrent=null;heroTurn=null;heroPositionCurrent=null;heroMove=null;}
 };
 const currentState=window.getBODState?window.getBODState():null;
