@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.4</title>
+<title>Bag of Dungeon 3D v10.5</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -494,6 +494,7 @@ Changes:
 <!-- v10.2: Added a master Lighting Effects switch. Lighting now starts OFF by default, giving a bright neutral tabletop view for mechanics testing. Turning it ON restores the hero torch, adjustable radius/falloff, atmospheric darkness and shadows. The setting is saved in the browser. -->
 <!-- v10.3: Fixed GLB characters disappearing when Lighting Effects were switched off or on. Lighting changes redraw the Three.js board; cached model geometry and materials are now preserved instead of being disposed during that redraw. -->
 <!-- v10.4: Fixed Lighting Off mode. It now removes fog, vignette, hero torch, darkness masks, tone mapping and dynamic shadows, and switches to a bright neutral tabletop scene. Lighting is forced OFF on startup while mechanics are being developed. -->
+<!-- v10.5: Added an explicit hero-model filename map, including alendra.glb. Hero GLB requests are cache-busted by version, failed or empty GLBs fall back to hero PNG artwork, and the browser console now reports successful and failed model loads. -->
 </head>
 <body class="lightingOff">
 
@@ -582,7 +583,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.4';
+const VERSION='v10.5';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -718,7 +719,23 @@ const MONSTER_MODEL_FILES={
  'Red Dragon':'dragon.glb'
 };
 function monsterModelFile(name){return MONSTER_MODEL_FILES[name]||'';}
-function characterModelFile(character){return character&&character.id?character.id+'.glb':'';}
+
+const HERO_MODEL_FILES={
+ sirrus:'sirrus.glb',
+ tamara:'tamara.glb',
+ duric:'duric.glb',
+ marria:'marria.glb',
+ rill:'rill.glb',
+ tarak:'tarak.glb',
+ alendra:'alendra.glb',
+ galhorn:'galhorn.glb'
+};
+
+function characterModelFile(character){
+ if(!character)return '';
+ const id=String(character.id||'').trim().toLowerCase();
+ return HERO_MODEL_FILES[id]||`${id}.glb`;
+}
 function modelPath(file){return file?'assets/models/'+file:'';}
 
 function monsterBoardHTML(monster,rangedClass='',tileKey=''){
@@ -1699,7 +1716,18 @@ function loadTexture(path){
 function loadModel(path){
  if(modelCache.has(path))return modelCache.get(path);
  const promise=new Promise(resolve=>{
-  gltfLoader.load(path,g=>resolve(g.scene),undefined,()=>resolve(null));
+  gltfLoader.load(
+   path,
+   g=>{
+    console.info('Loaded GLB:',path);
+    resolve(g.scene);
+   },
+   undefined,
+   error=>{
+    console.error('Failed to load GLB:',path,error);
+    resolve(null);
+   }
+  );
  });
  modelCache.set(path,promise);
  return promise;
@@ -1871,6 +1899,19 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
  });
  const box=new THREE.Box3().setFromObject(model);
  const size=box.getSize(new THREE.Vector3());
+
+ // Fall back to PNG if a GLB loads but contains no usable visible geometry.
+ if(
+  !Number.isFinite(size.x) ||
+  !Number.isFinite(size.y) ||
+  !Number.isFinite(size.z) ||
+  size.y<=0.001
+ ){
+  console.warn('Invalid or empty GLB, using PNG fallback:',modelPath);
+  await addSprite(pngPath,x,y,1.05,.05,type,key,token);
+  return;
+ }
+
  const scale=1.62/Math.max(size.y,.001);
  model.scale.setScalar(scale);
  model.updateMatrixWorld(true);
@@ -1883,7 +1924,8 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
  return model;
 }
 async function addHero(character,player,token){
- const path='assets/models/'+character.id+'.glb';
+ const file=characterModelFile(character);
+ const path=`assets/models/${file}?v=${encodeURIComponent(VERSION)}`;
  const targetRotation=facingRadians(player.facing||'S');
  const startRotation=heroRotationCurrent===null?targetRotation:heroRotationCurrent;
 
