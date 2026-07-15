@@ -2530,11 +2530,15 @@ async function addCorpseMiniature(corpse,x,y,token){
 
  const scaledBox=new THREE.Box3().setFromObject(model);
  const centre=scaledBox.getCenter(new THREE.Vector3());
- model.position.set(
-  -centre.x,
-  -scaledBox.min.y+.025,
-  -centre.z
- );
+ const standingSize=scaledBox.getSize(new THREE.Vector3());
+
+ // Rotate around the model's true geometric centre via this intermediate
+ // group, not the .glb's own baked-in origin — a source model authored
+ // off-centre (e.g. a low, sprawled creature) would otherwise swing through
+ // a huge arc when tipped, instead of toppling roughly in place.
+ model.position.set(-centre.x,-centre.y,-centre.z);
+ const fallGroup=new THREE.Group();
+ fallGroup.add(model);
 
  const pivot=new THREE.Group();
  pivot.position.set(
@@ -2546,20 +2550,17 @@ async function addCorpseMiniature(corpse,x,y,token){
 
  // Choose the fall direction from the model's actual scaled dimensions.
  // The system can see the outer geometry bounds, although it does not know anatomy.
- const standingSize=new THREE.Box3()
-  .setFromObject(model)
-  .getSize(new THREE.Vector3());
  const pose=chooseCorpsePose(path,standingSize,corpse.fallSide||1);
 
  if(pose.axis==='x'){
-  model.rotation.x=pose.angle;
-  model.position.z+=(corpse.fallSide||1)*pose.sideOffset;
+  fallGroup.rotation.x=pose.angle;
+  fallGroup.position.z+=(corpse.fallSide||1)*pose.sideOffset;
  }else{
-  model.rotation.z=pose.angle;
-  model.position.x+=(corpse.fallSide||1)*pose.sideOffset;
+  fallGroup.rotation.z=pose.angle;
+  fallGroup.position.x+=(corpse.fallSide||1)*pose.sideOffset;
  }
 
- pivot.add(model);
+ pivot.add(fallGroup);
  pivot.userData.isCorpse=true;
  pivot.userData.monsterName=corpse.name;
  boardGroup.add(pivot);
