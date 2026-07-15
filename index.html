@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.8</title>
+<title>Bag of Dungeon 3D v10.9</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -519,6 +519,7 @@ Changes:
 <!-- v10.6: Fixed the hero disappearing after Run Away. Instant retreat movement now resets the Three.js hero and camera tracking before redraw, snaps the miniature to the previous tile, and updates its facing direction. Tornado retreat uses the same safe path. -->
 <!-- v10.7: Added physical punchboard depth to every Three.js floor tile. Tiles now use a shallow 3D body with #4C3D2A edges beneath the original PNG artwork. Heroes, monsters, markers and darkness overlays are raised to sit correctly on the new tile surface. -->
 <!-- v10.8: Multiple dropped items now display as a vertical floating stack above their tile instead of showing only the first item. Up to eight item sprites are shown in 3D with small alternating offsets for readability; the 2D fallback also shows a stacked group. Clicking any item still opens the full item list for that tile. -->
+<!-- v10.9: Fixed heroes disappearing when items are dropped. Board redraws now finish all asynchronous tiles, item sprites and monsters before adding the hero. The character is rendered last with explicit scene priority, checked after redraw, and automatically retried if absent. -->
 </head>
 <body class="lightingOff">
 
@@ -607,7 +608,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.8';
+const VERSION='v10.9';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2072,6 +2073,22 @@ async function addHero(character,player,token){
 
  heroModel=model;
 
+ // Always draw the character after tiles, item sprites and darkness overlays.
+ heroModel.renderOrder=1000;
+ heroModel.traverse?.(o=>{
+  o.renderOrder=1000;
+  if(o.material){
+   const materials=Array.isArray(o.material)?o.material:[o.material];
+   materials.forEach(material=>{
+    material.depthTest=true;
+    material.depthWrite=true;
+    material.transparent=false;
+    material.opacity=1;
+    material.needsUpdate=true;
+   });
+  }
+ });
+
  // addMiniature has already calculated the exact centred target position.
  const targetPosition={
   x:model.position.x,
@@ -2116,6 +2133,11 @@ async function addHero(character,player,token){
    started:performance.now(),
    duration:HERO_MOVE_MS
   };
+ }
+
+ // Ensure the model is attached even after an asynchronous redraw.
+ if(model.parent!==boardGroup){
+  boardGroup.add(model);
  }
 }
 function fitCamera(state){
@@ -2202,9 +2224,28 @@ async function renderBoard(state){
  latestState=state;
  const token=++renderToken;
  clearBoard();
- const jobs=Object.entries(state.tiles||{}).map(([k,t])=>addTile(k,t,token));
- jobs.push(addHero(state.charDef,state.player,token));
- await Promise.all(jobs);
+
+ // Finish every tile, dropped item and monster first.
+ // The hero is deliberately added last so asynchronous item loading cannot
+ // replace, obscure or cancel the character during the same redraw.
+ const tileJobs=Object.entries(state.tiles||{}).map(
+  ([k,t])=>addTile(k,t,token)
+ );
+ await Promise.all(tileJobs);
+
+ if(token!==renderToken)return;
+
+ await addHero(state.charDef,state.player,token);
+
+ // Defensive retry: a character should never remain absent after a redraw.
+ if(token===renderToken&&!heroModel){
+  console.warn('Hero missing after board redraw; retrying hero model.');
+  heroPositionCurrent=null;
+  heroMove=null;
+  heroTurn=null;
+  await addHero(state.charDef,state.player,token);
+ }
+
  if(token===renderToken){
   if(!cameraInitialised){
    centreCameraOnHero();
