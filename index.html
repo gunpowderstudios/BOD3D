@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.20</title>
+<title>Bag of Dungeon 3D v10.21</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -759,6 +759,14 @@ body.cinematicCombat #compass{
 .tileItemStack .tileItemMarker:nth-child(4n+4){right:5px;bottom:5px}
 .tileItemStack .tileItemMarker:nth-child(n+5){transform:translateY(-8px) scale(.88)}
 
+
+.tileItemStack .tileItemMarker{
+  background:#1b140f;
+  border-color:#fff6d8;
+  box-shadow:0 0 0 2px #000,2px 2px 0 #000;
+  z-index:30;
+}
+
 </style>
 <!--
 8BITBOD
@@ -851,6 +859,7 @@ Changes:
 <!-- v10.18: Fixed defeated miniatures floating above the dungeon by grounding each corpse after its final tipped rotation. During cinematic combat the hero and monster are now continuously locked facing one another, preventing redraws or movement state from spinning the hero away. Pressing Fight adds a subtle advance-and-retreat lunge while preserving the tabletop-miniature feel. -->
 <!-- v10.19: Exploration now resumes with the hero exactly centred on the current tile after every fight, so the next normal move starts and ends at tile centre. Fallen monsters now use geometry-aware posing: the renderer measures each scaled GLB, chooses a suitable fall axis and angle, grounds the final outline, recentres it and keeps wide limbs/tentacles near the tile. Special overrides handle Reacher, Snake, Dragon and Mirror Monster. -->
 <!-- v10.20: Ranged attacks now follow the physical board-game charge more clearly. If a Bow or Ice Staff fails to kill a monster, the surviving monster is transferred onto the hero's tile and the Run Away button remains disabled until one melee round has been fought. Dropped items now occupy the four tile corners, with additional items stacking above those corners, keeping loot visible beside heroes, blood and fallen monsters. -->
+<!-- v10.21: Improved battlefield readability. Dropped items now float higher above the tile, render above blood/corpse layers and receive a subtle dark backing disc so icons remain visible. Blood pools are shifted away from tile corners and rebuilt as irregular overlapping pools with fourteen smaller splatter droplets for a more natural, less circular effect. -->
 </head>
 <body class="lightingOff">
 
@@ -949,7 +958,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.20';
+const VERSION='v10.21';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2468,41 +2477,70 @@ function seededFraction(seed,index){
 
 function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
  const group=new THREE.Group();
+
+ // Keep the main pool slightly off-centre so corner loot remains visible.
+ const poolShiftX=(seededFraction(seed,90)-.5)*.22;
+ const poolShiftZ=(seededFraction(seed,91)-.5)*.22;
+
  group.position.set(
-  x*TILE+offsetX,
+  x*TILE+offsetX+poolShiftX,
   TILE_THICKNESS+.012,
-  y*TILE+offsetZ
+  y*TILE+offsetZ+poolShiftZ
  );
  group.rotation.x=-Math.PI/2;
  group.rotation.z=seededFraction(seed,1)*Math.PI*2;
- group.renderOrder=18;
+ group.renderOrder=16;
 
- const bloodMaterial=new THREE.MeshBasicMaterial({
+ const makeBloodMaterial=(opacity=.72)=>new THREE.MeshBasicMaterial({
   color:0x65130f,
   transparent:true,
-  opacity:.72,
+  opacity,
   depthWrite:false,
   polygonOffset:true,
-  polygonOffsetFactor:-2,
-  polygonOffsetUnits:-2
+  polygonOffsetFactor:-3,
+  polygonOffsetUnits:-3
  });
 
- const blobs=5;
+ // Uneven central pool.
+ const blobs=7;
  for(let i=0;i<blobs;i++){
-  const radius=.12+seededFraction(seed,i+2)*.18;
+  const radius=.10+seededFraction(seed,i+2)*.17;
   const blob=new THREE.Mesh(
    new THREE.CircleGeometry(radius,20),
-   bloodMaterial.clone()
+   makeBloodMaterial(.60+seededFraction(seed,i+42)*.18)
   );
   const angle=seededFraction(seed,i+12)*Math.PI*2;
-  const distance=seededFraction(seed,i+22)*.24;
+  const distance=seededFraction(seed,i+22)*.23;
   blob.position.set(
    Math.cos(angle)*distance,
    Math.sin(angle)*distance,
-   i*.0004
+   i*.00035
   );
-  blob.scale.y=.62+seededFraction(seed,i+32)*.5;
+  blob.scale.set(
+   .75+seededFraction(seed,i+31)*.75,
+   .45+seededFraction(seed,i+32)*.65,
+   1
+  );
   group.add(blob);
+ }
+
+ // Fine splatter droplets radiating away from the corpse.
+ const droplets=14;
+ for(let i=0;i<droplets;i++){
+  const radius=.018+seededFraction(seed,i+102)*.035;
+  const drop=new THREE.Mesh(
+   new THREE.CircleGeometry(radius,12),
+   makeBloodMaterial(.48+seededFraction(seed,i+132)*.28)
+  );
+  const angle=seededFraction(seed,i+112)*Math.PI*2;
+  const distance=.28+seededFraction(seed,i+122)*.42;
+  drop.position.set(
+   Math.cos(angle)*distance,
+   Math.sin(angle)*distance,
+   .004+i*.00015
+  );
+  drop.scale.y=.55+seededFraction(seed,i+142)*.7;
+  group.add(drop);
  }
 
  boardGroup.add(group);
@@ -2754,7 +2792,7 @@ async function addTile(key,t,token){
    const item=stack[i];
    const corner=cornerOffsets[i%cornerOffsets.length];
    const level=Math.floor(i/cornerOffsets.length);
-   const stackHeight=.10+(level*verticalGap);
+   const stackHeight=.24+(level*verticalGap);
 
    const sprite=await addSprite(
     'assets/items/'+slug(item.name)+'.png',
@@ -2770,8 +2808,30 @@ async function addTile(key,t,token){
    if(sprite){
     sprite.position.x+=corner.x;
     sprite.position.z+=corner.z;
-    sprite.renderOrder=45+i;
+    sprite.renderOrder=80+i;
     sprite.userData.itemCorner=i%cornerOffsets.length;
+
+    // Small dark backing disc keeps the icon readable over blood and corpses.
+    const backing=new THREE.Mesh(
+     new THREE.CircleGeometry(itemSize*.43,24),
+     new THREE.MeshBasicMaterial({
+      color:0x1b140f,
+      transparent:true,
+      opacity:.78,
+      depthWrite:false,
+      polygonOffset:true,
+      polygonOffsetFactor:-4,
+      polygonOffsetUnits:-4
+     })
+    );
+    backing.rotation.x=-Math.PI/2;
+    backing.position.set(
+     sprite.position.x,
+     TILE_THICKNESS+.055+(level*.01),
+     sprite.position.z
+    );
+    backing.renderOrder=70+i;
+    boardGroup.add(backing);
    }
   }
  }
