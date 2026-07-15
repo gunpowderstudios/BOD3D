@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.24</title>
+<title>Bag of Dungeon 3D v10.25</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -863,6 +863,7 @@ Changes:
 <!-- v10.22: Fixed dropped item sprites still appearing behind transparent blood pools. Loot icons and their backing discs now bypass depth testing and render at a guaranteed higher priority, while every blood pool and droplet receives an explicitly lower render order. This keeps the entire Ice Staff and other dropped-item artwork visible regardless of camera angle. -->
 <!-- v10.23: Added a dedicated final overlay pass for dropped loot. Item sprites and their backing discs now use AlwaysDepth, extremely high render priority and a depth-buffer clear immediately before drawing. This prevents transparent blood meshes from sorting over any part of an item at steep camera angles. -->
 <!-- v10.24: Fixed heroes such as Tarak drifting far away from the dungeon. Hero placement and movement now use the visible GLB geometry centre rather than the model's exported root origin. A final centring pass runs on initial load, every ordinary move and after combat, making the fix apply consistently to all hero models. -->
+<!-- v10.25: Blood now uses opaque tile-surface decal geometry instead of transparent overlays. Hero bases, living monsters and corpses correctly hide it, so blood no longer appears through miniatures. -->
 </head>
 <body class="lightingOff">
 
@@ -961,7 +962,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.24';
+const VERSION='v10.25';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2487,21 +2488,24 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
 
  group.position.set(
   x*TILE+offsetX+poolShiftX,
-  TILE_THICKNESS+.012,
+  TILE_THICKNESS+.006,
   y*TILE+offsetZ+poolShiftZ
  );
  group.rotation.x=-Math.PI/2;
  group.rotation.z=seededFraction(seed,1)*Math.PI*2;
- group.renderOrder=16;
+ group.renderOrder=2;
 
  const makeBloodMaterial=(opacity=.72)=>new THREE.MeshBasicMaterial({
-  color:0x65130f,
-  transparent:true,
-  opacity,
-  depthWrite:false,
+  // Solid tile-surface decal: miniatures correctly occlude the blood.
+  color:opacity>.66?0x65130f:0x7a2119,
+  transparent:false,
+  opacity:1,
+  depthTest:true,
+  depthWrite:true,
+  side:THREE.DoubleSide,
   polygonOffset:true,
-  polygonOffsetFactor:-3,
-  polygonOffsetUnits:-3
+  polygonOffsetFactor:-2,
+  polygonOffsetUnits:-2
  });
 
  // Uneven central pool.
@@ -2524,7 +2528,6 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
    .45+seededFraction(seed,i+32)*.65,
    1
   );
-  blob.renderOrder=12+i;
   group.add(blob);
  }
 
@@ -2544,7 +2547,6 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
    .004+i*.00015
   );
   drop.scale.y=.55+seededFraction(seed,i+142)*.7;
-  drop.renderOrder=24+i;
   group.add(drop);
  }
 
