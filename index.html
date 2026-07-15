@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.0</title>
+<title>Bag of Dungeon 3D v10.1</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -462,6 +462,7 @@ Changes:
 <!-- v9.5: Lighting controls now have a much stronger visible range. Torch brightness is amplified, radius and falloff control both the real hero light and tile darkness, ambient light has a wider range, and shadow strength is more pronounced. Fixed Centre so it places the character at the centre of the Three.js view while preserving the current camera angle and zoom. -->
 <!-- v9.6: Smoothed camera behaviour by removing automatic board re-fitting after every move; the camera now stays where the player leaves it, and Centre is the only command that deliberately recentres on the hero. Lighting is brighter and higher-contrast with a stronger hero light, brighter key light and gentler distance darkness. Added a rotating compass and a North Up button for orientation. -->
 <!-- v10.0: Hero-locked camera mode. The adventurer remains in the centre while the dungeon glides smoothly beneath during movement; rotation, tilt and zoom still orbit around the hero. Added a guaranteed visible, clickable bottom-right compass with fixed N/E/S/W labels and a rotating north arrow. Clicking it resets to North Up. -->
+<!-- v10.1: Corrected the compass heading. North Up now points the red arrow to N, and the arrow tracks camera rotation in the correct direction. Lighting remains enabled by default. -->
 </head>
 <body>
 
@@ -540,7 +541,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.0';
+const VERSION='v10.1';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1461,16 +1462,16 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const LIGHTING_STORAGE_KEY='bod3dLightingV93';
+const LIGHTING_STORAGE_KEY='bod3dLightingV94';
 const DEFAULT_LIGHTING={
- brightness:68,
- radius:3.25,
- falloff:3.5,
- ambient:72,
- shadow:78,
- softness:3,
- exposure:1.28,
- colour:'#ffd09a',
+ brightness:82,
+ radius:2.5,
+ falloff:2.75,
+ ambient:26,
+ shadow:22,
+ softness:2,
+ exposure:.88,
+ colour:'#ffb15c',
  follow:true
 };
 const LIGHT_PRESETS={
@@ -1500,7 +1501,7 @@ renderer.toneMappingExposure=lighting.exposure;
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x010100);
-scene.fog=new THREE.FogExp2(0x010100,.065);
+scene.fog=new THREE.FogExp2(0x010100,.085);
 
 const camera=new THREE.PerspectiveCamera(38,1,.1,100);
 camera.position.set(8.5,11,12);
@@ -1515,10 +1516,10 @@ controls.maxDistance=34;
 controls.minPolarAngle=THREE.MathUtils.degToRad(20);
 controls.maxPolarAngle=THREE.MathUtils.degToRad(78);
 
-const ambientLight=new THREE.HemisphereLight(0x66728a,0x120a04,lighting.ambient/100);
+const ambientLight=new THREE.HemisphereLight(0x3a4252,0x0a0704,lighting.ambient/100);
 scene.add(ambientLight);
 
-const sun=new THREE.DirectionalLight(0xffffff,1.2+(lighting.shadow/100)*2.2);
+const sun=new THREE.DirectionalLight(0xffd9ad,.15+(lighting.shadow/100)*.9);
 sun.position.set(6,14,5);
 sun.castShadow=true;
 sun.shadow.mapSize.set(4096,4096);
@@ -1530,7 +1531,7 @@ sun.shadow.camera.top=16;
 sun.shadow.camera.bottom=-16;
 scene.add(sun);
 
-const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness*4.8,(lighting.radius+lighting.falloff)*2.05+5,1.35);
+const heroLight=new THREE.PointLight(lighting.colour,lighting.brightness*5.6,(lighting.radius+lighting.falloff)*2.05+3,1.8);
 heroLight.position.set(0,4.2,0);
 heroLight.castShadow=true;
 heroLight.shadow.mapSize.set(2048,2048);
@@ -1540,7 +1541,7 @@ scene.add(heroLight);
 
 const table=new THREE.Mesh(
  new THREE.PlaneGeometry(70,70),
- new THREE.MeshStandardMaterial({color:0x17120d,roughness:.97})
+ new THREE.MeshStandardMaterial({color:0x0c0906,roughness:.97})
 );
 table.rotation.x=-Math.PI/2;
 table.position.y=-.06;
@@ -1586,8 +1587,8 @@ function darknessForTile(x,y){
  const t=THREE.MathUtils.clamp((d-radius)/falloff,0,1);
 
  // Keep explored board readable while preserving a visible pool of light.
- const maximumDarkness=THREE.MathUtils.lerp(.56,.08,lighting.ambient/100);
- const brightnessRelief=THREE.MathUtils.lerp(.9,.58,lighting.brightness/100);
+ const maximumDarkness=THREE.MathUtils.lerp(.95,.3,lighting.ambient/100);
+ const brightnessRelief=THREE.MathUtils.lerp(.85,.55,lighting.brightness/100);
 
  return t*t*maximumDarkness*brightnessRelief;
 }
@@ -1697,7 +1698,7 @@ async function addTile(key,t,token){
   const shadeMaterial=new THREE.MeshBasicMaterial({
    color:0x000000,
    transparent:true,
-   opacity:Math.min(.52,darkness),
+   opacity:Math.min(.9,darkness),
    depthWrite:false,
    side:THREE.DoubleSide
   });
@@ -1743,7 +1744,7 @@ async function addSprite(path,x,y,size,height,type,key,token){
  s.position.set(x*TILE,height+size*.5,y*TILE);
  const darkness=darknessForTile(x,y);
  s.visible=objectVisibleAtTile(x,y);
- s.material.opacity=Math.max(.48,1-darkness);
+ s.material.opacity=Math.max(.15,1-darkness);
  if(type)markClickable(s,type,key);
  boardGroup.add(s);
 }
@@ -1793,7 +1794,7 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
   materials.forEach(material=>{
    if(material.emissive)material.emissive.setHex(0x000000);
    material.transparent=darkness>.01;
-   material.opacity=Math.max(.48,1-darkness);
+   material.opacity=Math.max(.15,1-darkness);
    material.needsUpdate=true;
   });
  });
@@ -1958,9 +1959,13 @@ function northUp(){
 function updateCompass(){
  const arrow=document.getElementById('compassArrow');
  if(!arrow)return;
+
  const direction=new THREE.Vector3();
  camera.getWorldDirection(direction);
- const angle=Math.atan2(direction.x,direction.z);
+
+ // Compass labels stay fixed on screen while the arrow shows world North.
+ // Using -Z corrects the previous 180-degree reversal.
+ const angle=Math.atan2(direction.x,-direction.z);
  arrow.style.transform=`rotate(${-THREE.MathUtils.radToDeg(angle)}deg)`;
 }
 async function renderBoard(state){
@@ -1988,15 +1993,15 @@ async function renderBoard(state){
 function applyLightingSettings(redraw=true){
  renderer.toneMappingExposure=lighting.exposure;
 
- // Expand the useful range so the controls visibly affect the scene.
- ambientLight.intensity=.18+(lighting.ambient/100)*1.55;
- sun.intensity=1.15+(lighting.shadow/100)*3.6;
+ // Kept deliberately low so the torch pool — not fill light — drives contrast.
+ ambientLight.intensity=.03+(lighting.ambient/100)*.4;
+ sun.intensity=.15+(lighting.shadow/100)*.9;
  sun.shadow.radius=lighting.softness;
 
  // Point-light intensity is deliberately amplified for a clear torch pool.
- heroLight.intensity=lighting.brightness*4.8;
- heroLight.distance=(lighting.radius+lighting.falloff)*TILE+5;
- heroLight.decay=1.45;
+ heroLight.intensity=lighting.brightness*5.6;
+ heroLight.distance=(lighting.radius+lighting.falloff)*TILE+3;
+ heroLight.decay=1.8;
  heroLight.color.set(lighting.colour);
  heroLight.castShadow=lighting.shadow>5;
 
