@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.21</title>
+<title>Bag of Dungeon 3D v10.22</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -860,6 +860,7 @@ Changes:
 <!-- v10.19: Exploration now resumes with the hero exactly centred on the current tile after every fight, so the next normal move starts and ends at tile centre. Fallen monsters now use geometry-aware posing: the renderer measures each scaled GLB, chooses a suitable fall axis and angle, grounds the final outline, recentres it and keeps wide limbs/tentacles near the tile. Special overrides handle Reacher, Snake, Dragon and Mirror Monster. -->
 <!-- v10.20: Ranged attacks now follow the physical board-game charge more clearly. If a Bow or Ice Staff fails to kill a monster, the surviving monster is transferred onto the hero's tile and the Run Away button remains disabled until one melee round has been fought. Dropped items now occupy the four tile corners, with additional items stacking above those corners, keeping loot visible beside heroes, blood and fallen monsters. -->
 <!-- v10.21: Improved battlefield readability. Dropped items now float higher above the tile, render above blood/corpse layers and receive a subtle dark backing disc so icons remain visible. Blood pools are shifted away from tile corners and rebuilt as irregular overlapping pools with fourteen smaller splatter droplets for a more natural, less circular effect. -->
+<!-- v10.22: Fixed dropped item sprites still appearing behind transparent blood pools. Loot icons and their backing discs now bypass depth testing and render at a guaranteed higher priority, while every blood pool and droplet receives an explicitly lower render order. This keeps the entire Ice Staff and other dropped-item artwork visible regardless of camera angle. -->
 </head>
 <body class="lightingOff">
 
@@ -958,7 +959,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.21';
+const VERSION='v10.22';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2521,6 +2522,7 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
    .45+seededFraction(seed,i+32)*.65,
    1
   );
+  blob.renderOrder=12+i;
   group.add(blob);
  }
 
@@ -2540,6 +2542,7 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
    .004+i*.00015
   );
   drop.scale.y=.55+seededFraction(seed,i+142)*.7;
+  drop.renderOrder=24+i;
   group.add(drop);
  }
 
@@ -2808,8 +2811,17 @@ async function addTile(key,t,token){
    if(sprite){
     sprite.position.x+=corner.x;
     sprite.position.z+=corner.z;
-    sprite.renderOrder=80+i;
+    sprite.renderOrder=200+i;
     sprite.userData.itemCorner=i%cornerOffsets.length;
+
+    // Transparent sprites are normally depth-sorted against the blood planes.
+    // Disable depth testing for loot so the complete icon always remains visible.
+    if(sprite.material){
+     sprite.material.depthTest=false;
+     sprite.material.depthWrite=false;
+     sprite.material.transparent=true;
+     sprite.material.needsUpdate=true;
+    }
 
     // Small dark backing disc keeps the icon readable over blood and corpses.
     const backing=new THREE.Mesh(
@@ -2827,10 +2839,12 @@ async function addTile(key,t,token){
     backing.rotation.x=-Math.PI/2;
     backing.position.set(
      sprite.position.x,
-     TILE_THICKNESS+.055+(level*.01),
+     TILE_THICKNESS+.075+(level*.01),
      sprite.position.z
     );
-    backing.renderOrder=70+i;
+    backing.material.depthTest=false;
+    backing.material.depthWrite=false;
+    backing.renderOrder=190+i;
     boardGroup.add(backing);
    }
   }
