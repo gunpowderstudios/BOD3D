@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.27</title>
+<title>Bag of Dungeon 3D v10.28</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -777,6 +777,20 @@ body.cinematicCombat #compass{
   50%{transform:translateY(-8px) scale(1.06)}
 }
 
+
+.lightSavedGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin:9px 0;
+}
+.lightSavedGrid button{
+  background:#3a2a12!important;
+  color:#ffd45f!important;
+  border-color:#d8b45e!important;
+  box-shadow:none!important;
+}
+
 </style>
 <!--
 8BITBOD
@@ -876,6 +890,7 @@ Changes:
 <!-- v10.25: Blood now uses opaque tile-surface decal geometry instead of transparent overlays. Hero bases, living monsters and corpses correctly hide it, so blood no longer appears through miniatures. -->
 <!-- v10.26: Applied the first formal testing-log fixes. Rusty Armour now lasts for exactly one melee fight and then breaks. The Ring is no longer awarded remotely when its location is revealed or when a distant monster dies; the hero must physically reach the tile after its guardian is gone. In 3D the Ring now hovers, gently bobs and emits a pulsing golden halo/light. Ordinary dropped items also receive a subtle asynchronous bob so loot feels alive without distracting from the tabletop presentation. -->
 <!-- v10.27: Hero Loader Refactor. Every hero GLB is now scaled and centred exactly once inside a clean THREE.Group. The parent group—not the asymmetric visible geometry—is positioned at the exact tile centre and used for all movement, turning, combat staging and recentring. Removed repeated bounding-box corrections during movement, preventing Rill, Duric, Tarak and other asymmetric heroes from jumping away as they rotate. -->
+<!-- v10.28: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
 </head>
 <body class="lightingOff">
 
@@ -952,6 +967,10 @@ Changes:
   <div class="lightColourRow"><label for="lightColour">Torch colour</label><input id="lightColour" type="color"></div>
   <div class="lightChecks"><label for="lightFollow">Torch follows hero</label><input id="lightFollow" type="checkbox"></div>
 
+  <div class="lightSavedGrid">
+    <button id="lightSaveDefault" class="lightAction">Save My Lighting</button>
+    <button id="lightLoadDefault" class="lightAction">Load My Lighting</button>
+  </div>
   <button id="lightReset" class="lightAction">Reset Lighting</button>
   <div class="lightPresetGrid">
     <button data-light-preset="bright">Bright Tabletop</button>
@@ -974,7 +993,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.27';
+const VERSION='v10.28';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2256,6 +2275,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const LIGHTING_STORAGE_KEY='bod3dLightingV94';
+const LIGHTING_DEFAULT_KEY='bod3dLightingCustomDefaultV1';
 const DEFAULT_LIGHTING={
  enabled:false,
  brightness:82,
@@ -2276,12 +2296,40 @@ const LIGHT_PRESETS={
 };
 function loadLighting(){
  try{
-  return {...DEFAULT_LIGHTING,...JSON.parse(localStorage.getItem(LIGHTING_STORAGE_KEY)||'{}')};
- }catch(e){return {...DEFAULT_LIGHTING};}
+  const current=localStorage.getItem(LIGHTING_STORAGE_KEY);
+  if(current){
+   return {...DEFAULT_LIGHTING,...JSON.parse(current)};
+  }
+
+  const custom=localStorage.getItem(LIGHTING_DEFAULT_KEY);
+  if(custom){
+   return {...DEFAULT_LIGHTING,...JSON.parse(custom)};
+  }
+
+  return {...DEFAULT_LIGHTING};
+ }catch(e){
+  return {...DEFAULT_LIGHTING};
+ }
 }
 let lighting=loadLighting();
 function saveLighting(){
  localStorage.setItem(LIGHTING_STORAGE_KEY,JSON.stringify(lighting));
+}
+function saveLightingAsDefault(){
+ localStorage.setItem(
+  LIGHTING_DEFAULT_KEY,
+  JSON.stringify(lighting)
+ );
+}
+function loadLightingDefault(){
+ try{
+  const saved=JSON.parse(
+   localStorage.getItem(LIGHTING_DEFAULT_KEY)||'null'
+  );
+  return saved?{...DEFAULT_LIGHTING,...saved}:null;
+ }catch(e){
+  return null;
+ }
 }
 
 const canvas=document.getElementById('threeBoard');
@@ -3715,6 +3763,24 @@ function wireLightingControls(){
   lighting.follow=e.target.checked;
   applyLightingSettings(false);
  });
+ document.getElementById('lightSaveDefault').onclick=()=>{
+  saveLightingAsDefault();
+  toast('Lighting saved for this browser.');
+  const status=document.getElementById('lightingStatus');
+  if(status)status.textContent='Your lighting has been saved as the browser default.';
+ };
+
+ document.getElementById('lightLoadDefault').onclick=()=>{
+  const saved=loadLightingDefault();
+  if(!saved){
+   toast('No saved lighting yet.');
+   return;
+  }
+  lighting=saved;
+  applyLightingSettings(true);
+  toast('Saved lighting loaded.');
+ };
+
  document.getElementById('lightReset').onclick=()=>{
   lighting={...DEFAULT_LIGHTING};
   applyLightingSettings(true);
