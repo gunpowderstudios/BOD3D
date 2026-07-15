@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.16</title>
+<title>Bag of Dungeon 3D v10.17</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -823,6 +823,7 @@ Changes:
 <!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
 <!-- v10.15: Corrected the persistent hero movement fix. The hero now moves by the exact change in tile coordinates rather than reapplying the GLB model-origin offset, which could throw some characters far away from the dungeon. Added automatic drift detection and safe rebuilding if a hero ever leaves its intended tile. -->
 <!-- v10.16: Added cinematic tabletop encounters. On entering combat, the camera smoothly zooms toward the monster tile, the hero and monster step apart like physical miniatures and rotate to face each other, and the combat panel fades in while the dungeon remains visible. Closing combat restores the exploration camera and positions. -->
+<!-- v10.17: Improved cinematic encounters and added persistent battlefield history. Hero/monster spacing now uses each GLB's real bounding size so bases, weapons and large creatures do not collide. The camera automatically frames both complete miniatures. Defeated monsters remain on their tile as tipped-over, darkened corpses with procedural blood stains, including ranged kills, so zooming out shows the hero's progress through the dungeon. -->
 </head>
 <body class="lightingOff">
 
@@ -921,7 +922,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.16';
+const VERSION='v10.17';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1449,7 +1450,7 @@ function connectedDistance(fromKey,toKey,maxRange){if(fromKey===toKey)return 0;c
 function rangedTargets(range){const from=key(state.player.x,state.player.y),out=[];for(const [kk,t] of Object.entries(state.tiles)){if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;const distance=connectedDistance(from,kk,range);if(distance>=1&&distance<=range)out.push({key:kk,distance});}return out;}
 function startRangedAttack(type){const p=state.player;let weapon,range,cost;if(type==='bow'){weapon=p.equipment.bow;if(!weapon){toast('Equip a Bow first');return;}range=3;cost=3;}else{weapon=p.equipment.staff;if(!weapon){toast('Equip the Ice Staff first');return;}range=2;cost=4;}if(p.ap<cost){toast('Not enough AP');return;}const targets=rangedTargets(range);if(!targets.length){toast('No monsters in range');return;}rangedMode={type,weapon,range,cost,targetKeys:new Set(targets.map(x=>x.key))};closeModal();toast('Choose a monster in range');log((type==='bow'?weapon.name:'Ice Staff')+' ready: choose a monster at range 1-'+range+'.','system');render();}
 function cancelRangedAttack(){rangedMode=null;toast('Ranged attack cancelled');render();}
-function rangedKill(tile,tileKey,monster,weaponName,damage){playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log(weaponName+' defeats '+monster.name+' at range with '+damage+' damage.','combat');state.player.killed.push(monster.name);state.monsterDiscard.push(monster);tile.monster=null;collectRingIfSafe(tileKey);const startingHealth=monster.maxHealth;if(!monster.isDragon){const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0)log(monster.name+' had '+startingHealth+' starting Health: no item reward.','system');else{log(monster.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}render();}
+function rangedKill(tile,tileKey,monster,weaponName,damage){playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log(weaponName+' defeats '+monster.name+' at range with '+damage+' damage.','combat');state.player.killed.push(monster.name);state.monsterDiscard.push(monster);recordMonsterCorpse(tile,tileKey,monster);tile.monster=null;collectRingIfSafe(tileKey);const startingHealth=monster.maxHealth;if(!monster.isDragon){const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0)log(monster.name+' had '+startingHealth+' starting Health: no item reward.','system');else{log(monster.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}render();}
 function fireRangedAt(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(!rangedMode||!rangedMode.targetKeys.has(tileKey))return;const p=state.player,t=state.tiles[tileKey];if(!t)return;if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;sndMonster();log('Your attack reveals '+t.monster.name+'.','combat');}const m=t.monster;if(!m||m.health<=0){toast('No monster there');cancelRangedAttack();return;}m.revealed=true;if(m.isDragon){playSound('dragon');toast('The Dragon is immune to ranged attacks');log('The Red Dragon is immune to ranged attacks.','combat');rangedMode=null;render();return;}if(p.ap<rangedMode.cost){toast('Not enough AP');rangedMode=null;render();return;}p.ap-=rangedMode.cost;let damage=0,weaponName='';if(rangedMode.type==='bow'){weaponName=rangedMode.weapon.name;const die=roll(1).total;damage=die+(weaponName==='Elven Bow'?2:0);playSound('bow');playTileEffect(tileKey,'arrow',700);setTimeout(()=>playSound('arrowHit'),120);}else{weaponName='Ice Staff';damage=roll(2).total;playSound('ice');playTileEffect(tileKey,'ice',900);}m.health-=damage;log(weaponName+' ranged attack deals '+damage+' damage to '+m.name+'.','combat');const sourceKey=tileKey;rangedMode=null;if(m.health<=0){rangedKill(t,sourceKey,m,weaponName,damage);return;}log(m.name+' survives and charges into melee!','combat');openCombat(t,{rangedEngagement:true,mustFightRound:true,sourceKey});render();}
 function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div><div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(b,combat.mustFightRound?'Run (fight first)':'Run (-1 HP)','red',runAway,combat.mustFightRound);combatItemButtons(b);}
 function combatItemButtons(wrap){const p=state.player;allCarriedItems().forEach((it,idx)=>{if((it.type==='spell'||it.type==='consumable'||it.use)&&it.use!=='teleport')addBtn(wrap,(it.icon||'?')+' '+it.name,'gold',()=>useInventoryIndex(idx));});}
@@ -1503,7 +1504,26 @@ function resolveFightRound(){
  if(mt>pt)playSound('heroHurt');
  render();renderCombat();
 }
-function killMonster(){const m=combat.tile.monster;const tileKey=combat.sourceKey||key(state.player.x,state.player.y);playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log('Defeated '+m.name+'.','combat');state.player.killed.push(m.name);state.monsterDiscard.push(m);combat.tile.monster=null;if(!m.isDragon){collectRingIfSafe(tileKey);}if(m.isDragon&&state.player.hasRing){win();return;}if(!m.isDragon){const startingHealth=m.maxHealth;const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0){log(m.name+' had '+startingHealth+' starting Health: no item reward.','system');}else{log(m.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}closeCombat();render();}
+function recordMonsterCorpse(tile,tileKey,monster){
+ if(!tile||!monster)return;
+
+ const seed=Math.abs(
+  [...String(tileKey+monster.name+state.player.killed.length)]
+   .reduce((total,char)=>((total*31)+char.charCodeAt(0))|0,17)
+ );
+
+ tile.corpses=tile.corpses||[];
+ tile.corpses.push({
+  name:monster.name,
+  rotationY:(seed%628)/100,
+  fallSide:seed%2===0?1:-1,
+  offsetX:(((seed>>3)%31)-15)/100,
+  offsetZ:(((seed>>7)%31)-15)/100,
+  bloodSeed:seed
+ });
+}
+
+function killMonster(){const m=combat.tile.monster;const tileKey=combat.sourceKey||key(state.player.x,state.player.y);playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log('Defeated '+m.name+'.','combat');state.player.killed.push(m.name);state.monsterDiscard.push(m);recordMonsterCorpse(combat.tile,tileKey,m);combat.tile.monster=null;if(!m.isDragon){collectRingIfSafe(tileKey);}if(m.isDragon&&state.player.hasRing){win();return;}if(!m.isDragon){const startingHealth=m.maxHealth;const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0){log(m.name+' had '+startingHealth+' starting Health: no item reward.','system');}else{log(m.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}closeCombat();render();}
 function runAway(){
  const p=state.player;
  const charged=!!combat?.rangedEngagement;
@@ -2373,6 +2393,125 @@ function markClickable(obj,type,key){
  obj.userData.tileKey=key;
  obj.traverse?.(o=>{o.userData.actionType=type;o.userData.tileKey=key;});
 }
+
+function seededFraction(seed,index){
+ const x=Math.sin((seed+index*1013)*12.9898)*43758.5453;
+ return x-Math.floor(x);
+}
+
+function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
+ const group=new THREE.Group();
+ group.position.set(
+  x*TILE+offsetX,
+  TILE_THICKNESS+.012,
+  y*TILE+offsetZ
+ );
+ group.rotation.x=-Math.PI/2;
+ group.rotation.z=seededFraction(seed,1)*Math.PI*2;
+ group.renderOrder=18;
+
+ const bloodMaterial=new THREE.MeshBasicMaterial({
+  color:0x65130f,
+  transparent:true,
+  opacity:.72,
+  depthWrite:false,
+  polygonOffset:true,
+  polygonOffsetFactor:-2,
+  polygonOffsetUnits:-2
+ });
+
+ const blobs=5;
+ for(let i=0;i<blobs;i++){
+  const radius=.12+seededFraction(seed,i+2)*.18;
+  const blob=new THREE.Mesh(
+   new THREE.CircleGeometry(radius,20),
+   bloodMaterial.clone()
+  );
+  const angle=seededFraction(seed,i+12)*Math.PI*2;
+  const distance=seededFraction(seed,i+22)*.24;
+  blob.position.set(
+   Math.cos(angle)*distance,
+   Math.sin(angle)*distance,
+   i*.0004
+  );
+  blob.scale.y=.62+seededFraction(seed,i+32)*.5;
+  group.add(blob);
+ }
+
+ boardGroup.add(group);
+ return group;
+}
+
+async function addCorpseMiniature(corpse,x,y,token){
+ const file=monsterFile(corpse.name);
+ const path='assets/models/'+file;
+ const source=await loadModel(path);
+ if(token!==renderToken||!source)return;
+
+ const model=source.clone(true);
+ model.traverse(o=>{
+  if(!o.isMesh)return;
+  o.castShadow=true;
+  o.receiveShadow=true;
+  o.userData.cached=true;
+
+  const materials=Array.isArray(o.material)?o.material:[o.material];
+  materials.forEach(material=>{
+   if(!material)return;
+   material=material.clone?.()||material;
+   if(material.color){
+    material.color.multiplyScalar(.62);
+   }
+   if(material.emissive)material.emissive.setHex(0x000000);
+   material.roughness=Math.max(.88,material.roughness??.88);
+   material.needsUpdate=true;
+   o.material=material;
+  });
+ });
+
+ const originalBox=new THREE.Box3().setFromObject(model);
+ const originalSize=originalBox.getSize(new THREE.Vector3());
+ const targetHeight=targetSceneHeightForModel(path);
+ model.scale.setScalar(targetHeight/Math.max(originalSize.y,.001));
+ model.updateMatrixWorld(true);
+
+ const scaledBox=new THREE.Box3().setFromObject(model);
+ const centre=scaledBox.getCenter(new THREE.Vector3());
+ model.position.set(
+  -centre.x,
+  -scaledBox.min.y+.025,
+  -centre.z
+ );
+
+ const pivot=new THREE.Group();
+ pivot.position.set(
+  x*TILE+(corpse.offsetX||0),
+  TILE_THICKNESS+.018,
+  y*TILE+(corpse.offsetZ||0)
+ );
+ pivot.rotation.y=corpse.rotationY||0;
+
+ // Tip the miniature onto its side while retaining its original base.
+ model.rotation.z=(corpse.fallSide||1)*THREE.MathUtils.degToRad(82);
+ model.position.y+=.04;
+ model.position.x+=(corpse.fallSide||1)*.16;
+
+ pivot.add(model);
+ pivot.userData.isCorpse=true;
+ pivot.userData.monsterName=corpse.name;
+ boardGroup.add(pivot);
+
+ addBloodStain(
+  x,
+  y,
+  corpse.bloodSeed||1,
+  corpse.offsetX||0,
+  corpse.offsetZ||0
+ );
+
+ return pivot;
+}
+
 async function addTile(key,t,token){
  const [x,y]=key.split(',').map(Number);
  const file=tileFiles[t.kind]||'crossroad.png';
@@ -2462,6 +2601,12 @@ async function addTile(key,t,token){
    }
   }
  }
+ if(t.corpses&&t.corpses.length){
+  for(const corpse of t.corpses){
+   await addCorpseMiniature(corpse,x,y,token);
+  }
+ }
+
  if((t.monsterPending)||(t.monster&&t.monster.health>0)){
   if(t.monster&&(t.monster.revealed||t.monster.peeked)){
    await addMonsterMiniature(
@@ -2895,10 +3040,27 @@ function stageCombatScene(tileKey){
  forward.normalize();
 
  const right=new THREE.Vector3(-forward.z,0,forward.x).normalize();
- const separation=Math.min(.78,TILE*.34);
 
  const heroStart={position:heroModel.position.clone(),rotationY:heroModel.rotation.y};
  const monsterStart={position:monster.position.clone(),rotationY:monster.rotation.y};
+
+ // Measure the actual miniatures, including broad bases, weapons and tails.
+ heroModel.updateMatrixWorld(true);
+ monster.updateMatrixWorld(true);
+ const heroSize=new THREE.Box3().setFromObject(heroModel)
+  .getSize(new THREE.Vector3());
+ const monsterSize=new THREE.Box3().setFromObject(monster)
+  .getSize(new THREE.Vector3());
+
+ const heroRadius=Math.max(heroSize.x,heroSize.z)*.5;
+ const monsterRadius=Math.max(monsterSize.x,monsterSize.z)*.5;
+ const requiredDistance=heroRadius+monsterRadius+.24;
+ const separation=THREE.MathUtils.clamp(
+  requiredDistance*.5,
+  TILE*.36,
+  TILE*.92
+ );
+
  const heroTarget=centre.clone().addScaledVector(right,-separation);
  const monsterTarget=centre.clone().addScaledVector(right,separation);
  heroTarget.y=heroStart.position.y;
@@ -2912,10 +3074,28 @@ function stageCombatScene(tileKey){
  heroPositionCurrent={x:heroModel.position.x,y:heroModel.position.y,z:heroModel.position.z};
 
  const savedCamera={position:camera.position.clone(),target:controls.target.clone()};
- const encounterTarget=centre.clone();
- encounterTarget.y=.62;
- const cinematicPosition=encounterTarget.clone().addScaledVector(forward.clone().negate(),5.2);
- cinematicPosition.y=3.55;
+
+ heroModel.updateMatrixWorld(true);
+ monster.updateMatrixWorld(true);
+ const encounterBounds=new THREE.Box3()
+  .setFromObject(heroModel)
+  .union(new THREE.Box3().setFromObject(monster));
+ const encounterSize=encounterBounds.getSize(new THREE.Vector3());
+ const encounterTarget=encounterBounds.getCenter(new THREE.Vector3());
+ encounterTarget.y=Math.max(.58,encounterTarget.y*.48);
+
+ const cameraDistance=Math.max(
+  5.4,
+  encounterSize.x*2.05,
+  encounterSize.z*2.05,
+  encounterSize.y*1.7
+ );
+ const cinematicPosition=encounterTarget.clone()
+  .addScaledVector(forward.clone().negate(),cameraDistance);
+ cinematicPosition.y=Math.max(
+  3.7,
+  encounterSize.y*1.05+1.7
+ );
 
  combatScene={tileKey,hero:heroModel,monster,heroStart,monsterStart,savedCamera};
  cameraLockedToHero=false;
@@ -2939,6 +3119,20 @@ function endCombatScene(){
 
  if(c.hero&&c.hero.parent===boardGroup){
   c.hero.position.copy(c.heroStart.position);
+
+  // Leave a little room for any corpse now occupying this tile.
+  const [cx,cz]=c.tileKey.split(',').map(Number);
+  const tile=latestState?.tiles?.[c.tileKey];
+  if(tile?.corpses?.length){
+   const cameraDirection=new THREE.Vector3();
+   camera.getWorldDirection(cameraDirection);
+   cameraDirection.y=0;
+   if(cameraDirection.lengthSq()<.0001)cameraDirection.set(0,0,-1);
+   cameraDirection.normalize();
+   const side=new THREE.Vector3(-cameraDirection.z,0,cameraDirection.x);
+   c.hero.position.addScaledVector(side,-.28);
+  }
+
   c.hero.rotation.y=c.heroStart.rotationY;
   heroRotationCurrent=c.heroStart.rotationY;
   heroPositionCurrent={x:c.hero.position.x,y:c.hero.position.y,z:c.hero.position.z};
