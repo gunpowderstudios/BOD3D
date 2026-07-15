@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.11</title>
+<title>Bag of Dungeon 3D v10.12</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -440,72 +440,101 @@ body.threeMode.lightingOn #viewport::after{
 }
 
 
+
 #mobileSheetToggle,#mobileStatus,#mobileDpad{display:none}
 
 @media(max-width:800px){
+  html,body{height:100%;overflow:hidden}
+
   #app{
+    height:100%;
+    display:grid;
     grid-template-columns:1fr;
-    grid-template-rows:minmax(0,1fr) auto;
+    grid-template-rows:minmax(0,1fr) 58px;
   }
 
-  #main{min-height:0}
+  #main{
+    min-height:0;
+    grid-row:1;
+  }
 
+  /* Bottom character drawer: collapsed by default, expands over the board. */
   #side{
-    grid-row:2;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:110;
     display:block;
-    max-height:42vh;
+    max-height:72vh;
+    height:auto;
     overflow:auto;
     border-right:none;
     border-top:4px solid var(--ink);
-    padding:8px;
-    transition:max-height .22s ease;
+    padding:7px 8px 10px;
+    background:var(--panel);
+    transform:translateY(calc(100% - 58px));
+    transition:transform .24s ease;
+    box-shadow:0 -8px 20px rgba(0,0,0,.45);
+  }
+  #side.mobileExpanded{
+    transform:translateY(0);
   }
   #side.mobileCollapsed{
-    max-height:76px;
-    overflow:hidden;
+    transform:translateY(calc(100% - 58px));
   }
-  #side.mobileCollapsed > .box,
-  #side.mobileCollapsed #brandHeader{
-    display:none;
-  }
+
+  #side #brandHeader{display:none}
 
   #mobileSheetToggle{
     display:block;
     position:sticky;
     top:0;
-    z-index:8;
+    z-index:12;
     width:100%;
-    padding:7px 10px;
-    margin:0 0 6px;
-    font-size:14px;
+    height:42px;
+    padding:4px 10px;
+    margin:0 0 5px;
+    font-size:13px;
+    line-height:1;
     box-shadow:none;
   }
+  #mobileSheetToggle::before{
+    content:"";
+    display:block;
+    width:72px;
+    height:5px;
+    margin:0 auto 5px;
+    border-radius:4px;
+    background:#111;
+    opacity:.85;
+  }
+
   #mobileStatus{
     display:grid;
-    grid-template-columns:repeat(3,auto) 1fr;
-    gap:5px 10px;
+    grid-template-columns:1fr auto auto auto;
+    gap:4px 8px;
     align-items:center;
-    padding:7px 9px;
-    margin-bottom:7px;
-    border:3px solid var(--ink);
+    padding:6px 8px;
+    margin-bottom:6px;
+    border:2px solid var(--ink);
     background:var(--cream);
-    font-size:13px;
+    font-size:11px;
     font-weight:bold;
   }
   #mobileStatus .mobileHero{
     grid-column:1/-1;
-    font-size:15px;
+    font-size:13px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
   #mobileStatus .mobileDecks{
     grid-column:1/-1;
-    font-size:12px;
+    font-size:10px;
     font-weight:normal;
   }
 
-  /* Keep only the compact camera controls and the 2D/3D switch on the board. */
   #topbar{
     left:7px;
     right:7px;
@@ -521,81 +550,92 @@ body.threeMode.lightingOn #viewport::after{
     justify-content:flex-start;
   }
   #topbar button{
-    min-width:42px;
-    padding:7px 9px;
+    min-width:38px;
+    height:38px;
+    padding:4px 7px;
     font-size:0;
     box-shadow:2px 2px 0 #000;
   }
-  #zoomOut::after{content:"−";font-size:18px}
-  #centreBtn::after{content:"◎";font-size:18px}
-  #zoomIn::after{content:"+";font-size:18px}
+  #zoomOut::after{content:"−";font-size:17px}
+  #centreBtn::after{content:"◎";font-size:17px}
+  #zoomIn::after{content:"+";font-size:17px}
   #viewBtn{
     margin-left:auto;
-    min-width:58px!important;
-    font-size:13px!important;
+    min-width:52px!important;
+    font-size:12px!important;
   }
   #northUpBtn,#lightingBtn{display:none}
-  #menuBtn{min-width:42px!important}
-  #menuBtn::after{content:"☰";font-size:18px}
+  #menuBtn{
+    min-width:38px!important;
+  }
+  #menuBtn::after{content:"☰";font-size:17px}
 
-  /* Permanent cross-shaped direction controller. */
+  /* Small centred cross at the bottom of the play area. */
   #mobileDpad{
     position:absolute;
-    right:10px;
+    left:50%;
+    right:auto;
     bottom:12px;
     z-index:72;
     display:grid;
-    grid-template-columns:50px 50px 50px;
-    grid-template-rows:46px 46px 46px 34px;
-    gap:4px;
+    grid-template-columns:44px 44px 44px;
+    grid-template-rows:40px 40px 40px;
+    gap:3px;
+    transform:translateX(-50%);
     pointer-events:auto;
   }
   #mobileDpad button{
     padding:0;
     min-width:0;
-    border-width:3px;
-    font-size:16px;
-    box-shadow:2px 2px 0 #000;
+    border-width:2px;
+    font-size:13px;
+    box-shadow:1px 1px 0 #000;
   }
   .dpadN{grid-column:2;grid-row:1}
   .dpadW{grid-column:1;grid-row:2}
   .dpadCentre{grid-column:2;grid-row:2}
   .dpadE{grid-column:3;grid-row:2}
   .dpadS{grid-column:2;grid-row:3}
-  .dpadRest{grid-column:1/4;grid-row:4;font-size:13px!important}
-  .dpadBtn[data-action="lay"]::after{content:" +";font-size:12px}
+  .dpadRest{
+    position:absolute;
+    left:142px;
+    bottom:3px;
+    width:72px;
+    height:34px;
+    font-size:12px!important;
+  }
+  .dpadBtn[data-action="lay"]::after{content:"+";font-size:10px;margin-left:2px}
   .dpadBtn[data-action="move"]{background:#f7e9c1}
-  .dpadBtn:disabled{opacity:.34}
+  .dpadBtn:disabled{opacity:.32}
 
   #controls{
     left:8px;
     right:auto;
     bottom:10px;
-    max-width:calc(100% - 185px);
+    max-width:calc(100% - 220px);
     justify-content:flex-start;
   }
-  #controls button{font-size:12px;padding:7px}
+  #controls button{font-size:11px;padding:6px}
 
   #compass{
-    width:72px!important;
-    height:72px!important;
-    right:11px!important;
-    bottom:184px!important;
+    width:68px!important;
+    height:68px!important;
+    right:12px!important;
+    top:58px!important;
+    bottom:auto!important;
   }
-  .compassDial span{font-size:12px}
+  .compassDial span{font-size:11px}
   .compassArrow{
-    font-size:24px;
-    width:30px;
-    height:48px;
-    margin-left:-15px;
-    margin-top:-24px;
+    font-size:22px;
+    width:28px;
+    height:44px;
+    margin-left:-14px;
+    margin-top:-22px;
   }
 
-  #brandHeader{display:none}
   #inventory{grid-column:auto}
   #log{max-height:125px;min-height:70px}
 }
-
 </style>
 <!--
 8BITBOD
@@ -679,6 +719,7 @@ Changes:
 <!-- v10.9: Fixed heroes disappearing when items are dropped. Board redraws now finish all asynchronous tiles, item sprites and monsters before adding the hero. The character is rendered last with explicit scene priority, checked after redraw, and automatically retried if absent. -->
 <!-- v10.10: Added real miniature height scaling based on the original sculpt dimensions. Sirrus at 41 mm remains the baseline; dwarfs render shorter, elves and monsters render proportionally taller, and the 71 mm Reacher now appears significantly larger. GLB export units are normalised, so inconsistent C4D/Blender scale settings no longer affect relative in-game size. -->
 <!-- v10.11: Mobile interface redesign. The dungeon receives more screen space, deck counters move into a compact character summary, Lighting and North Up move into Menu, the 2D/3D toggle remains permanently accessible, and N/E/S/W now use a fixed cross-shaped controller that automatically changes between Lay and Move. The character sheet can collapse into a compact status strip. -->
+<!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
 </head>
 <body class="lightingOff">
 
@@ -777,7 +818,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.11';
+const VERSION='v10.12';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1818,13 +1859,37 @@ const mobileDpadCentre=document.querySelector('.dpadCentre');
 if(mobileDpadCentre)mobileDpadCentre.onclick=()=>centreOnHero(true);
 
 const mobileSheetToggle=document.getElementById('mobileSheetToggle');
-if(mobileSheetToggle){
+const mobileSide=document.getElementById('side');
+
+function setMobileSheetExpanded(expanded){
+ if(!mobileSide||!mobileSheetToggle)return;
+ mobileSide.classList.toggle('mobileExpanded',expanded);
+ mobileSide.classList.toggle('mobileCollapsed',!expanded);
+ mobileSheetToggle.setAttribute('aria-expanded',String(expanded));
+ mobileSheetToggle.textContent=expanded?'Character & Inventory ▾':'Player Stats ▴';
+}
+
+if(mobileSheetToggle&&mobileSide){
+ setMobileSheetExpanded(false);
+
  mobileSheetToggle.onclick=()=>{
-  const side=document.getElementById('side');
-  const collapsed=side.classList.toggle('mobileCollapsed');
-  mobileSheetToggle.setAttribute('aria-expanded',String(!collapsed));
-  mobileSheetToggle.textContent=collapsed?'Character & Inventory ▴':'Character & Inventory ▾';
+  setMobileSheetExpanded(!mobileSide.classList.contains('mobileExpanded'));
  };
+
+ let sheetTouchStartY=null;
+ mobileSide.addEventListener('touchstart',e=>{
+  sheetTouchStartY=e.touches?.[0]?.clientY??null;
+ },{passive:true});
+
+ mobileSide.addEventListener('touchend',e=>{
+  if(sheetTouchStartY===null)return;
+  const endY=e.changedTouches?.[0]?.clientY??sheetTouchStartY;
+  const delta=endY-sheetTouchStartY;
+  sheetTouchStartY=null;
+
+  if(delta<-35)setMobileSheetExpanded(true);
+  else if(delta>35)setMobileSheetExpanded(false);
+ },{passive:true});
 }
 
 function keyboardDirection(e){
