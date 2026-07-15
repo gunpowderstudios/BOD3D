@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.22</title>
+<title>Bag of Dungeon 3D v10.24</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -861,6 +861,8 @@ Changes:
 <!-- v10.20: Ranged attacks now follow the physical board-game charge more clearly. If a Bow or Ice Staff fails to kill a monster, the surviving monster is transferred onto the hero's tile and the Run Away button remains disabled until one melee round has been fought. Dropped items now occupy the four tile corners, with additional items stacking above those corners, keeping loot visible beside heroes, blood and fallen monsters. -->
 <!-- v10.21: Improved battlefield readability. Dropped items now float higher above the tile, render above blood/corpse layers and receive a subtle dark backing disc so icons remain visible. Blood pools are shifted away from tile corners and rebuilt as irregular overlapping pools with fourteen smaller splatter droplets for a more natural, less circular effect. -->
 <!-- v10.22: Fixed dropped item sprites still appearing behind transparent blood pools. Loot icons and their backing discs now bypass depth testing and render at a guaranteed higher priority, while every blood pool and droplet receives an explicitly lower render order. This keeps the entire Ice Staff and other dropped-item artwork visible regardless of camera angle. -->
+<!-- v10.23: Added a dedicated final overlay pass for dropped loot. Item sprites and their backing discs now use AlwaysDepth, extremely high render priority and a depth-buffer clear immediately before drawing. This prevents transparent blood meshes from sorting over any part of an item at steep camera angles. -->
+<!-- v10.24: Fixed heroes such as Tarak drifting far away from the dungeon. Hero placement and movement now use the visible GLB geometry centre rather than the model's exported root origin. A final centring pass runs on initial load, every ordinary move and after combat, making the fix apply consistently to all hero models. -->
 </head>
 <body class="lightingOff">
 
@@ -959,7 +961,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.22';
+const VERSION='v10.24';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2817,11 +2819,22 @@ async function addTile(key,t,token){
     // Transparent sprites are normally depth-sorted against the blood planes.
     // Disable depth testing for loot so the complete icon always remains visible.
     if(sprite.material){
-     sprite.material.depthTest=false;
+     sprite.material.depthTest=true;
      sprite.material.depthWrite=false;
+     sprite.material.depthFunc=THREE.AlwaysDepth;
      sprite.material.transparent=true;
+     sprite.material.alphaTest=.04;
      sprite.material.needsUpdate=true;
     }
+
+    // Force loot into a final overlay pass. Transparent blood planes can still
+    // sort over a Sprite at steep camera angles, so clear only the depth buffer
+    // immediately before drawing each item and render it last.
+    sprite.renderOrder=10000+i;
+    sprite.frustumCulled=false;
+    sprite.onBeforeRender=(renderer)=>{
+     renderer.clearDepth();
+    };
 
     // Small dark backing disc keeps the icon readable over blood and corpses.
     const backing=new THREE.Mesh(
@@ -2842,9 +2855,14 @@ async function addTile(key,t,token){
      TILE_THICKNESS+.075+(level*.01),
      sprite.position.z
     );
-    backing.material.depthTest=false;
+    backing.material.depthTest=true;
     backing.material.depthWrite=false;
-    backing.renderOrder=190+i;
+    backing.material.depthFunc=THREE.AlwaysDepth;
+    backing.renderOrder=9990+i;
+    backing.frustumCulled=false;
+    backing.onBeforeRender=(renderer)=>{
+     renderer.clearDepth();
+    };
     boardGroup.add(backing);
    }
   }
@@ -3002,32 +3020,31 @@ async function addHero(character,player,token){
  ){
   const model=heroModel;
 
-  // Move from the hero's previous logical tile by exactly one board-grid delta.
-  // Do not rebuild the target from the GLB's internal origin offset: models
-  // exported far from world zero can otherwise jump far away from the board.
-  const previousGridX=Number.isFinite(model.userData.heroGridX)
-   ? model.userData.heroGridX
-   : player.x;
-  const previousGridY=Number.isFinite(model.userData.heroGridY)
-   ? model.userData.heroGridY
-   : player.y;
+  // Position by the miniature's real visible centre, not its GLB object origin.
+  // Some exported heroes contain large internal origin offsets; using those
+  // transforms directly can place the figure far away from the dungeon.
+  model.updateMatrixWorld(true);
 
-  const dxTiles=player.x-previousGridX;
-  const dyTiles=player.y-previousGridY;
+  const currentBounds=new THREE.Box3().setFromObject(model);
+  const currentCentre=currentBounds.getCenter(new THREE.Vector3());
+
+  const expectedCentreX=player.x*TILE;
+  const expectedCentreZ=player.y*TILE;
 
   const startPosition={
    x:model.position.x,
    y:model.position.y,
    z:model.position.z
   };
+
   const targetPosition={
-   x:startPosition.x+dxTiles*TILE,
-   y:model.userData.heroBaseY??startPosition.y,
-   z:startPosition.z+dyTiles*TILE
+   x:model.position.x+(expectedCentreX-currentCentre.x),
+   y:model.userData.heroBaseY??model.position.y,
+   z:model.position.z+(expectedCentreZ-currentCentre.z)
   };
 
   // Record the logical destination immediately so rapid consecutive moves
-  // cannot apply the same grid delta twice.
+  // cannot apply the same correction twice.
   model.userData.heroGridX=player.x;
   model.userData.heroGridY=player.y;
 
@@ -3065,14 +3082,22 @@ async function addHero(character,player,token){
    heroMove=null;
   }
 
-  const expectedX=player.x*TILE;
-  const expectedZ=player.y*TILE;
+  model.position.set(targetPosition.x,targetPosition.y,targetPosition.z);
+  model.updateMatrixWorld(true);
+  const correctedCentre=new THREE.Box3()
+   .setFromObject(model)
+   .getCenter(new THREE.Vector3());
+
+  // Restore the animation start before movement begins.
+  model.position.set(startPosition.x,startPosition.y,startPosition.z);
+  model.updateMatrixWorld(true);
+
   const distanceFromTile=Math.hypot(
-   targetPosition.x-expectedX,
-   targetPosition.z-expectedZ
+   correctedCentre.x-expectedCentreX,
+   correctedCentre.z-expectedCentreZ
   );
 
-  if(distanceFromTile>TILE*1.5){
+  if(distanceFromTile>TILE*.35){
    console.warn('Hero drift detected; rebuilding character at tile centre.');
    boardGroup.remove(model);
    heroModel=null;
@@ -3099,6 +3124,16 @@ async function addHero(character,player,token){
  if(!model||token!==renderToken)return;
 
  heroModel=model;
+
+ // Final geometry-based centring pass. This corrects heroes whose GLB root or
+ // parent objects were exported a long way from the actual miniature mesh.
+ heroModel.updateMatrixWorld(true);
+ const loadedBounds=new THREE.Box3().setFromObject(heroModel);
+ const loadedCentre=loadedBounds.getCenter(new THREE.Vector3());
+ heroModel.position.x+=player.x*TILE-loadedCentre.x;
+ heroModel.position.z+=player.y*TILE-loadedCentre.z;
+ heroModel.updateMatrixWorld(true);
+
  heroModel.userData.heroId=character.id;
  heroModel.userData.heroGridX=player.x;
  heroModel.userData.heroGridY=player.y;
@@ -3393,6 +3428,13 @@ function endCombatScene(){
 
   c.hero.position.set(centredX,centredY,centredZ);
   c.hero.rotation.y=c.heroStart.rotationY;
+  c.hero.updateMatrixWorld(true);
+
+  const restoredBounds=new THREE.Box3().setFromObject(c.hero);
+  const restoredCentre=restoredBounds.getCenter(new THREE.Vector3());
+  c.hero.position.x+=centredX-restoredCentre.x;
+  c.hero.position.z+=centredZ-restoredCentre.z;
+  c.hero.updateMatrixWorld(true);
 
   c.hero.userData.heroGridX=latestState.player.x;
   c.hero.userData.heroGridY=latestState.player.y;
@@ -3400,9 +3442,9 @@ function endCombatScene(){
 
   heroRotationCurrent=c.heroStart.rotationY;
   heroPositionCurrent={
-   x:centredX,
-   y:centredY,
-   z:centredZ
+   x:c.hero.position.x,
+   y:c.hero.position.y,
+   z:c.hero.position.z
   };
   heroMove=null;
   heroTurn=null;
