@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.13</title>
+<title>Bag of Dungeon 3D v10.14</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -773,6 +773,7 @@ Changes:
 <!-- v10.11: Mobile interface redesign. The dungeon receives more screen space, deck counters move into a compact character summary, Lighting and North Up move into Menu, the 2D/3D toggle remains permanently accessible, and N/E/S/W now use a fixed cross-shaped controller that automatically changes between Lay and Move. The character sheet can collapse into a compact status strip. -->
 <!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
 <!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
+<!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
 </head>
 <body class="lightingOff">
 
@@ -871,7 +872,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.13';
+const VERSION='v10.14';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2283,11 +2284,18 @@ function loadModel(path){
  return promise;
 }
 function clearBoard(){
- heroModel=null;
+ // Keep the current hero alive during ordinary board redraws.
+ // Recreating the GLB on every step caused intermittent disappearing models.
+ const preservedHero=heroModel&&heroModel.parent===boardGroup?heroModel:null;
+
  heroTurn=null;
  heroMove=null;
- while(boardGroup.children.length){
-  const obj=boardGroup.children.pop();
+
+ const children=[...boardGroup.children];
+ children.forEach(obj=>{
+  if(obj===preservedHero)return;
+
+  boardGroup.remove(obj);
   obj.traverse?.(o=>{
    if(o.geometry&&!o.userData.cached)o.geometry.dispose?.();
    if(o.material&&!o.userData.cached){
@@ -2295,7 +2303,9 @@ function clearBoard(){
     mats.forEach(m=>m.dispose?.());
    }
   });
- }
+ });
+
+ heroModel=preservedHero;
 }
 function markClickable(obj,type,key){
  obj.userData.actionType=type;
@@ -2530,6 +2540,62 @@ async function addHero(character,player,token){
  const targetRotation=facingRadians(player.facing||'S');
  const startRotation=heroRotationCurrent===null?targetRotation:heroRotationCurrent;
 
+ // Reuse the existing hero GLB during normal movement instead of reloading it.
+ if(
+  heroModel &&
+  heroModel.parent===boardGroup &&
+  heroModel.userData.heroId===character.id
+ ){
+  const model=heroModel;
+  const targetPosition={
+   x:player.x*TILE+(model.userData.heroOffsetX||0),
+   y:model.userData.heroBaseY??model.position.y,
+   z:player.y*TILE+(model.userData.heroOffsetZ||0)
+  };
+  const startPosition={
+   x:model.position.x,
+   y:model.position.y,
+   z:model.position.z
+  };
+
+  const rotationDelta=shortestAngleDelta(startRotation,targetRotation);
+  if(Math.abs(rotationDelta)<0.001){
+   model.rotation.y=targetRotation;
+   heroRotationCurrent=targetRotation;
+   heroTurn=null;
+  }else{
+   heroTurn={
+    model,
+    start:startRotation,
+    delta:rotationDelta,
+    started:performance.now(),
+    duration:HERO_TURN_MS,
+    target:targetRotation
+   };
+  }
+
+  const moved=
+   Math.abs(targetPosition.x-startPosition.x)>.001 ||
+   Math.abs(targetPosition.z-startPosition.z)>.001;
+
+  if(moved){
+   heroMove={
+    model,
+    start:startPosition,
+    target:targetPosition,
+    started:performance.now(),
+    duration:HERO_MOVE_MS
+   };
+  }else{
+   model.position.set(targetPosition.x,targetPosition.y,targetPosition.z);
+   heroPositionCurrent={...targetPosition};
+   heroMove=null;
+  }
+
+  model.visible=true;
+  return model;
+ }
+
  const model=await addMiniature(
   path,
   heroPng(character),
@@ -2543,6 +2609,10 @@ async function addHero(character,player,token){
  if(!model||token!==renderToken)return;
 
  heroModel=model;
+ heroModel.userData.heroId=character.id;
+ heroModel.userData.heroOffsetX=model.position.x-player.x*TILE;
+ heroModel.userData.heroOffsetZ=model.position.z-player.y*TILE;
+ heroModel.userData.heroBaseY=model.position.y;
 
  // Always draw the character after tiles, item sprites and darkness overlays.
  heroModel.renderOrder=1000;
@@ -2978,6 +3048,8 @@ window.BOD3D={
  centreOnHero:centreCameraOnHero,
  northUp,
  resetHeroFacing(){
+  if(heroModel&&heroModel.parent===boardGroup)boardGroup.remove(heroModel);
+  heroModel=null;
   heroRotationCurrent=null;
   heroTurn=null;
   heroPositionCurrent=null;
@@ -2987,6 +3059,7 @@ window.BOD3D={
  },
  snapHeroToPlayer(){
   // Used by Run Away, Tornado and other instant repositioning.
+  if(heroModel&&heroModel.parent===boardGroup)boardGroup.remove(heroModel);
   heroModel=null;
   heroTurn=null;
   heroMove=null;
