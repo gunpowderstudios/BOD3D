@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.2</title>
+<title>Bag of Dungeon 3D v10.3</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -492,6 +492,7 @@ Changes:
 <!-- v10.0: Hero-locked camera mode. The adventurer remains in the centre while the dungeon glides smoothly beneath during movement; rotation, tilt and zoom still orbit around the hero. Added a guaranteed visible, clickable bottom-right compass with fixed N/E/S/W labels and a rotating north arrow. Clicking it resets to North Up. -->
 <!-- v10.1: Corrected the compass heading. North Up now points the red arrow to N, and the arrow tracks camera rotation in the correct direction. Lighting remains enabled by default. -->
 <!-- v10.2: Added a master Lighting Effects switch. Lighting now starts OFF by default, giving a bright neutral tabletop view for mechanics testing. Turning it ON restores the hero torch, adjustable radius/falloff, atmospheric darkness and shadows. The setting is saved in the browser. -->
+<!-- v10.3: Fixed GLB characters disappearing when Lighting Effects were switched off or on. Lighting changes redraw the Three.js board; cached model geometry and materials are now preserved instead of being disposed during that redraw. -->
 </head>
 <body>
 
@@ -580,7 +581,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.2';
+const VERSION='v10.3';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1803,6 +1804,10 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
   if(o.isMesh){
    o.castShadow=true;
    o.receiveShadow=true;
+
+   // GLB clones share resources with the cached source model.
+   // Prevent clearBoard() from disposing those resources during a lighting redraw.
+   o.userData.cached=true;
   }
  });
 
@@ -1851,7 +1856,15 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
  if(token!==renderToken)return;
  if(!source){await addSprite(pngPath,x,y,1.05,.05,type,key,token);return;}
  const model=source.clone(true);
- model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+ model.traverse(o=>{
+  if(o.isMesh){
+   o.castShadow=true;
+   o.receiveShadow=true;
+
+   // Keep the cached GLB resources alive when lighting changes redraw the board.
+   o.userData.cached=true;
+  }
+ });
  const box=new THREE.Box3().setFromObject(model);
  const size=box.getSize(new THREE.Vector3());
  const scale=1.62/Math.max(size.y,.001);
