@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.15</title>
+<title>Bag of Dungeon 3D v10.16</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -688,6 +688,53 @@ body.threeMode.lightingOn #viewport::after{
   }
 }
 
+
+/* ===== Cinematic tabletop combat v10.16 ===== */
+body.cinematicCombat #combat{
+  background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.06) 42%,rgba(0,0,0,.62) 100%);
+  align-items:flex-end;
+  justify-content:flex-end;
+  pointer-events:none;
+  padding:18px;
+}
+body.cinematicCombat #combat .card{
+  pointer-events:auto;
+  width:min(480px,calc(100vw - 36px));
+  max-height:58vh;
+  overflow:auto;
+  margin:0;
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity .22s ease,transform .22s ease;
+}
+body.cinematicCombat #combat.open .card{opacity:1;transform:translateY(0)}
+body.cinematicCombat #topbar,
+body.cinematicCombat #mobileDpad,
+body.cinematicCombat #controls,
+body.cinematicCombat #compass{
+  opacity:.16;
+  pointer-events:none;
+}
+@media(max-width:800px){
+  body.cinematicCombat #combat{
+    justify-content:center;
+    padding:0 6px max(6px,env(safe-area-inset-bottom));
+  }
+  body.cinematicCombat #combat .card{
+    width:100%;
+    max-width:none;
+    max-height:48dvh;
+    padding:9px;
+  }
+  body.cinematicCombat #combat .card h2{font-size:21px;margin:2px 0 6px}
+  body.cinematicCombat .combatGrid{grid-template-columns:1fr 1fr;gap:6px;margin:5px 0}
+  body.cinematicCombat .fighter{min-height:92px;padding:5px;font-size:12px}
+  body.cinematicCombat .bigGlyph{font-size:30px}
+  body.cinematicCombat .hearts{font-size:14px}
+  body.cinematicCombat .diceTray{min-height:42px;margin:5px 0}
+  body.cinematicCombat .combatLog{min-height:34px;margin:5px 0;font-size:14px}
+}
+
 </style>
 <!--
 8BITBOD
@@ -775,6 +822,7 @@ Changes:
 <!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
 <!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
 <!-- v10.15: Corrected the persistent hero movement fix. The hero now moves by the exact change in tile coordinates rather than reapplying the GLB model-origin offset, which could throw some characters far away from the dungeon. Added automatic drift detection and safe rebuilding if a hero ever leaves its intended tile. -->
+<!-- v10.16: Added cinematic tabletop encounters. On entering combat, the camera smoothly zooms toward the monster tile, the hero and monster step apart like physical miniatures and rotate to face each other, and the combat panel fades in while the dungeon remains visible. Closing combat restores the exploration camera and positions. -->
 </head>
 <body class="lightingOff">
 
@@ -873,7 +921,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.15';
+const VERSION='v10.16';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1362,14 +1410,22 @@ function openCombat(tile,options={}){
   sourceKey:options.sourceKey||null
  };
 
- document.body.classList.add('combatActive');
+ document.body.classList.add('combatActive','cinematicCombat');
+
+ const combatTileKey=options.sourceKey||key(state.player.x,state.player.y);
+ combat.tileKey=combatTileKey;
+ window.BOD3D?.beginCombat?.(combatTileKey);
 
  // Collapse the mobile character drawer before combat appears.
  if(typeof setMobileSheetExpanded==='function'){
   setMobileSheetExpanded(false);
  }
 
- document.getElementById('combat').classList.add('open');
+ const combatElement=document.getElementById('combat');
+ combatElement.classList.remove('open');
+ setTimeout(()=>{
+  if(combat&&combat.tile===tile)combatElement.classList.add('open');
+ },520);
  document.getElementById('combatTitle').textContent=
   options.rangedEngagement?'The Monster Charges!':'Combat';
  document.getElementById('combatLog').textContent=
@@ -1487,7 +1543,8 @@ function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='p
 function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(p.flags.insurance||acme){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();render();centreOnHero();}
 function closeCombat(){
  document.getElementById('combat').classList.remove('open');
- document.body.classList.remove('combatActive');
+ document.body.classList.remove('combatActive','cinematicCombat');
+ window.BOD3D?.endCombat?.();
  combat=null;
  if(state?.player)state.player.temp={};
 }
@@ -2178,6 +2235,9 @@ let heroRotationCurrent=null;
 let heroTurn=null;
 let heroPositionCurrent=null;
 let heroMove=null;
+let pendingCombatTileKey=null;
+let combatScene=null;
+let cameraTween=null;
 const HERO_TURN_MS=180;
 const HERO_MOVE_MS=220;
 const TILE=2.05;
@@ -2798,6 +2858,101 @@ function updateCompass(){
  const angle=Math.atan2(direction.x,-direction.z);
  arrow.style.transform=`rotate(${-THREE.MathUtils.radToDeg(angle)}deg)`;
 }
+
+function findMonsterAtTile(tileKey){
+ return boardGroup.children.find(obj=>
+  obj.userData?.actionType==='monster' &&
+  obj.userData?.tileKey===tileKey
+ )||null;
+}
+function yawTowards(from,to){
+ return Math.atan2(to.x-from.x,to.z-from.z);
+}
+function startCameraTween(position,target,duration=620){
+ cameraTween={
+  startPosition:camera.position.clone(),
+  startTarget:controls.target.clone(),
+  endPosition:position.clone(),
+  endTarget:target.clone(),
+  started:performance.now(),
+  duration
+ };
+}
+function stageCombatScene(tileKey){
+ if(!tileKey||!heroModel)return false;
+ const monster=findMonsterAtTile(tileKey);
+ if(!monster)return false;
+
+ if(combatScene&&combatScene.tileKey===tileKey&&combatScene.monster===monster)return true;
+
+ const [tx,tz]=tileKey.split(',').map(Number);
+ const centre=new THREE.Vector3(tx*TILE,TILE_THICKNESS,tz*TILE);
+
+ const forward=new THREE.Vector3();
+ camera.getWorldDirection(forward);
+ forward.y=0;
+ if(forward.lengthSq()<.0001)forward.set(0,0,-1);
+ forward.normalize();
+
+ const right=new THREE.Vector3(-forward.z,0,forward.x).normalize();
+ const separation=Math.min(.78,TILE*.34);
+
+ const heroStart={position:heroModel.position.clone(),rotationY:heroModel.rotation.y};
+ const monsterStart={position:monster.position.clone(),rotationY:monster.rotation.y};
+ const heroTarget=centre.clone().addScaledVector(right,-separation);
+ const monsterTarget=centre.clone().addScaledVector(right,separation);
+ heroTarget.y=heroStart.position.y;
+ monsterTarget.y=monsterStart.position.y;
+
+ heroModel.position.copy(heroTarget);
+ monster.position.copy(monsterTarget);
+ heroModel.rotation.y=yawTowards(heroTarget,monsterTarget);
+ monster.rotation.y=yawTowards(monsterTarget,heroTarget);
+ heroRotationCurrent=heroModel.rotation.y;
+ heroPositionCurrent={x:heroModel.position.x,y:heroModel.position.y,z:heroModel.position.z};
+
+ const savedCamera={position:camera.position.clone(),target:controls.target.clone()};
+ const encounterTarget=centre.clone();
+ encounterTarget.y=.62;
+ const cinematicPosition=encounterTarget.clone().addScaledVector(forward.clone().negate(),5.2);
+ cinematicPosition.y=3.55;
+
+ combatScene={tileKey,hero:heroModel,monster,heroStart,monsterStart,savedCamera};
+ cameraLockedToHero=false;
+ lastCameraHeroPosition=null;
+ startCameraTween(cinematicPosition,encounterTarget,620);
+ return true;
+}
+function beginCombatScene(tileKey){
+ pendingCombatTileKey=tileKey;
+ if(!stageCombatScene(tileKey)){
+  setTimeout(()=>{
+   if(pendingCombatTileKey===tileKey)stageCombatScene(tileKey);
+  },120);
+ }
+}
+function endCombatScene(){
+ pendingCombatTileKey=null;
+ if(!combatScene)return;
+ const c=combatScene;
+ combatScene=null;
+
+ if(c.hero&&c.hero.parent===boardGroup){
+  c.hero.position.copy(c.heroStart.position);
+  c.hero.rotation.y=c.heroStart.rotationY;
+  heroRotationCurrent=c.heroStart.rotationY;
+  heroPositionCurrent={x:c.hero.position.x,y:c.hero.position.y,z:c.hero.position.z};
+ }
+ if(c.monster&&c.monster.parent===boardGroup){
+  c.monster.position.copy(c.monsterStart.position);
+  c.monster.rotation.y=c.monsterStart.rotationY;
+ }
+
+ cameraLockedToHero=true;
+ startCameraTween(c.savedCamera.position,c.savedCamera.target,520);
+ setTimeout(resetCameraHeroTracking,540);
+}
+
 async function renderBoard(state){
  latestState=state;
  const token=++renderToken;
@@ -2838,6 +2993,7 @@ async function renderBoard(state){
    );
   }
  }
+  if(pendingCombatTileKey)stageCombatScene(pendingCombatTileKey);
 }
 function applyLightingSettings(redraw=true){
  const effectsOn=!!lighting.enabled;
@@ -3021,6 +3177,18 @@ new ResizeObserver(resize).observe(canvas);
 function animate(now){
  requestAnimationFrame(animate);
 
+ if(cameraTween){
+  const t=Math.min(1,(now-cameraTween.started)/cameraTween.duration);
+  const eased=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  camera.position.lerpVectors(cameraTween.startPosition,cameraTween.endPosition,eased);
+  controls.target.lerpVectors(cameraTween.startTarget,cameraTween.endTarget,eased);
+  if(t>=1){
+   camera.position.copy(cameraTween.endPosition);
+   controls.target.copy(cameraTween.endTarget);
+   cameraTween=null;
+  }
+ }
+
  if(heroMove&&heroMove.model===heroModel){
   const t=Math.min(1,(now-heroMove.started)/heroMove.duration);
   const eased=t<.5
@@ -3053,7 +3221,7 @@ function animate(now){
 
  // Move the camera by exactly the same world-space amount as the hero.
  // This keeps the miniature fixed at the centre while the dungeon glides underneath.
- if(heroPositionCurrent){
+ if(heroPositionCurrent&&!combatScene){
   lockCameraToWorldPosition(heroPositionCurrent);
  }
 
@@ -3084,6 +3252,8 @@ window.BOD3D={
  resetCamera,
  centreOnHero:centreCameraOnHero,
  northUp,
+ beginCombat:beginCombatScene,
+ endCombat:endCombatScene,
  resetHeroFacing(){
   if(heroModel&&heroModel.parent===boardGroup)boardGroup.remove(heroModel);
   heroModel=null;
