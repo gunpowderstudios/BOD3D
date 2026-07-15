@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.12</title>
+<title>Bag of Dungeon 3D v10.13</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -636,6 +636,58 @@ body.threeMode.lightingOn #viewport::after{
   #inventory{grid-column:auto}
   #log{max-height:125px;min-height:70px}
 }
+
+@media(max-width:800px){
+  /* Required action screens must always sit above the bottom character drawer. */
+  #combat,
+  #placement,
+  #modal{
+    z-index:400!important;
+    padding:
+      max(8px,env(safe-area-inset-top))
+      8px
+      max(8px,env(safe-area-inset-bottom));
+  }
+
+  #combat .card,
+  #placement .card,
+  #modal .card{
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* The collapsed Player Stats handle must not cover combat buttons. */
+  body.combatActive #side{
+    display:none!important;
+    pointer-events:none!important;
+  }
+
+  body.combatActive #combat{
+    align-items:flex-start;
+    overflow:auto;
+  }
+
+  body.combatActive #combat .card{
+    margin:auto;
+  }
+
+  /* Keep combat action buttons visible and comfortably tappable. */
+  #combatBtns{
+    position:sticky;
+    bottom:0;
+    z-index:5;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    background:var(--panel);
+    border-top:2px solid var(--ink);
+  }
+
+  #combatBtns button{
+    min-height:46px;
+    font-size:15px;
+  }
+}
+
 </style>
 <!--
 8BITBOD
@@ -720,6 +772,7 @@ Changes:
 <!-- v10.10: Added real miniature height scaling based on the original sculpt dimensions. Sirrus at 41 mm remains the baseline; dwarfs render shorter, elves and monsters render proportionally taller, and the 71 mm Reacher now appears significantly larger. GLB export units are normalised, so inconsistent C4D/Blender scale settings no longer affect relative in-game size. -->
 <!-- v10.11: Mobile interface redesign. The dungeon receives more screen space, deck counters move into a compact character summary, Lighting and North Up move into Menu, the 2D/3D toggle remains permanently accessible, and N/E/S/W now use a fixed cross-shaped controller that automatically changes between Lay and Move. The character sheet can collapse into a compact status strip. -->
 <!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
+<!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
 </head>
 <body class="lightingOff">
 
@@ -818,7 +871,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.12';
+const VERSION='v10.13';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -832,7 +885,7 @@ const CHARACTERS=[
 ];
 function renderCharSelect(){const grid=document.getElementById('charGrid');grid.innerHTML='';CHARACTERS.forEach(c=>{const card=document.createElement('div');card.className='charCard';card.innerHTML=`<h3>${c.name}</h3><div class="charDesc">${c.desc}</div><div class="charStats">Health ${c.maxHealth} · AP ${c.maxAp} · Combat ${c.baseDice}d6+${c.baseMod}</div><div class="charSpecial"><b>${c.special}</b><br>${c.specialDesc}</div><div class="charGlyph">${iconHTML(c.name,c.glyph)}</div>`;card.onclick=()=>startGame(c);grid.appendChild(card);});}
 function startGame(c){audio();document.getElementById('charSelect').classList.add('hidden');newGame(c);}
-function showCharSelect(){closeModal();closeCombat();document.getElementById('charSelect').classList.remove('hidden');renderCharSelect();}
+function showCharSelect(){document.body.classList.remove('combatActive');closeModal();closeCombat();document.getElementById('charSelect').classList.remove('hidden');renderCharSelect();}
 
 const TILE=128,GAP=0,STEP=TILE+GAP;
 const DIRS={N:{dx:0,dy:-1,opp:'S'},E:{dx:1,dy:0,opp:'W'},S:{dx:0,dy:1,opp:'N'},W:{dx:-1,dy:0,opp:'E'}};
@@ -1294,7 +1347,46 @@ function promptHealingPool(tile){
   {text:'No — Leave It',fn:()=>{closeModal();log('You leave the Healing Pool unused.','system');render();}}
  ]);
 }
-function openCombat(tile,options={}){const m=tile.monster;combat={tile,openingShot:true,monsterSkip:false,reroll:false,rolling:false,mustFightRound:!!options.mustFightRound,rangedEngagement:!!options.rangedEngagement,sourceKey:options.sourceKey||null};document.getElementById('combat').classList.add('open');document.getElementById('combatTitle').textContent=options.rangedEngagement?'The Monster Charges!':'Combat';document.getElementById('combatLog').textContent=options.rangedEngagement?'Your ranged attack has drawn the monster upon you. Fight one melee round before escaping.':'Ready to fight!';const tray=document.getElementById('diceTray');if(tray){tray.className='diceTray';tray.innerHTML='Dice will appear here.';}renderCombat();}
+function openCombat(tile,options={}){
+ const m=tile.monster;
+ combat={
+  tile,
+  openingShot:true,
+  monsterSkip:false,
+  reroll:false,
+  rolling:false,
+  mustFightRound:!!options.mustFightRound,
+  rangedEngagement:!!options.rangedEngagement,
+  sourceKey:options.sourceKey||null
+ };
+
+ document.body.classList.add('combatActive');
+
+ // Collapse the mobile character drawer before combat appears.
+ if(typeof setMobileSheetExpanded==='function'){
+  setMobileSheetExpanded(false);
+ }
+
+ document.getElementById('combat').classList.add('open');
+ document.getElementById('combatTitle').textContent=
+  options.rangedEngagement?'The Monster Charges!':'Combat';
+ document.getElementById('combatLog').textContent=
+  options.rangedEngagement
+   ?'Your ranged attack has drawn the monster upon you. Fight one melee round before escaping.'
+   :'Ready to fight!';
+
+ const tray=document.getElementById('diceTray');
+ if(tray){
+  tray.className='diceTray';
+  tray.innerHTML='Dice will appear here.';
+ }
+
+ // Always begin at the top of the mobile combat card.
+ const combatCard=document.querySelector('#combat .card');
+ if(combatCard)combatCard.scrollTop=0;
+
+ renderCombat();
+}
 function connectedDistance(fromKey,toKey,maxRange){if(fromKey===toKey)return 0;const q=[[fromKey,0]],seen=new Set([fromKey]);while(q.length){const [kk,dst]=q.shift();if(dst>=maxRange)continue;const [x,y]=kk.split(',').map(Number),t=state.tiles[kk];if(!t)continue;for(const dir of dirOrder){if(!t.opens[dir])continue;const dd=DIRS[dir],nk=key(x+dd.dx,y+dd.dy),nt=state.tiles[nk];if(!nt||!nt.opens[dd.opp]||seen.has(nk))continue;if(nk===toKey)return dst+1;seen.add(nk);q.push([nk,dst+1]);}}return Infinity;}
 function rangedTargets(range){const from=key(state.player.x,state.player.y),out=[];for(const [kk,t] of Object.entries(state.tiles)){if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;const distance=connectedDistance(from,kk,range);if(distance>=1&&distance<=range)out.push({key:kk,distance});}return out;}
 function startRangedAttack(type){const p=state.player;let weapon,range,cost;if(type==='bow'){weapon=p.equipment.bow;if(!weapon){toast('Equip a Bow first');return;}range=3;cost=3;}else{weapon=p.equipment.staff;if(!weapon){toast('Equip the Ice Staff first');return;}range=2;cost=4;}if(p.ap<cost){toast('Not enough AP');return;}const targets=rangedTargets(range);if(!targets.length){toast('No monsters in range');return;}rangedMode={type,weapon,range,cost,targetKeys:new Set(targets.map(x=>x.key))};closeModal();toast('Choose a monster in range');log((type==='bow'?weapon.name:'Ice Staff')+' ready: choose a monster at range 1-'+range+'.','system');render();}
@@ -1391,7 +1483,12 @@ function runAway(){
 function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,armour:null,boots:null};p.backpack=[];p.companionBear=null;p.flags.bootsBonus=false;p.maxAp=state.charDef.maxAp;p.ap=Math.min(p.ap,p.maxAp);syncEquipment();}
 function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='pool')||null;}
 function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(p.flags.insurance||acme){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();render();centreOnHero();}
-function closeCombat(){document.getElementById('combat').classList.remove('open');combat=null;if(state?.player)state.player.temp={};}
+function closeCombat(){
+ document.getElementById('combat').classList.remove('open');
+ document.body.classList.remove('combatActive');
+ combat=null;
+ if(state?.player)state.player.temp={};
+}
 function useInventoryItem(list,idx){ /* legacy alias */ if(list==='inventory')useInventoryIndex(idx); }
 function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let used=false,msg='';
  if(it.use==='healthPotion'){const h=roll(2).total;p.health=Math.min(p.maxHealth,p.health+h);msg='Health Potion restores '+h+' health.';used=true;}
