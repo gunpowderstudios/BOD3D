@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.1</title>
+<title>Bag of Dungeon 3D v10.2</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -390,6 +390,34 @@ body.threeMode #viewport::after{
   .compassArrow{font-size:27px;width:34px;height:54px;margin-left:-17px;margin-top:-27px}
 }
 
+
+.lightingMasterSwitch{
+  margin:4px 0 12px;
+  padding:9px 10px;
+  border:2px solid #c7a45b;
+  border-radius:6px;
+  background:#241b10;
+}
+.lightingMasterSwitch label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-weight:bold;
+  color:#ffd45f;
+  cursor:pointer;
+}
+.lightingMasterSwitch input{
+  width:22px;
+  height:22px;
+  accent-color:#d6aa45;
+}
+#lightingAdvancedControls.disabled{
+  opacity:.38;
+  pointer-events:none;
+  filter:grayscale(.25);
+}
+
 </style>
 <!--
 8BITBOD
@@ -463,6 +491,7 @@ Changes:
 <!-- v9.6: Smoothed camera behaviour by removing automatic board re-fitting after every move; the camera now stays where the player leaves it, and Centre is the only command that deliberately recentres on the hero. Lighting is brighter and higher-contrast with a stronger hero light, brighter key light and gentler distance darkness. Added a rotating compass and a North Up button for orientation. -->
 <!-- v10.0: Hero-locked camera mode. The adventurer remains in the centre while the dungeon glides smoothly beneath during movement; rotation, tilt and zoom still orbit around the hero. Added a guaranteed visible, clickable bottom-right compass with fixed N/E/S/W labels and a rotating north arrow. Clicking it resets to North Up. -->
 <!-- v10.1: Corrected the compass heading. North Up now points the red arrow to N, and the arrow tracks camera rotation in the correct direction. Lighting remains enabled by default. -->
+<!-- v10.2: Added a master Lighting Effects switch. Lighting now starts OFF by default, giving a bright neutral tabletop view for mechanics testing. Turning it ON restores the hero torch, adjustable radius/falloff, atmospheric darkness and shadows. The setting is saved in the browser. -->
 </head>
 <body>
 
@@ -509,6 +538,15 @@ Changes:
     <button id="lightingClose" aria-label="Close lighting controls">×</button>
   </div>
 
+  <div class="lightingMasterSwitch">
+    <label for="lightingEnabled">
+      <span>Lighting effects</span>
+      <input id="lightingEnabled" type="checkbox">
+    </label>
+    <div class="lightHint">Off gives a bright, clean tabletop view while testing mechanics.</div>
+  </div>
+
+  <div id="lightingAdvancedControls">
   <div class="lightRow"><label for="lightBrightness">Torch brightness</label><input id="lightBrightness" type="range" min="0" max="100" step="1"><span id="lightBrightnessValue" class="lightValue"></span></div>
   <div class="lightRow"><label for="lightRadius">Bright radius</label><input id="lightRadius" type="range" min="1" max="7" step=".25"><span id="lightRadiusValue" class="lightValue"></span></div>
   <div class="lightRow"><label for="lightFalloff">Falloff width</label><input id="lightFalloff" type="range" min=".5" max="6" step=".25"><span id="lightFalloffValue" class="lightValue"></span></div>
@@ -527,7 +565,8 @@ Changes:
     <button data-light-preset="torch">Torchlight</button>
     <button data-light-preset="dark">Very Dark</button>
   </div>
-  <div id="lightingStatus" class="lightHint">Settings save automatically in this browser.</div>
+  </div>
+  <div id="lightingStatus" class="lightHint">Lighting effects are off.</div>
 </div>
 
   </main>
@@ -541,7 +580,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.1';
+const VERSION='v10.2';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1464,6 +1503,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const LIGHTING_STORAGE_KEY='bod3dLightingV94';
 const DEFAULT_LIGHTING={
+ enabled:false,
  brightness:82,
  radius:2.5,
  falloff:2.75,
@@ -1579,6 +1619,8 @@ function tileDistanceFromHero(x,y){
  return Math.sqrt(dx*dx+dy*dy);
 }
 function darknessForTile(x,y){
+ if(!lighting.enabled)return 0;
+
  const d=tileDistanceFromHero(x,y);
  const radius=Math.max(1,lighting.radius);
  const falloff=Math.max(.5,lighting.falloff);
@@ -1991,27 +2033,47 @@ async function renderBoard(state){
  }
 }
 function applyLightingSettings(redraw=true){
- renderer.toneMappingExposure=lighting.exposure;
+ const effectsOn=!!lighting.enabled;
 
- // Kept deliberately low so the torch pool — not fill light — drives contrast.
- ambientLight.intensity=.03+(lighting.ambient/100)*.4;
- sun.intensity=.15+(lighting.shadow/100)*.9;
- sun.shadow.radius=lighting.softness;
+ if(effectsOn){
+  renderer.toneMappingExposure=lighting.exposure;
 
- // Point-light intensity is deliberately amplified for a clear torch pool.
- heroLight.intensity=lighting.brightness*5.6;
- heroLight.distance=(lighting.radius+lighting.falloff)*TILE+3;
- heroLight.decay=1.8;
- heroLight.color.set(lighting.colour);
- heroLight.castShadow=lighting.shadow>5;
+  // Atmospheric torch mode.
+  ambientLight.intensity=.03+(lighting.ambient/100)*.4;
+  sun.intensity=.15+(lighting.shadow/100)*.9;
+  sun.castShadow=lighting.shadow>5;
+  sun.shadow.radius=lighting.softness;
+
+  heroLight.intensity=lighting.brightness*5.6;
+  heroLight.distance=(lighting.radius+lighting.falloff)*TILE+3;
+  heroLight.decay=1.8;
+  heroLight.color.set(lighting.colour);
+  heroLight.castShadow=lighting.shadow>5;
+
+  renderer.shadowMap.enabled=lighting.shadow>5;
+ }else{
+  // Bright neutral tabletop mode for developing and testing mechanics.
+  renderer.toneMappingExposure=1.12;
+  ambientLight.intensity=1.25;
+  sun.intensity=2.45;
+  sun.castShadow=false;
+  heroLight.intensity=0;
+  heroLight.castShadow=false;
+  renderer.shadowMap.enabled=false;
+ }
 
  saveLighting();
  syncLightingUI();
 
  const status=document.getElementById('lightingStatus');
  if(status){
-  status.textContent=`Live: ${lighting.radius} tile radius · ${lighting.brightness}% brightness`;
+  status.textContent=effectsOn
+   ? `Lighting on: ${lighting.radius} tile radius · ${lighting.brightness}% brightness`
+   : 'Lighting effects are off — bright tabletop testing mode.';
  }
+
+ const button=document.getElementById('lightingBtn');
+ if(button)button.textContent=effectsOn?'☀ Lighting: On':'☀ Lighting: Off';
 
  if(redraw&&latestState)renderBoard(latestState);
 }
@@ -2033,8 +2095,13 @@ function syncLightingUI(){
  });
  const colour=document.getElementById('lightColour');
  const follow=document.getElementById('lightFollow');
+ const enabledSwitch=document.getElementById('lightingEnabled');
+ const advanced=document.getElementById('lightingAdvancedControls');
+
  if(colour)colour.value=lighting.colour;
  if(follow)follow.checked=!!lighting.follow;
+ if(enabledSwitch)enabledSwitch.checked=!!lighting.enabled;
+ if(advanced)advanced.classList.toggle('disabled',!lighting.enabled);
 }
 function openLightingPanel(){
  const panel=document.getElementById('lightingPanel');
@@ -2048,6 +2115,12 @@ function closeLightingPanel(){
  panel.setAttribute('aria-hidden','true');
 }
 function wireLightingControls(){
+ const enabledSwitch=document.getElementById('lightingEnabled');
+ enabledSwitch.addEventListener('change',e=>{
+  lighting.enabled=e.target.checked;
+  applyLightingSettings(true);
+ });
+
  const bindings={
   lightBrightness:['brightness',Number],
   lightRadius:['radius',Number],
