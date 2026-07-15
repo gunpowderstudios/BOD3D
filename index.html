@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.9</title>
+<title>Bag of Dungeon 3D v10.10</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -520,6 +520,7 @@ Changes:
 <!-- v10.7: Added physical punchboard depth to every Three.js floor tile. Tiles now use a shallow 3D body with #4C3D2A edges beneath the original PNG artwork. Heroes, monsters, markers and darkness overlays are raised to sit correctly on the new tile surface. -->
 <!-- v10.8: Multiple dropped items now display as a vertical floating stack above their tile instead of showing only the first item. Up to eight item sprites are shown in 3D with small alternating offsets for readability; the 2D fallback also shows a stacked group. Clicking any item still opens the full item list for that tile. -->
 <!-- v10.9: Fixed heroes disappearing when items are dropped. Board redraws now finish all asynchronous tiles, item sprites and monsters before adding the hero. The character is rendered last with explicit scene priority, checked after redraw, and automatically retried if absent. -->
+<!-- v10.10: Added real miniature height scaling based on the original sculpt dimensions. Sirrus at 41 mm remains the baseline; dwarfs render shorter, elves and monsters render proportionally taller, and the 71 mm Reacher now appears significantly larger. GLB export units are normalised, so inconsistent C4D/Blender scale settings no longer affect relative in-game size. -->
 </head>
 <body class="lightingOff">
 
@@ -608,7 +609,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.9';
+const VERSION='v10.10';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -762,6 +763,49 @@ function characterModelFile(character){
  return HERO_MODEL_FILES[id]||`${id}.glb`;
 }
 function modelPath(file){return file?'assets/models/'+file:'';}
+
+// Physical miniature heights taken from the original Bag of Dungeon sculpts.
+// Sirrus (41 mm) remains the visual baseline used by the earlier renderer.
+const MODEL_HEIGHT_MM={
+ sirrus:41,
+ duric:37,
+ alendra:52,
+ galhorn:51,
+ marria:37,
+ rill:42,
+ tamara:39,
+ tarak:43,
+
+ goblin:50,
+ minotaur:47,
+ 'mirror-monster':35,
+ monk:55,
+ 'mud-monster':44,
+ mummy:46,
+ reacher:71,
+ skeleton:52,
+ 'giant-snake':58,
+ snake:58,
+ troll:50,
+ werewolf:49,
+ zombie:44,
+ zombie2:44,
+ dragon:43
+};
+
+const MODEL_BASELINE_MM=41;
+const MODEL_BASELINE_SCENE_HEIGHT=1.62;
+
+function modelKeyFromPath(path){
+ const clean=String(path||'').split('?')[0];
+ const file=clean.substring(clean.lastIndexOf('/')+1);
+ return file.replace(/\.glb$/i,'').toLowerCase();
+}
+function targetSceneHeightForModel(path){
+ const key=modelKeyFromPath(path);
+ const mm=MODEL_HEIGHT_MM[key]||MODEL_BASELINE_MM;
+ return MODEL_BASELINE_SCENE_HEIGHT*(mm/MODEL_BASELINE_MM);
+}
 
 function monsterBoardHTML(monster,rangedClass='',tileKey=''){
  return `<span class="mark monsterGlyph${rangedClass}" role="button" tabindex="0" data-monster-key="${tileKey}" aria-label="View ${monster.name} stats" title="Click to view ${monster.name} stats">${iconHTML(monster.name,monster.glyph)}</span>`;
@@ -1976,7 +2020,8 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
  // Scale first.
  const originalBox=new THREE.Box3().setFromObject(model);
  const originalSize=originalBox.getSize(new THREE.Vector3());
- const scale=1.62/Math.max(originalSize.y,.001);
+ const targetHeight=targetSceneHeightForModel(modelPath);
+ const scale=targetHeight/Math.max(originalSize.y,.001);
  model.scale.setScalar(scale);
  model.updateMatrixWorld(true);
 
@@ -2042,7 +2087,8 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
   return;
  }
 
- const scale=1.62/Math.max(size.y,.001);
+ const targetHeight=targetSceneHeightForModel(modelPath);
+ const scale=targetHeight/Math.max(size.y,.001);
  model.scale.setScalar(scale);
  model.updateMatrixWorld(true);
  const scaled=new THREE.Box3().setFromObject(model);
