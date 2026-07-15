@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.25</title>
+<title>Bag of Dungeon 3D v10.26</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -767,6 +767,16 @@ body.cinematicCombat #compass{
   z-index:30;
 }
 
+
+.ringMark{
+  animation:ringObjectiveBob 2.4s ease-in-out infinite;
+  filter:drop-shadow(0 0 7px #ffd24f) drop-shadow(0 0 14px #ffad24);
+}
+@keyframes ringObjectiveBob{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-8px) scale(1.06)}
+}
+
 </style>
 <!--
 8BITBOD
@@ -864,6 +874,7 @@ Changes:
 <!-- v10.23: Added a dedicated final overlay pass for dropped loot. Item sprites and their backing discs now use AlwaysDepth, extremely high render priority and a depth-buffer clear immediately before drawing. This prevents transparent blood meshes from sorting over any part of an item at steep camera angles. -->
 <!-- v10.24: Fixed heroes such as Tarak drifting far away from the dungeon. Hero placement and movement now use the visible GLB geometry centre rather than the model's exported root origin. A final centring pass runs on initial load, every ordinary move and after combat, making the fix apply consistently to all hero models. -->
 <!-- v10.25: Blood now uses opaque tile-surface decal geometry instead of transparent overlays. Hero bases, living monsters and corpses correctly hide it, so blood no longer appears through miniatures. -->
+<!-- v10.26: Applied the first formal testing-log fixes. Rusty Armour now lasts for exactly one melee fight and then breaks. The Ring is no longer awarded remotely when its location is revealed or when a distant monster dies; the hero must physically reach the tile after its guardian is gone. In 3D the Ring now hovers, gently bobs and emits a pulsing golden halo/light. Ordinary dropped items also receive a subtle asynchronous bob so loot feels alive without distracting from the tabletop presentation. -->
 </head>
 <body class="lightingOff">
 
@@ -962,7 +973,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.25';
+const VERSION='v10.26';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -994,7 +1005,7 @@ const MONSTER_MASTER=[
  {name:'Mirror Monster',copies:2,dice:0,mod:0,maxHealth:0,glyph:'◈',special:'Mirrors your current Health & Combat.'}
 ];
 const ITEM_MASTER=[
- {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'-1 damage from attacks.',apply:p=>equipBest('armour',1,'Rusty Armour','▤')},
+ {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'One fight: -1 damage from attacks, then discard.',apply:p=>equipBest('armour',1,'Rusty Armour','▤')},
  {name:'Steel Armour',copies:1,type:'equipment',slot:'armour',icon:'▥',desc:'-1 damage from attacks.',apply:p=>equipBest('armour',1,'Steel Armour','▥')},
  {name:'Magic Armour',copies:1,type:'equipment',slot:'armour',icon:'▦',desc:'-2 damage from attacks.',apply:p=>equipBest('armour',2,'Magic Armour','▦')},
  {name:'Magic Boots',copies:2,type:'equipment',slot:'boots',icon:'👢',desc:'+1 AP each turn.',apply:p=>{if(!p.equipment.boots){p.maxAp+=1;p.ap+=1;}p.equipment.boots={name:'Magic Boots',icon:'👢',value:1};}},
@@ -1386,19 +1397,21 @@ function placeExitAndRing(x,y,fromTile){
  playSound('dragon');playTileEffect(exitKey,'dragon',1400);
  playSound('dice');
  log('The final dungeon tile is laid. The Exit appears and the Red Dragon guards it.','loot');
- log('Ring location roll: '+rr.rolls.join(' + ')+' = '+ringNumber+'. The Ring of Creation appears beneath one of the dungeon monsters!','loot');
+ log('Ring location roll: '+rr.rolls.join(' + ')+' = '+ringNumber+'. The Ring of Creation appears at M'+ringNumber+' and must be physically collected.','loot');
  if(found){
   const ringTile=found[1];
   if(ringTile.monsterPending || (ringTile.monster&&ringTile.monster.health>0)){
    log('A monster guards the Ring. It must be defeated before the Ring can be collected.','combat');
   }
-  collectRingIfSafe(found[0]);
+  // The Ring remains at its location until the hero physically reaches
+  // the tile and any guarding monster has been defeated.
  }else{
   log('Error: the rolled Ring location could not be found in the laid dungeon.','combat');
  }
 }
 function collectRingIfSafe(tileKey){
  if(!state.ringActivated||state.player.hasRing||state.ringKey!==tileKey)return false;
+ if(key(state.player.x,state.player.y)!==tileKey)return false;
  const t=state.tiles[tileKey];
  if(!t||!t.hasRing)return false;
  const livingMonster=t.monsterPending||(t.monster&&t.monster.health>0);
@@ -1447,6 +1460,7 @@ function openCombat(tile,options={}){
   monsterSkip:false,
   reroll:false,
   rolling:false,
+  hadMeleeRound:false,
   mustFightRound:!!options.mustFightRound,
   noEscape:!!options.noEscape,
   rangedEngagement:!!options.rangedEngagement,
@@ -1547,6 +1561,7 @@ function fightRound(){
 }
 function resolveFightRound(){
  if(!combat)return;
+ combat.hadMeleeRound=true;
  const p=state.player,m=combat.tile.monster;
  let pr=roll(pDice()),mr=roll(m.dice);
  let crit=isCritical(pr.rolls);
@@ -1639,9 +1654,24 @@ function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,a
 function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='pool')||null;}
 function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(p.flags.insurance||acme){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();render();centreOnHero();}
 function closeCombat(){
+ const finishedCombat=combat;
+
  document.getElementById('combat').classList.remove('open');
  document.body.classList.remove('combatActive','cinematicCombat');
  window.BOD3D?.endCombat?.();
+
+ if(
+  finishedCombat?.hadMeleeRound &&
+  state?.player?.slots?.armour?.name==='Rusty Armour'
+ ){
+  const rusty=state.player.slots.armour;
+  state.player.slots.armour=null;
+  state.itemDiscard.push(rusty);
+  syncEquipment();
+  log('The Rusty Armour falls apart after the fight.','system');
+  toast('Rusty Armour breaks!');
+ }
+
  combat=null;
  if(state?.player)state.player.temp={};
 }
@@ -2780,7 +2810,53 @@ async function addTile(key,t,token){
  }
 
  if(t.itemPending&&!t.itemUsed)await addSprite('assets/ui/item.png',x,y,.66,.05,'items',key,token);
- if(t.hasRing)await addSprite('assets/ui/ring.png',x,y,.62,.08,null,key,token);
+ if(t.hasRing){
+  const ringSprite=await addSprite(
+   'assets/ui/ring.png',
+   x,
+   y,
+   .62,
+   .64,
+   null,
+   key,
+   token
+  );
+
+  if(ringSprite){
+   ringSprite.renderOrder=500;
+   ringSprite.userData.floatObject=true;
+   ringSprite.userData.floatBaseY=ringSprite.position.y;
+   ringSprite.userData.floatAmplitude=.085;
+   ringSprite.userData.floatSpeed=1.25;
+   ringSprite.userData.floatPhase=(x*1.73+y*2.19);
+   ringSprite.userData.isRing=true;
+
+   // Soft gold halo beneath the hovering Ring.
+   const halo=new THREE.Mesh(
+    new THREE.CircleGeometry(.48,32),
+    new THREE.MeshBasicMaterial({
+     color:0xffc84a,
+     transparent:true,
+     opacity:.28,
+     depthWrite:false,
+     blending:THREE.AdditiveBlending,
+     side:THREE.DoubleSide
+    })
+   );
+   halo.rotation.x=-Math.PI/2;
+   halo.position.set(x*TILE,TILE_THICKNESS+.025,y*TILE);
+   halo.renderOrder=35;
+   halo.userData.ringHalo=true;
+   halo.userData.floatPhase=ringSprite.userData.floatPhase;
+   boardGroup.add(halo);
+
+   const ringLight=new THREE.PointLight(0xffc14d,5.5,4.2,2);
+   ringLight.position.set(x*TILE,1.05,y*TILE);
+   ringLight.userData.ringLight=true;
+   ringLight.userData.floatPhase=ringSprite.userData.floatPhase;
+   boardGroup.add(ringLight);
+  }
+ }
  if(t.droppedItems&&t.droppedItems.length){
   const stack=t.droppedItems.slice(0,8);
   const itemSize=.46;
@@ -2817,6 +2893,11 @@ async function addTile(key,t,token){
     sprite.position.z+=corner.z;
     sprite.renderOrder=200+i;
     sprite.userData.itemCorner=i%cornerOffsets.length;
+    sprite.userData.floatObject=true;
+    sprite.userData.floatBaseY=sprite.position.y;
+    sprite.userData.floatAmplitude=.032;
+    sprite.userData.floatSpeed=.82;
+    sprite.userData.floatPhase=(x*1.41+y*2.07+i*1.37);
 
     // Transparent sprites are normally depth-sorted against the blood planes.
     // Disable depth testing for loot so the complete icon always remains visible.
@@ -3684,6 +3765,29 @@ window.addEventListener('resize',resize);
 new ResizeObserver(resize).observe(canvas);
 function animate(now){
  requestAnimationFrame(animate);
+
+ const floatTime=now*.001;
+ boardGroup.traverse(object=>{
+  if(object.userData?.floatObject){
+   const base=object.userData.floatBaseY??object.position.y;
+   const amplitude=object.userData.floatAmplitude??.03;
+   const speed=object.userData.floatSpeed??1;
+   const phase=object.userData.floatPhase??0;
+   object.position.y=base+Math.sin(floatTime*speed+phase)*amplitude;
+  }
+
+  if(object.userData?.ringHalo&&object.material){
+   const phase=object.userData.floatPhase??0;
+   const pulse=.88+Math.sin(floatTime*1.45+phase)*.12;
+   object.scale.setScalar(pulse);
+   object.material.opacity=.22+Math.sin(floatTime*1.45+phase)*.07;
+  }
+
+  if(object.userData?.ringLight){
+   const phase=object.userData.floatPhase??0;
+   object.intensity=5.1+Math.sin(floatTime*1.45+phase)*1.25;
+  }
+ });
 
  if(combatScene&&combatScene.hero&&combatScene.monster){
   const hero=combatScene.hero;
