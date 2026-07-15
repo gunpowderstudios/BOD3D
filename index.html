@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.14</title>
+<title>Bag of Dungeon 3D v10.15</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -774,6 +774,7 @@ Changes:
 <!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
 <!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
 <!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
+<!-- v10.15: Corrected the persistent hero movement fix. The hero now moves by the exact change in tile coordinates rather than reapplying the GLB model-origin offset, which could throw some characters far away from the dungeon. Added automatic drift detection and safe rebuilding if a hero ever leaves its intended tile. -->
 </head>
 <body class="lightingOff">
 
@@ -872,7 +873,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.14';
+const VERSION='v10.15';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2547,16 +2548,35 @@ async function addHero(character,player,token){
   heroModel.userData.heroId===character.id
  ){
   const model=heroModel;
-  const targetPosition={
-   x:player.x*TILE+(model.userData.heroOffsetX||0),
-   y:model.userData.heroBaseY??model.position.y,
-   z:player.y*TILE+(model.userData.heroOffsetZ||0)
-  };
+
+  // Move from the hero's previous logical tile by exactly one board-grid delta.
+  // Do not rebuild the target from the GLB's internal origin offset: models
+  // exported far from world zero can otherwise jump far away from the board.
+  const previousGridX=Number.isFinite(model.userData.heroGridX)
+   ? model.userData.heroGridX
+   : player.x;
+  const previousGridY=Number.isFinite(model.userData.heroGridY)
+   ? model.userData.heroGridY
+   : player.y;
+
+  const dxTiles=player.x-previousGridX;
+  const dyTiles=player.y-previousGridY;
+
   const startPosition={
    x:model.position.x,
    y:model.position.y,
    z:model.position.z
   };
+  const targetPosition={
+   x:startPosition.x+dxTiles*TILE,
+   y:model.userData.heroBaseY??startPosition.y,
+   z:startPosition.z+dyTiles*TILE
+  };
+
+  // Record the logical destination immediately so rapid consecutive moves
+  // cannot apply the same grid delta twice.
+  model.userData.heroGridX=player.x;
+  model.userData.heroGridY=player.y;
 
   const rotationDelta=shortestAngleDelta(startRotation,targetRotation);
   if(Math.abs(rotationDelta)<0.001){
@@ -2592,6 +2612,23 @@ async function addHero(character,player,token){
    heroMove=null;
   }
 
+  const expectedX=player.x*TILE;
+  const expectedZ=player.y*TILE;
+  const distanceFromTile=Math.hypot(
+   targetPosition.x-expectedX,
+   targetPosition.z-expectedZ
+  );
+
+  if(distanceFromTile>TILE*1.5){
+   console.warn('Hero drift detected; rebuilding character at tile centre.');
+   boardGroup.remove(model);
+   heroModel=null;
+   heroPositionCurrent=null;
+   heroMove=null;
+   heroTurn=null;
+   return addHero(character,player,token);
+  }
+
   model.visible=true;
   return model;
  }
@@ -2610,8 +2647,8 @@ async function addHero(character,player,token){
 
  heroModel=model;
  heroModel.userData.heroId=character.id;
- heroModel.userData.heroOffsetX=model.position.x-player.x*TILE;
- heroModel.userData.heroOffsetZ=model.position.z-player.y*TILE;
+ heroModel.userData.heroGridX=player.x;
+ heroModel.userData.heroGridY=player.y;
  heroModel.userData.heroBaseY=model.position.y;
 
  // Always draw the character after tiles, item sprites and darkness overlays.
