@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.3</title>
+<title>Bag of Dungeon 3D v10.4</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -208,7 +208,7 @@ body.threeMode #viewport.dragging{cursor:grabbing}
 }
 
 
-body.threeMode #viewport::after{
+body.threeMode.lightingOn #viewport::after{
   content:"";
   position:absolute;
   inset:0;
@@ -493,8 +493,9 @@ Changes:
 <!-- v10.1: Corrected the compass heading. North Up now points the red arrow to N, and the arrow tracks camera rotation in the correct direction. Lighting remains enabled by default. -->
 <!-- v10.2: Added a master Lighting Effects switch. Lighting now starts OFF by default, giving a bright neutral tabletop view for mechanics testing. Turning it ON restores the hero torch, adjustable radius/falloff, atmospheric darkness and shadows. The setting is saved in the browser. -->
 <!-- v10.3: Fixed GLB characters disappearing when Lighting Effects were switched off or on. Lighting changes redraw the Three.js board; cached model geometry and materials are now preserved instead of being disposed during that redraw. -->
+<!-- v10.4: Fixed Lighting Off mode. It now removes fog, vignette, hero torch, darkness masks, tone mapping and dynamic shadows, and switches to a bright neutral tabletop scene. Lighting is forced OFF on startup while mechanics are being developed. -->
 </head>
-<body>
+<body class="lightingOff">
 
 <div id="charSelect">
   <img class="selectLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
@@ -581,7 +582,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.3';
+const VERSION='v10.4';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1527,6 +1528,7 @@ function loadLighting(){
  }catch(e){return {...DEFAULT_LIGHTING};}
 }
 let lighting=loadLighting();
+lighting.enabled=false;
 function saveLighting(){
  localStorage.setItem(LIGHTING_STORAGE_KEY,JSON.stringify(lighting));
 }
@@ -1621,6 +1623,7 @@ function tileDistanceFromHero(x,y){
 }
 function darknessForTile(x,y){
  if(!lighting.enabled)return 0;
+ if(!lighting.enabled)return 0;
 
  const d=tileDistanceFromHero(x,y);
  const radius=Math.max(1,lighting.radius);
@@ -1636,6 +1639,7 @@ function darknessForTile(x,y){
  return t*t*maximumDarkness*brightnessRelief;
 }
 function objectVisibleAtTile(x,y){
+ if(!lighting.enabled)return true;
  return true;
 }
 
@@ -2048,48 +2052,52 @@ async function renderBoard(state){
 function applyLightingSettings(redraw=true){
  const effectsOn=!!lighting.enabled;
 
- if(effectsOn){
-  renderer.toneMappingExposure=lighting.exposure;
+ document.body.classList.toggle('lightingOn',effectsOn);
+ document.body.classList.toggle('lightingOff',!effectsOn);
 
-  // Atmospheric torch mode.
+ if(effectsOn){
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=lighting.exposure;
   ambientLight.intensity=.03+(lighting.ambient/100)*.4;
   sun.intensity=.15+(lighting.shadow/100)*.9;
   sun.castShadow=lighting.shadow>5;
   sun.shadow.radius=lighting.softness;
-
+  heroLight.visible=true;
   heroLight.intensity=lighting.brightness*5.6;
   heroLight.distance=(lighting.radius+lighting.falloff)*TILE+3;
   heroLight.decay=1.8;
   heroLight.color.set(lighting.colour);
   heroLight.castShadow=lighting.shadow>5;
-
   renderer.shadowMap.enabled=lighting.shadow>5;
+  scene.fog=new THREE.FogExp2(0x010100,.045);
+  scene.background.set(0x050403);
  }else{
-  // Bright neutral tabletop mode for developing and testing mechanics.
-  renderer.toneMappingExposure=1.12;
-  ambientLight.intensity=1.25;
-  sun.intensity=2.45;
+  renderer.toneMapping=THREE.NoToneMapping;
+  renderer.toneMappingExposure=1;
+  ambientLight.intensity=2.2;
+  sun.intensity=3.6;
   sun.castShadow=false;
+  heroLight.visible=false;
   heroLight.intensity=0;
   heroLight.castShadow=false;
   renderer.shadowMap.enabled=false;
+  scene.fog=null;
+  scene.background.set(0x2f2417);
  }
 
  saveLighting();
  syncLightingUI();
-
  const status=document.getElementById('lightingStatus');
  if(status){
   status.textContent=effectsOn
    ? `Lighting on: ${lighting.radius} tile radius · ${lighting.brightness}% brightness`
    : 'Lighting effects are off — bright tabletop testing mode.';
  }
-
  const button=document.getElementById('lightingBtn');
  if(button)button.textContent=effectsOn?'☀ Lighting: On':'☀ Lighting: Off';
-
  if(redraw&&latestState)renderBoard(latestState);
 }
+
 function syncLightingUI(){
  const fields={
   lightBrightness:['brightness',v=>String(Math.round(v))],
