@@ -2567,9 +2567,13 @@ async function addCorpseMiniature(corpse,x,y,token){
 
  // Rotation changes the model's vertical bounds. Measure the finished fallen
  // miniature and lift/lower the whole pivot so its lowest point rests on the tile.
+ // A small negative bias is deliberate: some source models measure slightly
+ // wrong (e.g. a rig's bind pose vs its actual posed shape), so it's safer to
+ // sink a corpse a touch into the stone than to have it float above it.
+ const CORPSE_EMBED_BIAS=.035;
  pivot.updateMatrixWorld(true);
  const fallenBounds=new THREE.Box3().setFromObject(pivot);
- const tileSurface=TILE_THICKNESS+.022;
+ const tileSurface=TILE_THICKNESS+.022-CORPSE_EMBED_BIAS;
  if(Number.isFinite(fallenBounds.min.y)){
   pivot.position.y+=tileSurface-fallenBounds.min.y;
   pivot.updateMatrixWorld(true);
