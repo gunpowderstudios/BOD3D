@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.5</title>
+<title>Bag of Dungeon 3D v10.6</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -495,6 +495,7 @@ Changes:
 <!-- v10.3: Fixed GLB characters disappearing when Lighting Effects were switched off or on. Lighting changes redraw the Three.js board; cached model geometry and materials are now preserved instead of being disposed during that redraw. -->
 <!-- v10.4: Fixed Lighting Off mode. It now removes fog, vignette, hero torch, darkness masks, tone mapping and dynamic shadows, and switches to a bright neutral tabletop scene. Lighting is forced OFF on startup while mechanics are being developed. -->
 <!-- v10.5: Added an explicit hero-model filename map, including alendra.glb. Hero GLB requests are cache-busted by version, failed or empty GLBs fall back to hero PNG artwork, and the browser console now reports successful and failed model loads. -->
+<!-- v10.6: Fixed the hero disappearing after Run Away. Instant retreat movement now resets the Three.js hero and camera tracking before redraw, snaps the miniature to the previous tile, and updates its facing direction. Tornado retreat uses the same safe path. -->
 </head>
 <body class="lightingOff">
 
@@ -583,7 +584,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.5';
+const VERSION='v10.6';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1076,7 +1077,39 @@ function resolveFightRound(){
  render();renderCombat();
 }
 function killMonster(){const m=combat.tile.monster;const tileKey=combat.sourceKey||key(state.player.x,state.player.y);playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log('Defeated '+m.name+'.','combat');state.player.killed.push(m.name);state.monsterDiscard.push(m);combat.tile.monster=null;if(!m.isDragon){collectRingIfSafe(tileKey);}if(m.isDragon&&state.player.hasRing){win();return;}if(!m.isDragon){const startingHealth=m.maxHealth;const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0){log(m.name+' had '+startingHealth+' starting Health: no item reward.','system');}else{log(m.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}closeCombat();render();}
-function runAway(){const p=state.player,charged=!!combat?.rangedEngagement;p.health-=1;playSound('run');log(charged?'Escaped the charging monster: take 1 direct damage and remain on your tile.':'Escaped combat: take 1 direct damage and return to the previous tile.','combat');if(p.health<=0){death();return;}if(!charged){p.x=p.prevX;p.y=p.prevY;}if(combat?.tile?.monster){combat.tile.monster.revealed=true;}closeCombat();render();centreOnHero(false);}
+function runAway(){
+ const p=state.player;
+ const charged=!!combat?.rangedEngagement;
+ p.health-=1;
+ playSound('run');
+ log(
+  charged
+   ? 'Escaped the charging monster: take 1 direct damage and remain on your tile.'
+   : 'Escaped combat: take 1 direct damage and return to the previous tile.',
+  'combat'
+ );
+ if(p.health<=0){death();return;}
+
+ if(!charged){
+  const oldX=p.x,oldY=p.y;
+  p.x=p.prevX;
+  p.y=p.prevY;
+
+  // Face the direction of the retreat.
+  const dx=p.x-oldX,dy=p.y-oldY;
+  if(Math.abs(dx)>=Math.abs(dy)&&dx!==0)p.facing=dx>0?'E':'W';
+  else if(dy!==0)p.facing=dy>0?'S':'N';
+
+  // Run Away is an instant return, not a normal sliding move.
+  // Reset the Three.js hero/camera tracking before rebuilding the board.
+  window.BOD3D?.snapHeroToPlayer?.();
+ }
+
+ if(combat?.tile?.monster)combat.tile.monster.revealed=true;
+ closeCombat();
+ render();
+ centreOnHero(false);
+}
 
 function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,armour:null,boots:null};p.backpack=[];p.companionBear=null;p.flags.bootsBonus=false;p.maxAp=state.charDef.maxAp;p.ap=Math.min(p.ap,p.maxAp);syncEquipment();}
 function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='pool')||null;}
@@ -1089,7 +1122,26 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
  if(it.use==='reroll'){p.flags.reroll=true;msg="Imp's Teeth ready: your next combat roll rerolls.";used=true;}
  if(it.use==='iceStaff'){startRangedAttack('iceStaff');return;}
  if(['fireball','bomb','daggers','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='fireball'){dmg=roll(3).total;cost=2;}if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='daggers'){dmg=roll(2).total;cost=0;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
- if(it.use==='tornado'&&combat){msg='Tornado carries you safely away.';used=true;consume?.();const oldCombat=combat;p.x=p.prevX;p.y=p.prevY;if(oldCombat?.tile?.monster)oldCombat.tile.monster.revealed=true;document.getElementById('combatLog').textContent=msg;log(msg,'loot');closeCombat();render();centreOnHero(false);return;}
+ if(it.use==='tornado'&&combat){
+ msg='Tornado carries you safely away.';
+ used=true;
+ consume?.();
+ const oldCombat=combat;
+ const oldX=p.x,oldY=p.y;
+ p.x=p.prevX;
+ p.y=p.prevY;
+ const dx=p.x-oldX,dy=p.y-oldY;
+ if(Math.abs(dx)>=Math.abs(dy)&&dx!==0)p.facing=dx>0?'E':'W';
+ else if(dy!==0)p.facing=dy>0?'S':'N';
+ window.BOD3D?.snapHeroToPlayer?.();
+ if(oldCombat?.tile?.monster)oldCombat.tile.monster.revealed=true;
+ document.getElementById('combatLog').textContent=msg;
+ log(msg,'loot');
+ closeCombat();
+ render();
+ centreOnHero(false);
+ return;
+}
  if(it.use==='smallChest'){const r=roll(1).total;if(r<=2){p.health-=2;msg='Chest trap! Take 2 damage.';}else{awardItem();msg='Small Chest opened: draw 1 item.';}used=true;}
  if(it.use==='largeChest'){const r=roll(1).total;if(r<=2){p.health-=5;msg='Large Chest trap! Take 5 damage.';}else{awardItem();awardItem();msg='Large Chest opened: draw 2 items.';}used=true;}
  if(it.use==='teleport'){showTeleport(it);used=false;}
@@ -2336,7 +2388,23 @@ window.BOD3D={
  resetCamera,
  centreOnHero:centreCameraOnHero,
  northUp,
- resetHeroFacing(){heroRotationCurrent=null;heroTurn=null;heroPositionCurrent=null;heroMove=null;lastCameraHeroPosition=null;cameraInitialised=false;}
+ resetHeroFacing(){
+  heroRotationCurrent=null;
+  heroTurn=null;
+  heroPositionCurrent=null;
+  heroMove=null;
+  lastCameraHeroPosition=null;
+  cameraInitialised=false;
+ },
+ snapHeroToPlayer(){
+  // Used by Run Away, Tornado and other instant repositioning.
+  heroModel=null;
+  heroTurn=null;
+  heroMove=null;
+  heroPositionCurrent=null;
+  lastCameraHeroPosition=null;
+  cameraInitialised=false;
+ }
 };
 const currentState=window.getBODState?window.getBODState():null;
 if(currentState)renderBoard(currentState);
