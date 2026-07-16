@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.33</title>
+<title>Bag of Dungeon 3D v10.34</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -994,6 +994,7 @@ Changes:
 <!-- v10.31: Added a hidden Item Tester screen for balancing weapons and equipment. Press Control/Ctrl + Alt/Option + Shift + I during an active game to search the full item list, equip weapons directly to either hand, wear armour/boots, add the Loyal Bear, place consumables/spells in the backpack, restore Health/AP and clear the current loadout. The screen is absent from all player-facing menus. -->
 <!-- v10.32: Fixed the blank startup screen introduced by the secret Item Tester. Its controls were being wired before the tester HTML existed, causing a null-reference error during page load. The tester now initialises safely after DOMContentLoaded, with element checks, while retaining Control/Ctrl + Alt/Option + Shift + I. -->
 <!-- v10.33: Added a first-pass Three.js spell-effects engine for testing. Fireball now launches a glowing projectile, bursts around the monster and leaves fading smoke; Magic Vine grows along the floor and wraps the target with leaves; Ice Staff fires a frozen bolt followed by shards and frost mist; Tornado surrounds the hero with a spiralling dust column. Effects last approximately 2–3 seconds and clean themselves up automatically. -->
+<!-- v10.34: Fixed the secret Item Tester selection buttons. The panel now uses stable item indexes and one delegated click handler, so Ice Staff and all other items equip reliably; the tester closes after selection to show the updated loadout. Invisibility Cloak encounters now explicitly reveal and permanently display the monster as soon as the hero enters/passes its tile, whether the sneak roll succeeds or fails. -->
 </head>
 <body class="lightingOn">
 
@@ -1096,7 +1097,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.33';
+const VERSION='v10.34';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1555,11 +1556,61 @@ function move(dir){const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.fac
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
  if(t.droppedItems&&t.droppedItems.length){setTimeout(()=>offerDroppedItems(),80);}
  if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;sndMonster();log('A monster is revealed: '+t.monster.name+'.','combat');}
- if(t.monster&&t.monster.health>0){t.monster.revealed=true;if(p.equipment.cloak&&t.kind!=='exit'&&!t.monster.isDragon){showCloakChoice(t);render();return;}openCombat(t);}
+ if(t.monster&&t.monster.health>0){
+  // Entering the tile identifies the monster even when the Cloak lets you pass.
+  t.monster.revealed=true;
+  t.monster.discoveredByCloak=!!p.equipment.cloak;
+
+  if(p.equipment.cloak&&t.kind!=='exit'&&!t.monster.isDragon){
+   showCloakChoice(t);
+   render();
+   return;
+  }
+  openCombat(t);
+ }
  else {collectRingIfSafe(key(p.x,p.y));}
  if(t.kind==='exit'&&p.hasRing&&!t.monster){win();}
  render();centreOnHero(false);}
-function showCloakChoice(tile){const m=tile.monster;showModal('Invisibility Cloak',m.name+'\nHealth '+m.health+'/'+m.maxHealth+'\nCombat '+m.dice+'d6+'+m.mod+'\n\nRoll to sneak past unseen. On a 1–2 the '+m.name+' spots you and you must fight with no chance to flee. The Dragon would still see you regardless.',[{text:'Sneak Past','cls':'green',fn:()=>{closeModal();const roll1=roll(1).total;if(roll1<=2){log('You roll '+roll1+' — the '+m.name+' spots you! There is no escape.','combat');openCombat(tile,{noEscape:true});}else{log('You roll '+roll1+' and slip past the '+m.name+' unseen.','system');render();}}},{text:'Fight',cls:'red',fn:()=>{closeModal();openCombat(tile);}}]);}
+function showCloakChoice(tile){
+ const m=tile.monster;
+ m.revealed=true;
+
+ showModal(
+  'Invisibility Cloak',
+  m.name+'\nHealth '+m.health+'/'+m.maxHealth+
+  '\nCombat '+m.dice+'d6+'+m.mod+
+  '\n\nThe monster is now revealed on the dungeon. Roll to sneak past it. On a 1–2 the '+
+  m.name+' spots you and you must fight with no chance to flee. The Dragon would still see you regardless.',
+  [
+   {
+    text:'Sneak Past',
+    cls:'green',
+    fn:()=>{
+     closeModal();
+     m.revealed=true;
+     const roll1=roll(1).total;
+
+     if(roll1<=2){
+      log('You roll '+roll1+' — the '+m.name+' spots you! There is no escape.','combat');
+      openCombat(tile,{noEscape:true});
+     }else{
+      log('You roll '+roll1+' and slip past the revealed '+m.name+'.','system');
+      render();
+     }
+    }
+   },
+   {
+    text:'Fight',
+    cls:'red',
+    fn:()=>{
+     closeModal();
+     m.revealed=true;
+     openCombat(tile);
+    }
+   }
+  ]
+ );
+}
 function promptOldSpikey(tile){
  const carried=allCarriedItems().filter(x=>!isBear(x));
  const buttons=[];
@@ -2360,6 +2411,7 @@ function testerEquipItem(name,slot){
  log('[TEST] Equipped '+item.name+'.','system');
  toast(item.name+' equipped for testing');
  render();
+ return true;
 }
 
 function testerAddToBackpack(name){
@@ -2382,6 +2434,7 @@ function testerAddToBackpack(name){
  log('[TEST] Added '+item.name+' to backpack.','system');
  toast(item.name+' added');
  render();
+ return true;
 }
 
 function testerClearEquipment(){
@@ -2415,25 +2468,25 @@ function testerRestoreHero(){
  toast('Health and AP restored');
 }
 
-function itemTesterButtons(item){
+function itemTesterButtons(item,index){
  if(isArmour(item)){
-  return `<button data-test-item="${item.name}" data-test-slot="armour">Wear</button>`;
+  return `<button type="button" data-test-index="${index}" data-test-slot="armour">Wear</button>`;
  }
  if(isBoots(item)){
-  return `<button data-test-item="${item.name}" data-test-slot="boots">Wear</button>`;
+  return `<button type="button" data-test-index="${index}" data-test-slot="boots">Wear</button>`;
  }
  if(isBear(item)){
-  return `<button data-test-item="${item.name}" data-test-slot="bear">Add Bear</button>`;
+  return `<button type="button" data-test-index="${index}" data-test-slot="bear">Add Bear</button>`;
  }
  if(isHandItem(item)){
   if(isTwoHanded(item)){
-   return `<button data-test-item="${item.name}" data-test-slot="left">Equip Both Hands</button>`;
+   return `<button type="button" data-test-index="${index}" data-test-slot="left">Equip Both Hands</button>`;
   }
   return `
-   <button data-test-item="${item.name}" data-test-slot="left">Equip Left</button>
-   <button data-test-item="${item.name}" data-test-slot="right">Equip Right</button>`;
+   <button type="button" data-test-index="${index}" data-test-slot="left">Equip Left</button>
+   <button type="button" data-test-index="${index}" data-test-slot="right">Equip Right</button>`;
  }
- return `<button data-test-pack="${item.name}">Add to Backpack</button>`;
+ return `<button type="button" data-test-index="${index}" data-test-pack="1">Add to Backpack</button>`;
 }
 
 function renderItemTester(filter=''){
@@ -2441,13 +2494,15 @@ function renderItemTester(filter=''){
  if(!grid)return;
 
  const query=String(filter||'').trim().toLowerCase();
- const items=ITEM_MASTER.filter(item=>
-  !query ||
-  item.name.toLowerCase().includes(query) ||
-  String(item.desc||'').toLowerCase().includes(query)
- );
+ const indexedItems=ITEM_MASTER
+  .map((item,index)=>({item,index}))
+  .filter(({item})=>
+   !query ||
+   item.name.toLowerCase().includes(query) ||
+   String(item.desc||'').toLowerCase().includes(query)
+  );
 
- grid.innerHTML=items.map(item=>`
+ grid.innerHTML=indexedItems.map(({item,index})=>`
   <div class="itemTesterEntry">
    <div class="itemTesterArt">${iconHTML(item.name,item.icon||'?')}</div>
    <div>
@@ -2455,26 +2510,38 @@ function renderItemTester(filter=''){
     <div class="itemTesterDesc">${item.desc||''}</div>
    </div>
    <div class="itemTesterButtons">
-    ${itemTesterButtons(item)}
+    ${itemTesterButtons(item,index)}
     ${isHandItem(item)||isArmour(item)||isBoots(item)||isBear(item)
-      ?`<button data-test-pack="${item.name}">Backpack</button>`
+      ?`<button type="button" data-test-index="${index}" data-test-pack="1">Backpack</button>`
       :''}
    </div>
   </div>
  `).join('');
-
- grid.querySelectorAll('[data-test-item]').forEach(button=>{
-  button.onclick=()=>testerEquipItem(
-   button.dataset.testItem,
-   button.dataset.testSlot
-  );
- });
-
- grid.querySelectorAll('[data-test-pack]').forEach(button=>{
-  button.onclick=()=>testerAddToBackpack(button.dataset.testPack);
- });
 }
 
+function handleItemTesterClick(event){
+ const button=event.target.closest('button[data-test-index]');
+ if(!button)return;
+
+ event.preventDefault();
+ event.stopPropagation();
+
+ const index=Number(button.dataset.testIndex);
+ const item=ITEM_MASTER[index];
+ if(!item){
+  toast('Tester item not found');
+  return;
+ }
+
+ if(button.dataset.testPack){
+  testerAddToBackpack(item.name);
+ }else{
+  testerEquipItem(item.name,button.dataset.testSlot);
+ }
+
+ // Close after a successful selection so the changed equipment is immediately visible.
+ closeItemTester();
+}
 function openItemTester(){
  if(!state){
   toast('Start a game first');
@@ -2595,7 +2662,11 @@ function wireItemTester(){
  });
 
  panel.addEventListener('click',event=>{
-  if(event.target.id==='itemTester')closeItemTester();
+  if(event.target.id==='itemTester'){
+   closeItemTester();
+   return;
+  }
+  handleItemTesterClick(event);
  });
 }
 
