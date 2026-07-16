@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.29</title>
+<title>Bag of Dungeon 3D v10.30</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -224,7 +224,8 @@ body.threeMode.lightingOn #viewport::after{
 }
 
 
-#lightingPanel{
+#lightingPanel{display:none!important;
+
   position:absolute;
   top:58px;
   right:12px;
@@ -240,7 +241,7 @@ body.threeMode.lightingOn #viewport::after{
   border-radius:8px;
   box-shadow:0 10px 30px rgba(0,0,0,.7);
 }
-#lightingPanel.open{display:block}
+#lightingPanel.open{display:none!important}
 #lightingPanel h3{margin:0 0 10px;text-align:center;color:#ffd45f}
 .lightRow{
   display:grid;
@@ -892,8 +893,9 @@ Changes:
 <!-- v10.27: Hero Loader Refactor. Every hero GLB is now scaled and centred exactly once inside a clean THREE.Group. The parent group—not the asymmetric visible geometry—is positioned at the exact tile centre and used for all movement, turning, combat staging and recentring. Removed repeated bounding-box corrections during movement, preventing Rill, Duric, Tarak and other asymmetric heroes from jumping away as they rotate. -->
 <!-- v10.28: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
 <!-- v10.29: Removed tipped-over dead monster miniatures from the dungeon while retaining their persistent blood splats and dropped loot. Corpse data is still stored in the game state, so the blood history remains compatible with existing saves. -->
+<!-- v10.30: The chosen lighting is now the permanent art-directed default: Lighting On, brightness 25, radius 2.5 tiles, falloff 0.5, ambient 0%, shadow strength 17%, softness 0, exposure 0.45, warm torch colour and hero-following enabled. Removed the Lighting button, panel access, presets and browser overrides from the player experience. -->
 </head>
-<body class="lightingOff">
+<body class="lightingOn">
 
 <div id="charSelect">
   <img class="selectLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
@@ -917,7 +919,7 @@ Changes:
   <main id="main">
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
-      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="lightingBtn">☀ Lighting</button><button id="menuBtn">☰ Menu</button></div>
+      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="menuBtn">☰ Menu</button></div>
     </div>
     <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
     <div id="mobileDpad" aria-label="Movement controls">
@@ -994,7 +996,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.29';
+const VERSION='v10.30';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1792,14 +1794,6 @@ function openAbout(){
 function openMenu(){
   showModal('Menu','Game and display options.',[
     {text:'Resume',fn:closeModal},
-    {text:(window.BOD3D&&window.BOD3D.isLightingOn())?'Turn Lighting Off':'Turn Lighting On',fn:()=>{
-      window.BOD3D?.toggleLighting?.();
-      closeModal();
-    }},
-    {text:'Lighting Controls',fn:()=>{
-      closeModal();
-      window.BOD3D?.openLightingPanel?.();
-    }},
     {text:'North Up',fn:()=>{
       closeModal();
       window.BOD3D?.northUp?.();
@@ -2278,15 +2272,15 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const LIGHTING_STORAGE_KEY='bod3dLightingV94';
 const LIGHTING_DEFAULT_KEY='bod3dLightingCustomDefaultV1';
 const DEFAULT_LIGHTING={
- enabled:false,
- brightness:82,
+ enabled:true,
+ brightness:25,
  radius:2.5,
- falloff:2.75,
- ambient:26,
- shadow:22,
- softness:2,
- exposure:.88,
- colour:'#ffb15c',
+ falloff:.5,
+ ambient:0,
+ shadow:17,
+ softness:0,
+ exposure:.45,
+ colour:'#ffcc99',
  follow:true
 };
 const LIGHT_PRESETS={
@@ -2296,21 +2290,7 @@ const LIGHT_PRESETS={
  dark:{brightness:58,radius:2.5,falloff:2.5,ambient:34,shadow:92,softness:2,exposure:.95,colour:'#ff9a45',follow:true}
 };
 function loadLighting(){
- try{
-  const current=localStorage.getItem(LIGHTING_STORAGE_KEY);
-  if(current){
-   return {...DEFAULT_LIGHTING,...JSON.parse(current)};
-  }
-
-  const custom=localStorage.getItem(LIGHTING_DEFAULT_KEY);
-  if(custom){
-   return {...DEFAULT_LIGHTING,...JSON.parse(custom)};
-  }
-
-  return {...DEFAULT_LIGHTING};
- }catch(e){
-  return {...DEFAULT_LIGHTING};
- }
+ return {...DEFAULT_LIGHTING};
 }
 let lighting=loadLighting();
 function saveLighting(){
@@ -3799,11 +3779,14 @@ function wireLightingControls(){
    applyLightingSettings(true);
   };
  });
- document.getElementById('lightingBtn').onclick=()=>{
-  const panel=document.getElementById('lightingPanel');
-  panel.classList.contains('open')?closeLightingPanel():openLightingPanel();
- };
- document.getElementById('lightingClose').onclick=closeLightingPanel;
+ const legacyLightingButton=document.getElementById('lightingBtn');
+ if(legacyLightingButton){
+  legacyLightingButton.onclick=()=>{};
+ }
+ const legacyLightingClose=document.getElementById('lightingClose');
+ if(legacyLightingClose){
+  legacyLightingClose.onclick=closeLightingPanel;
+ }
 }
 if(document.readyState==='loading'){
  document.addEventListener('DOMContentLoaded',()=>{
