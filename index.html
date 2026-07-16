@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.36</title>
+<title>Bag of Dungeon 3D v10.37</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -104,7 +104,11 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 
 .slotGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.equipSlot,.backpackSlot{border:2px solid var(--ink);background:#fff6d8;padding:6px;text-align:center;position:relative;overflow:hidden}.equipSlot{min-height:142px;display:flex;flex-direction:column}.equipSlot.wide{grid-column:1/3}.slotLabel{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;border-bottom:1px solid #000;margin-bottom:5px;flex:0 0 auto}.slotItem{font-size:14px;line-height:1.08;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:0;text-align:center;word-break:normal;overflow-wrap:anywhere}.equipSlot .slotItem .spriteWrap{width:82px;height:82px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;flex:0 0 auto}.slotItem .spriteIcon{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;image-rendering:pixelated}.slotEmpty{font-size:13px;opacity:.55;display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 8px}.backpackGrid{display:flex;flex-direction:column;gap:5px}.backpackSlot{min-width:0;min-height:54px;display:flex;align-items:stretch}.backpackSlot .slotItem{width:100%;min-height:72px;display:grid;grid-template-columns:minmax(0,1fr) 58px;grid-template-rows:auto auto;align-items:center;column-gap:10px;row-gap:2px;padding:8px 9px;text-align:left}.backpackSlot .slotName{grid-column:1;grid-row:1;width:100%;text-align:left;line-height:1.15;overflow-wrap:normal;font-weight:bold}.backpackSlot .slotDesc{grid-column:1;grid-row:2;width:100%;text-align:left;font-size:12px;line-height:1.18;font-weight:normal;opacity:.82}.backpackSlot .slotArt{grid-column:2;grid-row:1/3;width:58px;height:58px;display:flex;align-items:center;justify-content:center}.backpackSlot .slotArt .spriteWrap,.backpackSlot .slotArt .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;object-position:center;margin:0}.twoHandedBadge{font-size:10px;background:#000;color:#fff;padding:1px 3px}.peekBtn{font-size:12px;padding:5px 7px;margin:2px}.inventoryWarning{font-weight:bold;color:var(--red);margin:4px 0}
 
-.soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.75}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
+.soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.9;line-height:1.25}
+.soundStatus.github{color:#185c20;font-weight:bold}
+.soundStatus.browser{color:#704400;font-weight:bold}
+.soundStatus.missing{color:#9b1c16;font-weight:bold}
+.soundPath{display:block;font-size:10px;font-weight:normal;opacity:.72;overflow-wrap:anywhere;margin-top:2px}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
 @media(max-width:800px){#app{grid-template-columns:1fr;grid-template-rows:1fr 240px}#side{grid-row:2;border-right:none;border-top:5px solid var(--ink);display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px}#brandHeader{display:none}#log{max-height:105px;min-height:80px}.box{padding:6px}.sectionTitle{margin:3px 0}.itemBtn{width:38px;height:38px;font-size:21px}#inventory{grid-column:1/3}#topbar{font-size:13px}.badge{padding:6px}.tile{--tile:128px}.combatGrid{grid-template-columns:1fr}.card{max-height:90vh;overflow:auto}.charCard{min-height:270px;padding:12px}.charGlyph{height:125px}.charCard h3{font-size:22px}}
 
 /* ===== GLB monster layer v7.21 ===== */
@@ -1078,6 +1082,7 @@ Changes:
 <!-- v10.34: Fixed the secret Item Tester selection buttons. The panel now uses stable item indexes and one delegated click handler, so Ice Staff and all other items equip reliably; the tester closes after selection to show the updated loadout. Invisibility Cloak encounters now explicitly reveal and permanently display the monster as soon as the hero enters/passes its tile, whether the sneak roll succeeds or fails. -->
 <!-- v10.35: Fixed secret Item Tester duplication. Re-equipping Ice Staff or any other tester item no longer drops the previous loadout onto the dungeon tile. Tester replacements are now non-physical, duplicate copies of the selected item are removed from laid tiles, repeated selection is ignored, and Clear Equipment no longer spills tester items onto the board. -->
 <!-- v10.36: Added a hidden consolidated Developer Console. Press Control/Ctrl + Alt/Option + Shift + D to access Item Tester, Save/Load, Asset Manager, Sound Manager, hero restoration, Ring controls, camera centring, monster spawning/revealing/removal and current-tile loot cleanup. Existing individual secret shortcuts remain available. -->
+<!-- v10.37: Rebuilt Sound Manager source detection. Each sound now reports Browser override, GitHub sound loaded, or GitHub sound missing/unreadable and displays the actual/expected file path. GitHub audio is actively tested rather than inferred only from SOUND_PATHS, conventional assets/sounds/<key>.mp3/.ogg/.wav files are discovered automatically, playback uses the active source, and cache-busting ensures newly uploaded sounds replace stale browser copies. -->
 </head>
 <body class="lightingOn">
 
@@ -1178,9 +1183,9 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=8.4"></script>
+<script src="assets/assets.js?v=10.37"></script>
 <script>
-const VERSION='v10.36';
+const VERSION='v10.37';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1459,14 +1464,277 @@ function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.string
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
 function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
 function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
-function playSound(key){if(!soundOn)return;const src=USER_SOUNDS[key]||(window.SOUND_PATHS&&window.SOUND_PATHS[key]);if(src){const a=new Audio(src);a.volume=soundVolume;a.play().catch(()=>fallbackSound(key));a.addEventListener('error',()=>fallbackSound(key),{once:true});return;}fallbackSound(key);}
-function sndMove(){playSound('move')} function sndTile(){playSound('tilePlace')} function sndItem(){playSound('pickup')} function sndHit(){playSound('hit')} function sndSpell(){playSound('spell')} function sndMonster(){playSound('monsterReveal')} function sndWin(){playSound('win')} function sndLose(){playSound('lose')}
-function soundLabel(key){const d=SOUND_DEFS.find(x=>x[0]===key);return d?d[1]:key;}
-function openSoundManager(){const rows=SOUND_DEFS.map(([key,label])=>`<div class="soundRow"><div><b>${label}</b><div class="soundStatus">${USER_SOUNDS[key]?'Browser override':((window.SOUND_PATHS&&window.SOUND_PATHS[key])?'GitHub asset':'Built-in test sound')}</div></div><button onclick="playSound('${key}')">▶</button><button onclick="chooseSound('${key}')">Upload</button><button onclick="resetSound('${key}')" ${USER_SOUNDS[key]?'':'disabled'}>Reset</button></div>`).join('');showModal('Sound Manager','Upload short MP3, OGG or WAV effects. They are stored only in this browser for testing. For GitHub release, use assets/sounds with the same event names.',[{text:'Close',fn:closeModal},{text:soundOn?'Mute':'Unmute',fn:()=>{soundOn=!soundOn;saveSounds();openSoundManager();}},{text:'Reset All',cls:'red',fn:resetAllSounds}]);document.getElementById('modalBody').innerHTML=`<div class="volumeRow"><b>Volume</b><input id="soundVolume" type="range" min="0" max="1" step="0.05" value="${soundVolume}"><span id="soundVolumeValue">${Math.round(soundVolume*100)}%</span></div><div class="small">Recommended: MP3 for broad compatibility; OGG also works in modern browsers; WAV is best quality but much larger. Keep each effect short and preferably under 300 KB for browser storage.</div><div class="soundList">${rows}</div><input id="soundUpload" class="hiddenFile" type="file" accept="audio/mpeg,audio/ogg,audio/wav,.mp3,.ogg,.wav">`;const v=document.getElementById('soundVolume');v.oninput=()=>{soundVolume=Number(v.value);document.getElementById('soundVolumeValue').textContent=Math.round(soundVolume*100)+'%';saveSounds();};}
+const GITHUB_SOUND_CACHE={};
+
+function soundKeyFilename(key){
+ return String(key)
+  .replace(/([a-z0-9])([A-Z])/g,'$1-$2')
+  .replace(/[^a-z0-9-]+/gi,'-')
+  .toLowerCase();
+}
+
+function soundCandidates(key){
+ const configured=window.SOUND_PATHS&&window.SOUND_PATHS[key];
+ const simple=String(key).toLowerCase();
+ const kebab=soundKeyFilename(key);
+ const paths=[];
+
+ if(configured)paths.push(configured);
+
+ ['mp3','ogg','wav'].forEach(ext=>{
+  paths.push(`assets/sounds/${simple}.${ext}`);
+  if(kebab!==simple)paths.push(`assets/sounds/${kebab}.${ext}`);
+ });
+
+ return [...new Set(paths)];
+}
+
+function cacheBustSoundPath(path){
+ if(!path||String(path).startsWith('data:'))return path;
+ const separator=String(path).includes('?')?'&':'?';
+ return `${path}${separator}v=${encodeURIComponent(VERSION)}`;
+}
+
+function testSoundPath(path){
+ return new Promise(resolve=>{
+  const audioTest=new Audio();
+  let finished=false;
+
+  const done=ok=>{
+   if(finished)return;
+   finished=true;
+   audioTest.removeAttribute('src');
+   audioTest.load();
+   resolve(ok);
+  };
+
+  const timer=setTimeout(()=>done(false),3500);
+  audioTest.preload='metadata';
+  audioTest.addEventListener('loadedmetadata',()=>{
+   clearTimeout(timer);
+   done(true);
+  },{once:true});
+  audioTest.addEventListener('canplaythrough',()=>{
+   clearTimeout(timer);
+   done(true);
+  },{once:true});
+  audioTest.addEventListener('error',()=>{
+   clearTimeout(timer);
+   done(false);
+  },{once:true});
+
+  audioTest.src=cacheBustSoundPath(path);
+  audioTest.load();
+ });
+}
+
+async function resolveGitHubSound(key,force=false){
+ if(!force&&Object.prototype.hasOwnProperty.call(GITHUB_SOUND_CACHE,key)){
+  return GITHUB_SOUND_CACHE[key];
+ }
+
+ const candidates=soundCandidates(key);
+ for(const path of candidates){
+  if(await testSoundPath(path)){
+   GITHUB_SOUND_CACHE[key]=path;
+   return path;
+  }
+ }
+
+ GITHUB_SOUND_CACHE[key]=null;
+ return null;
+}
+
+async function activeSoundSource(key){
+ if(USER_SOUNDS[key]){
+  return {type:'browser',src:USER_SOUNDS[key],path:'Stored in this browser'};
+ }
+
+ const githubPath=await resolveGitHubSound(key);
+ if(githubPath){
+  return {type:'github',src:cacheBustSoundPath(githubPath),path:githubPath};
+ }
+
+ return {type:'builtin',src:null,path:`Expected: assets/sounds/${String(key).toLowerCase()}.mp3`};
+}
+
+async function playSound(key){
+ if(!soundOn)return;
+
+ const source=await activeSoundSource(key);
+ if(!source.src){
+  fallbackSound(key);
+  return;
+ }
+
+ const player=new Audio(source.src);
+ player.volume=soundVolume;
+
+ try{
+  await player.play();
+ }catch(error){
+  if(source.type==='github'){
+   delete GITHUB_SOUND_CACHE[key];
+   updateSoundManagerRow(key,{
+    type:'missing',
+    path:source.path
+   });
+  }
+  fallbackSound(key);
+ }
+}
+
+function sndMove(){playSound('move')}
+function sndTile(){playSound('tilePlace')}
+function sndItem(){playSound('pickup')}
+function sndHit(){playSound('hit')}
+function sndSpell(){playSound('spell')}
+function sndMonster(){playSound('monsterReveal')}
+function sndWin(){playSound('win')}
+function sndLose(){playSound('lose')}
+
+function soundLabel(key){
+ const definition=SOUND_DEFS.find(item=>item[0]===key);
+ return definition?definition[1]:key;
+}
+
+function soundStatusHTML(key,status=null){
+ if(USER_SOUNDS[key]){
+  return `<div class="soundStatus browser">Browser override<span class="soundPath">Stored only in this browser</span></div>`;
+ }
+
+ if(status?.type==='github'){
+  return `<div class="soundStatus github">✓ GitHub sound loaded<span class="soundPath">${status.path}</span></div>`;
+ }
+
+ if(status?.type==='missing'){
+  return `<div class="soundStatus missing">GitHub sound missing or unreadable<span class="soundPath">${status.path}</span></div>`;
+ }
+
+ return `<div class="soundStatus" id="sound-status-${key}">Checking GitHub…<span class="soundPath">assets/sounds/${String(key).toLowerCase()}.mp3</span></div>`;
+}
+
+function updateSoundManagerRow(key,status){
+ const row=document.getElementById(`sound-status-wrap-${key}`);
+ if(!row)return;
+ row.innerHTML=soundStatusHTML(key,status);
+}
+
+async function refreshSoundManagerStatuses(){
+ await Promise.all(SOUND_DEFS.map(async([key])=>{
+  if(USER_SOUNDS[key]){
+   updateSoundManagerRow(key,{type:'browser'});
+   return;
+  }
+
+  const path=await resolveGitHubSound(key,true);
+  updateSoundManagerRow(
+   key,
+   path
+    ?{type:'github',path}
+    :{type:'missing',path:`assets/sounds/${String(key).toLowerCase()}.mp3`}
+  );
+ }));
+}
+
+function openSoundManager(){
+ const rows=SOUND_DEFS.map(([key,label])=>`
+  <div class="soundRow">
+   <div>
+    <b>${label}</b>
+    <div id="sound-status-wrap-${key}">
+     ${soundStatusHTML(key)}
+    </div>
+   </div>
+   <button type="button" onclick="playSound('${key}')">▶</button>
+   <button type="button" onclick="chooseSound('${key}')">Upload</button>
+   <button type="button" onclick="resetSound('${key}')" ${USER_SOUNDS[key]?'':'disabled'}>Reset</button>
+  </div>
+ `).join('');
+
+ showModal(
+  'Sound Manager',
+  'The active source is checked in this order: browser override, GitHub sound, then built-in test sound.',
+  [
+   {text:'Close',fn:closeModal},
+   {
+    text:soundOn?'Mute':'Unmute',
+    fn:()=>{
+     soundOn=!soundOn;
+     saveSounds();
+     openSoundManager();
+    }
+   },
+   {text:'Reset All',cls:'red',fn:resetAllSounds}
+  ]
+ );
+
+ document.getElementById('modalBody').innerHTML=`
+  <div class="volumeRow">
+   <b>Volume</b>
+   <input id="soundVolume" type="range" min="0" max="1" step="0.05" value="${soundVolume}">
+   <span id="soundVolumeValue">${Math.round(soundVolume*100)}%</span>
+  </div>
+  <div class="small">
+   Green means the sound was found on GitHub and can be heard by everyone.
+   Brown means a private browser override is active.
+   Red means the expected GitHub file could not be loaded.
+  </div>
+  <div class="soundList">${rows}</div>
+  <input id="soundUpload" class="hiddenFile" type="file" accept="audio/mpeg,audio/ogg,audio/wav,.mp3,.ogg,.wav">
+ `;
+
+ const volumeControl=document.getElementById('soundVolume');
+ volumeControl.oninput=()=>{
+  soundVolume=Number(volumeControl.value);
+  document.getElementById('soundVolumeValue').textContent=Math.round(soundVolume*100)+'%';
+  saveSounds();
+ };
+
+ refreshSoundManagerStatuses();
+}
 let pendingSoundKey=null;
-function chooseSound(key){pendingSoundKey=key;const input=document.getElementById('soundUpload');input.value='';input.onchange=e=>{const file=e.target.files[0];if(!file)return;if(file.size>1500000&&!confirm('This file is fairly large and may exceed browser storage. Continue?'))return;const r=new FileReader();r.onload=()=>{USER_SOUNDS[pendingSoundKey]=r.result;saveSounds();playSound(pendingSoundKey);openSoundManager();};r.readAsDataURL(file);};input.click();}
-function resetSound(key){delete USER_SOUNDS[key];saveSounds();openSoundManager();}
-function resetAllSounds(){if(confirm('Reset all custom sounds?')){USER_SOUNDS={};saveSounds();openSoundManager();}}
+function chooseSound(key){
+ pendingSoundKey=key;
+ const input=document.getElementById('soundUpload');
+ input.value='';
+
+ input.onchange=event=>{
+  const file=event.target.files[0];
+  if(!file)return;
+
+  if(
+   file.size>1500000 &&
+   !confirm('This file is fairly large and may exceed browser storage. Continue?')
+  )return;
+
+  const reader=new FileReader();
+  reader.onload=()=>{
+   USER_SOUNDS[pendingSoundKey]=reader.result;
+   saveSounds();
+   playSound(pendingSoundKey);
+   openSoundManager();
+  };
+  reader.readAsDataURL(file);
+ };
+
+ input.click();
+}
+
+function resetSound(key){
+ delete USER_SOUNDS[key];
+ delete GITHUB_SOUND_CACHE[key];
+ saveSounds();
+ openSoundManager();
+}
+
+function resetAllSounds(){
+ if(!confirm('Reset all browser-uploaded sounds?'))return;
+ USER_SOUNDS={};
+ Object.keys(GITHUB_SOUND_CACHE).forEach(key=>delete GITHUB_SOUND_CACHE[key]);
+ saveSounds();
+ openSoundManager();
+}
 loadSounds();
 window.addEventListener('pointerdown',()=>{try{audio()}catch(e){}},{once:true});
 function createTileDeck(){
