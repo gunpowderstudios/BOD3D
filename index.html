@@ -890,7 +890,8 @@ Changes:
 <!-- v10.25: Blood now uses opaque tile-surface decal geometry instead of transparent overlays. Hero bases, living monsters and corpses correctly hide it, so blood no longer appears through miniatures. -->
 <!-- v10.26: Applied the first formal testing-log fixes. Rusty Armour now lasts for exactly one melee fight and then breaks. The Ring is no longer awarded remotely when its location is revealed or when a distant monster dies; the hero must physically reach the tile after its guardian is gone. In 3D the Ring now hovers, gently bobs and emits a pulsing golden halo/light. Ordinary dropped items also receive a subtle asynchronous bob so loot feels alive without distracting from the tabletop presentation. -->
 <!-- v10.27: Hero Loader Refactor. Every hero GLB is now scaled and centred exactly once inside a clean THREE.Group. The parent group—not the asymmetric visible geometry—is positioned at the exact tile centre and used for all movement, turning, combat staging and recentring. Removed repeated bounding-box corrections during movement, preventing Rill, Duric, Tarak and other asymmetric heroes from jumping away as they rotate. -->
-<!-- v10.29: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
+<!-- v10.28: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
+<!-- v10.29: Removed tipped-over dead monster miniatures from the dungeon while retaining their persistent blood splats and dropped loot. Corpse data is still stored in the game state, so the blood history remains compatible with existing saves. -->
 </head>
 <body class="lightingOff">
 
@@ -2674,9 +2675,7 @@ function chooseCorpsePose(modelPath,size,fallSide=1){
  };
 }
 
-async function //addCorpseMiniature(corpse,x,y,token){
-  return; // disabled corpse models
-
+async function addCorpseMiniature(corpse,x,y,token){
  const file=monsterFile(corpse.name);
  const path='assets/models/'+file;
  const source=await loadModel(path);
@@ -3002,8 +3001,15 @@ async function addTile(key,t,token){
   }
  }
  if(t.corpses&&t.corpses.length){
+  // Keep the persistent blood history, but do not draw tipped-over corpse models.
   for(const corpse of t.corpses){
-   await //addCorpseMiniature(corpse,x,y,token);
+   addBloodStain(
+    x,
+    y,
+    corpse.bloodSeed||1,
+    corpse.offsetX||0,
+    corpse.offsetZ||0
+   );
   }
  }
 
