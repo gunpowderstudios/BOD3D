@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.30</title>
+<title>Bag of Dungeon 3D v10.32</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -792,6 +792,103 @@ body.cinematicCombat #compass{
   box-shadow:none!important;
 }
 
+
+/* Hidden item testing screen — Ctrl/Control + Alt/Option + Shift + I */
+#itemTester{
+  position:fixed;
+  inset:0;
+  z-index:700;
+  display:none;
+  background:rgba(0,0,0,.82);
+  padding:18px;
+}
+#itemTester.open{display:flex;align-items:center;justify-content:center}
+.itemTesterCard{
+  width:min(980px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:var(--panel);
+  border:5px solid var(--ink);
+  box-shadow:7px 7px 0 #000;
+  padding:14px;
+}
+.itemTesterHead{
+  position:sticky;
+  top:-14px;
+  z-index:4;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:-14px -14px 12px;
+  padding:12px 14px;
+  background:var(--panel);
+  border-bottom:4px solid var(--ink);
+}
+.itemTesterHead h2{margin:0}
+.itemTesterTools{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+}
+#itemTesterSearch{
+  flex:1 1 230px;
+  min-width:180px;
+  padding:9px 10px;
+  border:3px solid #000;
+  background:#fff6d8;
+  font:16px Georgia,serif;
+}
+.itemTesterGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:10px;
+}
+.itemTesterEntry{
+  display:grid;
+  grid-template-columns:54px 1fr;
+  gap:9px;
+  align-items:start;
+  border:3px solid #000;
+  background:#fff6d8;
+  padding:8px;
+}
+.itemTesterArt{
+  width:54px;
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.itemTesterArt .spriteWrap,
+.itemTesterArt .spriteIcon{
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:contain;
+}
+.itemTesterName{font-weight:bold;font-size:16px}
+.itemTesterDesc{font-size:12px;line-height:1.2;margin:3px 0 7px}
+.itemTesterButtons{
+  grid-column:1/-1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.itemTesterButtons button{
+  padding:6px 8px;
+  font-size:12px;
+  box-shadow:1px 1px 0 #000;
+}
+@media(max-width:800px){
+  #itemTester{padding:6px}
+  .itemTesterCard{max-height:96dvh;padding:9px}
+  .itemTesterHead{top:-9px;margin:-9px -9px 9px;padding:9px}
+  .itemTesterGrid{grid-template-columns:1fr}
+}
+
 </style>
 <!--
 8BITBOD
@@ -894,6 +991,8 @@ Changes:
 <!-- v10.28: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
 <!-- v10.29: Removed tipped-over dead monster miniatures from the dungeon while retaining their persistent blood splats and dropped loot. Corpse data is still stored in the game state, so the blood history remains compatible with existing saves. -->
 <!-- v10.30: The chosen lighting is now the permanent art-directed default: Lighting On, brightness 25, radius 2.5 tiles, falloff 0.5, ambient 0%, shadow strength 17%, softness 0, exposure 0.45, warm torch colour and hero-following enabled. Removed the Lighting button, panel access, presets and browser overrides from the player experience. -->
+<!-- v10.31: Added a hidden Item Tester screen for balancing weapons and equipment. Press Control/Ctrl + Alt/Option + Shift + I during an active game to search the full item list, equip weapons directly to either hand, wear armour/boots, add the Loyal Bear, place consumables/spells in the backpack, restore Health/AP and clear the current loadout. The screen is absent from all player-facing menus. -->
+<!-- v10.32: Fixed the blank startup screen introduced by the secret Item Tester. Its controls were being wired before the tester HTML existed, causing a null-reference error during page load. The tester now initialises safely after DOMContentLoaded, with element checks, while retaining Control/Ctrl + Alt/Option + Shift + I. -->
 </head>
 <body class="lightingOn">
 
@@ -996,7 +1095,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.30';
+const VERSION='v10.32';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2202,10 +2301,222 @@ function keyboardDirection(e){
 function anyGameOverlayOpen(){
  return document.getElementById('modal').classList.contains('open')||document.getElementById('combat').classList.contains('open');
 }
+
+function cloneTesterItem(name){
+ const master=ITEM_MASTER.find(item=>item.name===name);
+ return master?{...master}:null;
+}
+
+function testerDropDisplaced(items){
+ const unique=[...new Set(items.filter(Boolean))];
+ if(!unique.length)return;
+ const tile=getTile(state.player.x,state.player.y);
+ tile.droppedItems=tile.droppedItems||[];
+ unique.forEach(item=>tile.droppedItems.push(item));
+}
+
+function testerEquipItem(name,slot){
+ if(!state)return;
+ const item=cloneTesterItem(name);
+ if(!item)return;
+
+ const p=state.player;
+
+ if(slot==='armour'){
+  if(p.slots.armour)testerDropDisplaced([p.slots.armour]);
+  p.slots.armour=item;
+ }else if(slot==='boots'){
+  if(p.slots.boots?.name==='Magic Boots'&&p.flags.bootsBonus){
+   p.flags.bootsBonus=false;
+   p.maxAp=Math.max(1,p.maxAp-1);
+   p.ap=Math.min(p.ap,p.maxAp);
+  }
+  if(p.slots.boots)testerDropDisplaced([p.slots.boots]);
+  p.slots.boots=item;
+  if(item.name==='Magic Boots'&&!p.flags.bootsBonus){
+   p.flags.bootsBonus=true;
+   p.maxAp+=1;
+   p.ap+=1;
+  }
+ }else if(slot==='bear'){
+  if(p.companionBear)testerDropDisplaced([p.companionBear]);
+  p.companionBear=item;
+ }else if(slot==='left'||slot==='right'){
+  if(isTwoHanded(item)){
+   testerDropDisplaced([p.slots.left,p.slots.right]);
+   p.slots.left=item;
+   p.slots.right=item;
+  }else{
+   const displaced=p.slots[slot];
+   if(displaced)testerDropDisplaced([displaced]);
+   const other=slot==='left'?'right':'left';
+   if(p.slots[other]===item)p.slots[other]=null;
+   p.slots[slot]=item;
+  }
+ }
+
+ syncEquipment();
+ log('[TEST] Equipped '+item.name+'.','system');
+ toast(item.name+' equipped for testing');
+ render();
+}
+
+function testerAddToBackpack(name){
+ if(!state)return;
+ const item=cloneTesterItem(name);
+ if(!item)return;
+
+ if(isBear(item)){
+  testerEquipItem(name,'bear');
+  return;
+ }
+
+ if(state.player.backpack.length>=BACKPACK_LIMIT){
+  toast('Backpack full — equip it directly or clear equipment');
+  return;
+ }
+
+ state.player.backpack.push(item);
+ syncEquipment();
+ log('[TEST] Added '+item.name+' to backpack.','system');
+ toast(item.name+' added');
+ render();
+}
+
+function testerClearEquipment(){
+ if(!state)return;
+ const p=state.player;
+ const displaced=[
+  p.slots.left,p.slots.right,p.slots.armour,p.slots.boots,p.companionBear
+ ];
+ testerDropDisplaced(displaced);
+
+ if(p.slots.boots?.name==='Magic Boots'&&p.flags.bootsBonus){
+  p.flags.bootsBonus=false;
+  p.maxAp=Math.max(1,p.maxAp-1);
+  p.ap=Math.min(p.ap,p.maxAp);
+ }
+
+ p.slots={left:null,right:null,armour:null,boots:null};
+ p.companionBear=null;
+ syncEquipment();
+ log('[TEST] Equipment cleared; displaced items left on the tile.','system');
+ render();
+ toast('Equipment cleared');
+}
+
+function testerRestoreHero(){
+ if(!state)return;
+ const p=state.player;
+ p.health=p.maxHealth;
+ p.ap=p.maxAp;
+ render();
+ toast('Health and AP restored');
+}
+
+function itemTesterButtons(item){
+ if(isArmour(item)){
+  return `<button data-test-item="${item.name}" data-test-slot="armour">Wear</button>`;
+ }
+ if(isBoots(item)){
+  return `<button data-test-item="${item.name}" data-test-slot="boots">Wear</button>`;
+ }
+ if(isBear(item)){
+  return `<button data-test-item="${item.name}" data-test-slot="bear">Add Bear</button>`;
+ }
+ if(isHandItem(item)){
+  if(isTwoHanded(item)){
+   return `<button data-test-item="${item.name}" data-test-slot="left">Equip Both Hands</button>`;
+  }
+  return `
+   <button data-test-item="${item.name}" data-test-slot="left">Equip Left</button>
+   <button data-test-item="${item.name}" data-test-slot="right">Equip Right</button>`;
+ }
+ return `<button data-test-pack="${item.name}">Add to Backpack</button>`;
+}
+
+function renderItemTester(filter=''){
+ const grid=document.getElementById('itemTesterGrid');
+ if(!grid)return;
+
+ const query=String(filter||'').trim().toLowerCase();
+ const items=ITEM_MASTER.filter(item=>
+  !query ||
+  item.name.toLowerCase().includes(query) ||
+  String(item.desc||'').toLowerCase().includes(query)
+ );
+
+ grid.innerHTML=items.map(item=>`
+  <div class="itemTesterEntry">
+   <div class="itemTesterArt">${iconHTML(item.name,item.icon||'?')}</div>
+   <div>
+    <div class="itemTesterName">${item.name}</div>
+    <div class="itemTesterDesc">${item.desc||''}</div>
+   </div>
+   <div class="itemTesterButtons">
+    ${itemTesterButtons(item)}
+    ${isHandItem(item)||isArmour(item)||isBoots(item)||isBear(item)
+      ?`<button data-test-pack="${item.name}">Backpack</button>`
+      :''}
+   </div>
+  </div>
+ `).join('');
+
+ grid.querySelectorAll('[data-test-item]').forEach(button=>{
+  button.onclick=()=>testerEquipItem(
+   button.dataset.testItem,
+   button.dataset.testSlot
+  );
+ });
+
+ grid.querySelectorAll('[data-test-pack]').forEach(button=>{
+  button.onclick=()=>testerAddToBackpack(button.dataset.testPack);
+ });
+}
+
+function openItemTester(){
+ if(!state){
+  toast('Start a game first');
+  return;
+ }
+ if(
+  document.getElementById('placement').classList.contains('open') ||
+  document.getElementById('combat').classList.contains('open')
+ ){
+  toast('Close the current action first');
+  return;
+ }
+
+ closeModal();
+ renderItemTester('');
+ const panel=document.getElementById('itemTester');
+ panel.classList.add('open');
+ panel.setAttribute('aria-hidden','false');
+
+ const search=document.getElementById('itemTesterSearch');
+ search.value='';
+ setTimeout(()=>search.focus(),30);
+}
+
+function closeItemTester(){
+ const panel=document.getElementById('itemTester');
+ panel.classList.remove('open');
+ panel.setAttribute('aria-hidden','true');
+}
+
 function handleGameKeyboard(e){
+ if(
+  e.code==='Escape' &&
+  document.getElementById('itemTester').classList.contains('open')
+ ){
+  e.preventDefault();
+  closeItemTester();
+  return;
+ }
+
  // Hidden tester shortcuts. These are intentionally absent from the player-facing menu.
  // Mac: Control + Option + Shift. Windows: Ctrl + Alt + Shift.
- // S = save, L = load, A = Asset Manager, M = Sound Manager.
+ // S = save, L = load, A = Asset Manager, M = Sound Manager, I = Item Tester.
  if(e.ctrlKey&&e.altKey&&e.shiftKey&&!e.metaKey){
   if(e.code==='KeyS'){
    e.preventDefault();
@@ -2227,6 +2538,11 @@ function handleGameKeyboard(e){
    e.preventDefault();
    if(document.getElementById('placement').classList.contains('open')||document.getElementById('combat').classList.contains('open'))return;
    closeModal();openSoundManager();
+   return;
+  }
+  if(e.code==='KeyI'){
+   e.preventDefault();
+   openItemTester();
    return;
   }
  }
@@ -2259,6 +2575,35 @@ function handleGameKeyboard(e){
  }
 }
 document.addEventListener('keydown',handleGameKeyboard);
+
+function wireItemTester(){
+ const closeButton=document.getElementById('itemTesterClose');
+ const healButton=document.getElementById('testerHeal');
+ const clearButton=document.getElementById('testerClear');
+ const search=document.getElementById('itemTesterSearch');
+ const panel=document.getElementById('itemTester');
+
+ if(!closeButton||!healButton||!clearButton||!search||!panel)return;
+
+ closeButton.onclick=closeItemTester;
+ healButton.onclick=testerRestoreHero;
+ clearButton.onclick=testerClearEquipment;
+
+ search.addEventListener('input',event=>{
+  renderItemTester(event.target.value);
+ });
+
+ panel.addEventListener('click',event=>{
+  if(event.target.id==='itemTester')closeItemTester();
+ });
+}
+
+if(document.readyState==='loading'){
+ document.addEventListener('DOMContentLoaded',wireItemTester);
+}else{
+ wireItemTester();
+}
+
 function win(){state.gameOver=true;sndWin();closeCombat();showModal('YOU ESCAPED!','You defeated the Dragon and escaped with the Ring of Creation.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
 function lose(){state.gameOver=true;sndLose();closeCombat();showModal('GAME OVER','The dungeon claims another adventurer.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
 renderCharSelect();
@@ -4007,6 +4352,22 @@ window.BOD3D={
 const currentState=window.getBODState?window.getBODState():null;
 if(currentState)renderBoard(currentState);
 </script>
+
+
+<div id="itemTester" aria-hidden="true">
+  <div class="itemTesterCard">
+    <div class="itemTesterHead">
+      <h2>Secret Item Tester</h2>
+      <button id="itemTesterClose" aria-label="Close item tester">×</button>
+    </div>
+    <div class="itemTesterTools">
+      <input id="itemTesterSearch" type="search" placeholder="Search items…">
+      <button id="testerHeal">Restore Health &amp; AP</button>
+      <button id="testerClear">Clear Equipment</button>
+    </div>
+    <div id="itemTesterGrid" class="itemTesterGrid"></div>
+  </div>
+</div>
 
 </body>
 </html>
