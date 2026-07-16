@@ -889,6 +889,84 @@ body.cinematicCombat #compass{
   .itemTesterGrid{grid-template-columns:1fr}
 }
 
+
+/* Combat damage feedback v10.36 */
+.fighter{position:relative;overflow:hidden}
+.combatImpact{
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:20;
+  width:138px;
+  height:118px;
+  transform:translate(-50%,-50%) scale(.25) rotate(-8deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  opacity:0;
+}
+.combatImpact::before{
+  content:"";
+  position:absolute;
+  inset:10px;
+  background:
+    radial-gradient(circle at 48% 48%,#8f0c0c 0 34%,transparent 36%),
+    radial-gradient(circle at 22% 31%,#a41414 0 11%,transparent 13%),
+    radial-gradient(circle at 76% 25%,#7d0909 0 10%,transparent 12%),
+    radial-gradient(circle at 84% 63%,#a41414 0 12%,transparent 14%),
+    radial-gradient(circle at 20% 72%,#760808 0 9%,transparent 11%),
+    radial-gradient(circle at 52% 88%,#990d0d 0 8%,transparent 10%);
+  filter:drop-shadow(0 4px 2px rgba(0,0,0,.65));
+  transform:scale(1.18);
+}
+.combatImpactNumber{
+  position:relative;
+  z-index:2;
+  color:#fff;
+  font:bold 54px/1 Georgia,serif;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000,
+     0 5px 3px rgba(0,0,0,.8);
+}
+.combatImpactLabel{
+  position:absolute;
+  z-index:3;
+  top:4px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#fff5bf;
+  font:bold 16px/1 Georgia,serif;
+  letter-spacing:1px;
+  text-shadow:2px 2px 0 #000,-2px -2px 0 #000;
+}
+.combatImpact.show{
+  animation:combatSplat .85s cubic-bezier(.2,.9,.2,1) forwards;
+}
+.combatImpact.critical::before{
+  filter:
+    drop-shadow(0 0 7px #ffd54f)
+    drop-shadow(0 4px 2px rgba(0,0,0,.7));
+}
+.combatImpact.heroHit{
+  transform:translate(-50%,-50%) scale(.25) rotate(9deg);
+}
+@keyframes combatSplat{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.18) rotate(-18deg)}
+  20%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(5deg)}
+  42%{opacity:1;transform:translate(-50%,-50%) scale(.98) rotate(-3deg)}
+  72%{opacity:1;transform:translate(-50%,-56%) scale(1) rotate(0deg)}
+  100%{opacity:0;transform:translate(-50%,-72%) scale(.84) rotate(3deg)}
+}
+@media(max-width:800px){
+  .combatImpact{width:112px;height:96px}
+  .combatImpactNumber{font-size:43px}
+  .combatImpactLabel{font-size:13px}
+}
+
 </style>
 <!--
 8BITBOD
@@ -996,7 +1074,7 @@ Changes:
 <!-- v10.33: Added a first-pass Three.js spell-effects engine for testing. Fireball now launches a glowing projectile, bursts around the monster and leaves fading smoke; Magic Vine grows along the floor and wraps the target with leaves; Ice Staff fires a frozen bolt followed by shards and frost mist; Tornado surrounds the hero with a spiralling dust column. Effects last approximately 2–3 seconds and clean themselves up automatically. -->
 <!-- v10.34: Fixed the secret Item Tester selection buttons. The panel now uses stable item indexes and one delegated click handler, so Ice Staff and all other items equip reliably; the tester closes after selection to show the updated loadout. Invisibility Cloak encounters now explicitly reveal and permanently display the monster as soon as the hero enters/passes its tile, whether the sneak roll succeeds or fails. -->
 <!-- v10.35: Fixed secret Item Tester duplication. Re-equipping Ice Staff or any other tester item no longer drops the previous loadout onto the dungeon tile. Tester replacements are now non-physical, duplicate copies of the selected item are removed from laid tiles, repeated selection is ignored, and Clear Equipment no longer spills tester items onto the board. -->
-<!-- v10.36: Fixed Fireball testing and gameplay. Fireball now opens the same ranged-target selection used by Bow and Ice Staff, highlights connected monsters at range 1–3, costs 2 AP, rolls 3 dice damage, plays the 3D Fireball effect toward the chosen monster, and is consumed only after a target is selected. A surviving monster charges into no-escape melee under the existing ranged rules. -->
+<!-- v10.36: Added high-impact combat damage feedback. Whenever the hero or monster takes damage, a brief dark-red blood splat appears over the correct fighter card with a large white damage number. Hero critical hits add a CRITICAL label and golden glow. Killing and fatal blows pause briefly so the final damage splat remains visible before combat closes. -->
 </head>
 <body class="lightingOn">
 
@@ -1093,7 +1171,7 @@ Changes:
 
 <div id="placement"><div class="card"><h2>Place Dungeon Tile</h2><div id="placeInfo" class="desc"></div><div class="preview" id="tilePreview"></div><div class="btnrow"><button id="rotBtn">Rotate 90°</button><button id="placeBtn" class="green">Place</button><button id="cancelPlace" class="red">Cancel</button></div><div class="small">Tile must connect back to your current tile.</div></div></div>
 <div id="modal"><div class="card"><h2 id="modalTitle">Item</h2><div id="modalBody" class="desc"></div><div id="modalButtons" class="btnrow"></div></div></div>
-<div id="combat"><div class="card"><h2 id="combatTitle">Combat</h2><div class="combatGrid"><div class="fighter"><div class="bigGlyph" id="heroGlyph">🧑</div><b id="heroCombatName">Hero</b><div id="heroCombatStats"></div></div><div class="fighter"><div class="bigGlyph" id="monsterGlyph">👹</div><b id="monsterName">Monster</b><div id="monsterCombatStats"></div></div></div><div class="diceTray" id="diceTray">Dice will appear here.</div><div class="combatLog" id="combatLog">A monster blocks your path.</div><div id="combatBtns" class="btnrow"></div></div></div>
+<div id="combat"><div class="card"><h2 id="combatTitle">Combat</h2><div class="combatGrid"><div class="fighter" id="heroFighterCard"><div class="combatImpact heroHit" id="heroCombatImpact"><span class="combatImpactLabel"></span><span class="combatImpactNumber"></span></div><div class="bigGlyph" id="heroGlyph">🧑</div><b id="heroCombatName">Hero</b><div id="heroCombatStats"></div></div><div class="fighter" id="monsterFighterCard"><div class="combatImpact" id="monsterCombatImpact"><span class="combatImpactLabel"></span><span class="combatImpactNumber"></span></div><div class="bigGlyph" id="monsterGlyph">👹</div><b id="monsterName">Monster</b><div id="monsterCombatStats"></div></div></div><div class="diceTray" id="diceTray">Dice will appear here.</div><div class="combatLog" id="combatLog">A monster blocks your path.</div><div id="combatBtns" class="btnrow"></div></div></div>
 <div id="toast"></div>
 <div id="devPanel"></div>
 
@@ -1149,7 +1227,7 @@ const ITEM_MASTER=[
  {name:'Vampire Teeth',copies:1,type:'spell',icon:'⌇',desc:'1 use: drain and gain 5 health.',use:'vampire'},
  {name:"Witch's Claw",copies:1,type:'spell',icon:' claw',desc:'1 use: choose and steal item in multiplayer; solo: weaken current monster.',use:'claw'},
  {name:'Elven Bow',copies:1,type:'equipment',slot:'bow',icon:'➶',desc:'Two-handed. Range 1-3. Spend 3 AP for 1 die +2 ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',apply:p=>{p.equipment.bow={name:'Elven Bow',icon:'➶',dice:1,bonus:2};}},
- {name:'Fireball',copies:1,type:'spell',icon:'☄',desc:'1 use. Range 1-3. Spend 2 AP for 3 dice ranged damage. If the monster survives, it charges into melee.',use:'fireball'},
+ {name:'Fireball',copies:1,type:'spell',icon:'☄',desc:'1 use, 2 AP: 3 dice damage to monster.',use:'fireball'},
  {name:'Steel Shield',copies:1,type:'equipment',slot:'shield',icon:'◫',desc:'-1 damage from attacks.',apply:p=>equipBest('shield',1,'Steel Shield','◫')},
  {name:'Magic Shield',copies:1,type:'equipment',slot:'shield',icon:'⬟',desc:'-2 damage from attacks.',apply:p=>equipBest('shield',2,'Magic Shield','⬟')},
  {name:'Strength Potion',copies:1,type:'consumable',icon:'▲',desc:'1 use: +1 combat die for one fight.',use:'strengthPotion'},
@@ -1683,83 +1761,10 @@ function openCombat(tile,options={}){
 }
 function connectedDistance(fromKey,toKey,maxRange){if(fromKey===toKey)return 0;const q=[[fromKey,0]],seen=new Set([fromKey]);while(q.length){const [kk,dst]=q.shift();if(dst>=maxRange)continue;const [x,y]=kk.split(',').map(Number),t=state.tiles[kk];if(!t)continue;for(const dir of dirOrder){if(!t.opens[dir])continue;const dd=DIRS[dir],nk=key(x+dd.dx,y+dd.dy),nt=state.tiles[nk];if(!nt||!nt.opens[dd.opp]||seen.has(nk))continue;if(nk===toKey)return dst+1;seen.add(nk);q.push([nk,dst+1]);}}return Infinity;}
 function rangedTargets(range){const from=key(state.player.x,state.player.y),out=[];for(const [kk,t] of Object.entries(state.tiles)){if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;const distance=connectedDistance(from,kk,range);if(distance>=1&&distance<=range)out.push({key:kk,distance});}return out;}
-function startRangedAttack(type,item=null,consume=null){
- const p=state.player;
- let weapon=null,range=0,cost=0,label='';
-
- if(type==='bow'){
-  weapon=p.equipment.bow;
-  if(!weapon){toast('Equip a Bow first');return;}
-  range=3;
-  cost=3;
-  label=weapon.name;
- }else if(type==='iceStaff'){
-  weapon=p.equipment.staff;
-  if(!weapon){toast('Equip the Ice Staff first');return;}
-  range=2;
-  cost=4;
-  label='Ice Staff';
- }else if(type==='fireball'){
-  if(!item||item.use!=='fireball'){toast('Carry a Fireball first');return;}
-  range=3;
-  cost=2;
-  label='Fireball';
- }else{
-  return;
- }
-
- if(p.ap<cost){toast('Not enough AP');return;}
-
- const targets=rangedTargets(range);
- if(!targets.length){
-  toast('No monsters in range');
-  return;
- }
-
- rangedMode={
-  type,
-  weapon,
-  item,
-  consume,
-  range,
-  cost,
-  label,
-  targetKeys:new Set(targets.map(x=>x.key))
- };
-
- closeModal();
- toast('Choose a monster in range');
- log(label+' ready: choose a monster at range 1-'+range+'.','system');
- render();
-}
+function startRangedAttack(type){const p=state.player;let weapon,range,cost;if(type==='bow'){weapon=p.equipment.bow;if(!weapon){toast('Equip a Bow first');return;}range=3;cost=3;}else{weapon=p.equipment.staff;if(!weapon){toast('Equip the Ice Staff first');return;}range=2;cost=4;}if(p.ap<cost){toast('Not enough AP');return;}const targets=rangedTargets(range);if(!targets.length){toast('No monsters in range');return;}rangedMode={type,weapon,range,cost,targetKeys:new Set(targets.map(x=>x.key))};closeModal();toast('Choose a monster in range');log((type==='bow'?weapon.name:'Ice Staff')+' ready: choose a monster at range 1-'+range+'.','system');render();}
 function cancelRangedAttack(){rangedMode=null;toast('Ranged attack cancelled');render();}
 function rangedKill(tile,tileKey,monster,weaponName,damage){playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log(weaponName+' defeats '+monster.name+' at range with '+damage+' damage.','combat');state.player.killed.push(monster.name);state.monsterDiscard.push(monster);recordMonsterCorpse(tile,tileKey,monster);tile.monster=null;collectRingIfSafe(tileKey);const startingHealth=monster.maxHealth;if(!monster.isDragon){const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0)log(monster.name+' had '+startingHealth+' starting Health: no item reward.','system');else{log(monster.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}render();}
-function fireRangedAt(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(!rangedMode||!rangedMode.targetKeys.has(tileKey))return;const p=state.player,t=state.tiles[tileKey];if(!t)return;if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;sndMonster();log('Your attack reveals '+t.monster.name+'.','combat');}const m=t.monster;if(!m||m.health<=0){toast('No monster there');cancelRangedAttack();return;}m.revealed=true;if(m.isDragon){playSound('dragon');toast('The Dragon is immune to ranged attacks');log('The Red Dragon is immune to ranged attacks.','combat');rangedMode=null;render();return;}if(p.ap<rangedMode.cost){toast('Not enough AP');rangedMode=null;render();return;}p.ap-=rangedMode.cost;
- let damage=0,weaponName='';
-
- if(rangedMode.type==='bow'){
-  weaponName=rangedMode.weapon.name;
-  const die=roll(1).total;
-  damage=die+(weaponName==='Elven Bow'?2:0);
-  playSound('bow');
-  playTileEffect(tileKey,'arrow',700);
-  setTimeout(()=>playSound('arrowHit'),120);
- }else if(rangedMode.type==='iceStaff'){
-  weaponName='Ice Staff';
-  damage=roll(2).total;
-  playSound('ice');
-  window.BOD3D?.playEffect?.('ice',tileKey);
- }else if(rangedMode.type==='fireball'){
-  weaponName='Fireball';
-  damage=roll(3).total;
-  playSound('fireball');
-  window.BOD3D?.playEffect?.('fireball',tileKey);
-
-  // Fireball is a one-use spell. Consume it only once a target is actually chosen.
-  if(rangedMode.consume)rangedMode.consume();
- }
-
- m.health-=damage;log(weaponName+' ranged attack deals '+damage+' damage to '+m.name+'.','combat');const sourceKey=tileKey;rangedMode=null;if(m.health<=0){rangedKill(t,sourceKey,m,weaponName,damage);return;}log(m.name+' survives and charges onto your tile! There is no escape.','combat');
+function fireRangedAt(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(!rangedMode||!rangedMode.targetKeys.has(tileKey))return;const p=state.player,t=state.tiles[tileKey];if(!t)return;if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;sndMonster();log('Your attack reveals '+t.monster.name+'.','combat');}const m=t.monster;if(!m||m.health<=0){toast('No monster there');cancelRangedAttack();return;}m.revealed=true;if(m.isDragon){playSound('dragon');toast('The Dragon is immune to ranged attacks');log('The Red Dragon is immune to ranged attacks.','combat');rangedMode=null;render();return;}if(p.ap<rangedMode.cost){toast('Not enough AP');rangedMode=null;render();return;}p.ap-=rangedMode.cost;let damage=0,weaponName='';if(rangedMode.type==='bow'){weaponName=rangedMode.weapon.name;const die=roll(1).total;damage=die+(weaponName==='Elven Bow'?2:0);playSound('bow');playTileEffect(tileKey,'arrow',700);setTimeout(()=>playSound('arrowHit'),120);}else{weaponName='Ice Staff';damage=roll(2).total;playSound('ice');window.BOD3D?.playEffect?.('ice',tileKey);}m.health-=damage;log(weaponName+' ranged attack deals '+damage+' damage to '+m.name+'.','combat');const sourceKey=tileKey;rangedMode=null;if(m.health<=0){rangedKill(t,sourceKey,m,weaponName,damage);return;}log(m.name+' survives and charges onto your tile! There is no escape.','combat');
 
  // Move the surviving monster from its original ranged tile onto the hero's
  // current tile, matching the physical board-game interpretation of a charge.
@@ -1795,6 +1800,32 @@ function combatItemButtons(wrap){const p=state.player;allCarriedItems().forEach(
 
 function diceHTML(label,rolls){return '<div class="diceGroup"><span class="diceLabel">'+label+'</span>'+rolls.map(v=>'<span class="die">'+v+'</span>').join('')+'</div>';}
 function showDice(playerRolls,monsterRolls,rolling=false){const tray=document.getElementById('diceTray');if(!tray)return;tray.className='diceTray'+(rolling?' rolling':'');tray.innerHTML=diceHTML('You',playerRolls)+diceHTML('Monster',monsterRolls);}
+
+function showCombatImpact(side,amount,options={}){
+ if(!amount||amount<=0)return;
+
+ const element=document.getElementById(
+  side==='hero'?'heroCombatImpact':'monsterCombatImpact'
+ );
+ if(!element)return;
+
+ const number=element.querySelector('.combatImpactNumber');
+ const label=element.querySelector('.combatImpactLabel');
+
+ number.textContent=String(amount);
+ label.textContent=options.critical?'CRITICAL!':'';
+
+ element.classList.remove('show','critical');
+ void element.offsetWidth;
+
+ if(options.critical)element.classList.add('critical');
+ element.classList.add('show');
+
+ setTimeout(()=>{
+  element.classList.remove('show','critical');
+ },900);
+}
+
 function isCritical(rolls){return rolls.length>1 && rolls.every(v=>v===rolls[0]);}
 function fightRound(){
  if(!combat||combat.rolling)return;
@@ -1828,19 +1859,41 @@ function resolveFightRound(){
  showDice(pr.rolls,mr.rolls,false);
  let text='You rolled '+pr.rolls.join(', ')+' = '+pr.total+(crit?' — CRITICAL! dice score doubled to '+(pr.total*2):'')+' + '+pCombatMod()+' = '+pt+'. Monster rolled '+mr.rolls.join(', ')+' = '+mr.total+' + '+m.mod+' = '+mt+'. ';
  let damageToMonster=0;
+ let damageToHero=0;
  const deadeye=p.special==='Dead-eye'&&pr.rolls.includes(6);
  if(deadeye){damageToMonster=Math.max(0,m.health);m.health=0;text+='Dead-eye! Instant kill.';}
  else if(pt>mt){let dmg=pt-mt;if(m.isDragon&&p.equipment.dragonlance){const extra=roll(3).total;dmg+=extra;text+='Dragonlance adds '+extra+' damage. ';}damageToMonster=dmg;m.health-=dmg;text+='You hit for '+dmg+'.';}
- else if(mt>pt){if(combat.monsterSkip){combat.monsterSkip=false;text+=m.name+' is held and misses.';}else{let dmg=Math.max(0,mt-pt-pDamageReduction());p.health-=dmg;text+=m.name+' hits for '+dmg+'.';if(dmg>0&&p.equipment.bear){text+=' Loyal Bear is defeated protecting you.';if(p.companionBear)state.itemDiscard.push(p.companionBear);p.companionBear=null;syncEquipment();}}}
+ else if(mt>pt){if(combat.monsterSkip){combat.monsterSkip=false;text+=m.name+' is held and misses.';}else{let dmg=Math.max(0,mt-pt-pDamageReduction());damageToHero=dmg;p.health-=dmg;text+=m.name+' hits for '+dmg+'.';if(dmg>0&&p.equipment.bear){text+=' Loyal Bear is defeated protecting you.';if(p.companionBear)state.itemDiscard.push(p.companionBear);p.companionBear=null;syncEquipment();}}}
  else{text+='Both miss.';}
  combat.rolling=false;
  combat.mustFightRound=false;
  document.getElementById('combatLog').textContent=text;
  log(text,'combat');
- if(crit){playSound('critical');playCurrentTileEffect('critical',850);}else if(damageToMonster>0){playCurrentTileEffect('hit',650);}
+
+ if(damageToMonster>0){
+  showCombatImpact('monster',damageToMonster,{critical:crit});
+ }
+ if(damageToHero>0){
+  showCombatImpact('hero',damageToHero);
+ }
+
+ if(crit){playSound('critical');playCurrentTileEffect('critical',850);}
+ else if(damageToMonster>0){playCurrentTileEffect('hit',650);}
  else if(pt!==mt)playSound('hit');
- if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');killMonster();return;}
- if(p.health<=0){playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');death();return;}
+
+ if(m.health<=0){
+  log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');
+  renderCombat();
+  setTimeout(()=>killMonster(),620);
+  return;
+ }
+ if(p.health<=0){
+  playSound('heroHurt');
+  log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');
+  renderCombat();
+  setTimeout(()=>death(),620);
+  return;
+ }
  if(mt>pt)playSound('heroHurt');
  render();renderCombat();
 }
@@ -1930,11 +1983,7 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
  if(it.use==='strengthPotion'){p.temp.strength=true;msg='Strength Potion: +1 combat die for this fight.';used=true;}
  if(it.use==='reroll'){p.flags.reroll=true;msg="Imp's Teeth ready: your next combat roll rerolls.";used=true;}
  if(it.use==='iceStaff'){startRangedAttack('iceStaff');return;}
- if(it.use==='fireball'){
-  startRangedAttack('fireball',it,consume);
-  return;
- }
- if(['bomb','daggers','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='daggers'){dmg=roll(2).total;cost=0;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
+ if(['fireball','bomb','daggers','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='fireball'){dmg=roll(3).total;cost=2;window.BOD3D?.playEffect?.('fireball');}if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='daggers'){dmg=roll(2).total;cost=0;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
  if(it.use==='tornado'&&combat){
  if(combat.noEscape){toast('There is no escape from this fight!');return;}
  msg='Tornado carries you safely away.';window.BOD3D?.playEffect?.('tornado');
