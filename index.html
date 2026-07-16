@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.34</title>
+<title>Bag of Dungeon 3D v10.35</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -995,6 +995,7 @@ Changes:
 <!-- v10.32: Fixed the blank startup screen introduced by the secret Item Tester. Its controls were being wired before the tester HTML existed, causing a null-reference error during page load. The tester now initialises safely after DOMContentLoaded, with element checks, while retaining Control/Ctrl + Alt/Option + Shift + I. -->
 <!-- v10.33: Added a first-pass Three.js spell-effects engine for testing. Fireball now launches a glowing projectile, bursts around the monster and leaves fading smoke; Magic Vine grows along the floor and wraps the target with leaves; Ice Staff fires a frozen bolt followed by shards and frost mist; Tornado surrounds the hero with a spiralling dust column. Effects last approximately 2–3 seconds and clean themselves up automatically. -->
 <!-- v10.34: Fixed the secret Item Tester selection buttons. The panel now uses stable item indexes and one delegated click handler, so Ice Staff and all other items equip reliably; the tester closes after selection to show the updated loadout. Invisibility Cloak encounters now explicitly reveal and permanently display the monster as soon as the hero enters/passes its tile, whether the sneak roll succeeds or fails. -->
+<!-- v10.35: Fixed secret Item Tester duplication. Re-equipping Ice Staff or any other tester item no longer drops the previous loadout onto the dungeon tile. Tester replacements are now non-physical, duplicate copies of the selected item are removed from laid tiles, repeated selection is ignored, and Clear Equipment no longer spills tester items onto the board. -->
 </head>
 <body class="lightingOn">
 
@@ -1097,7 +1098,7 @@ Changes:
 
 <script src="assets/assets.js?v=8.4"></script>
 <script>
-const VERSION='v10.34';
+const VERSION='v10.35';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2356,15 +2357,22 @@ function anyGameOverlayOpen(){
 
 function cloneTesterItem(name){
  const master=ITEM_MASTER.find(item=>item.name===name);
- return master?{...master}:null;
+ return master?{...master,_testerItem:true}:null;
 }
 
 function testerDropDisplaced(items){
- const unique=[...new Set(items.filter(Boolean))];
- if(!unique.length)return;
- const tile=getTile(state.player.x,state.player.y);
- tile.droppedItems=tile.droppedItems||[];
- unique.forEach(item=>tile.droppedItems.push(item));
+ // Secret tester replacements are not physical game actions.
+ // Remove the displaced test loadout instead of dropping copies on the board.
+ return;
+}
+
+function testerRemoveBoardCopies(itemName){
+ if(!state||!itemName)return;
+
+ Object.values(state.tiles||{}).forEach(tile=>{
+  if(!Array.isArray(tile.droppedItems))return;
+  tile.droppedItems=tile.droppedItems.filter(item=>item?.name!==itemName);
+ });
 }
 
 function testerEquipItem(name,slot){
@@ -2372,7 +2380,25 @@ function testerEquipItem(name,slot){
  const item=cloneTesterItem(name);
  if(!item)return;
 
+ // Remove copies accidentally created by older tester builds.
+ testerRemoveBoardCopies(name);
+
  const p=state.player;
+
+ // Selecting the same item again should not create or displace another copy.
+ if(
+  (slot==='left'||slot==='right') &&
+  p.slots[slot]?.name===name
+ ){
+  toast(name+' is already equipped');
+  render();
+  return true;
+ }
+
+ // Equipping an item that's also sitting in the backpack should move it,
+ // not leave a second copy behind — otherwise passive item effects (AP
+ // bonuses, light radius, etc.) get counted twice.
+ p.backpack=p.backpack.filter(bp=>bp?.name!==name);
 
  if(slot==='armour'){
   if(p.slots.armour)testerDropDisplaced([p.slots.armour]);
@@ -2419,14 +2445,35 @@ function testerAddToBackpack(name){
  const item=cloneTesterItem(name);
  if(!item)return;
 
+ testerRemoveBoardCopies(name);
+
  if(isBear(item)){
   testerEquipItem(name,'bear');
+  return;
+ }
+
+ const p=state.player;
+ const equippedElsewhere=
+  p.slots.left?.name===name ||
+  p.slots.right?.name===name ||
+  p.slots.armour?.name===name ||
+  p.slots.boots?.name===name ||
+  p.companionBear?.name===name;
+ if(equippedElsewhere){
+  toast(name+' is already equipped');
   return;
  }
 
  if(state.player.backpack.length>=BACKPACK_LIMIT){
   toast('Backpack full — equip it directly or clear equipment');
   return;
+ }
+
+ const existing=state.player.backpack.find(backpackItem=>backpackItem?.name===name);
+ if(existing){
+  toast(name+' is already in the backpack');
+  render();
+  return true;
  }
 
  state.player.backpack.push(item);
@@ -2440,10 +2487,6 @@ function testerAddToBackpack(name){
 function testerClearEquipment(){
  if(!state)return;
  const p=state.player;
- const displaced=[
-  p.slots.left,p.slots.right,p.slots.armour,p.slots.boots,p.companionBear
- ];
- testerDropDisplaced(displaced);
 
  if(p.slots.boots?.name==='Magic Boots'&&p.flags.bootsBonus){
   p.flags.bootsBonus=false;
@@ -2454,7 +2497,7 @@ function testerClearEquipment(){
  p.slots={left:null,right:null,armour:null,boots:null};
  p.companionBear=null;
  syncEquipment();
- log('[TEST] Equipment cleared; displaced items left on the tile.','system');
+ log('[TEST] Equipment cleared without dropping tester items.','system');
  render();
  toast('Equipment cleared');
 }
