@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.42</title>
+<title>Bag of Dungeon 3D v10.43</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -977,6 +977,26 @@ body.cinematicCombat #compass{
   .devConsoleGrid{grid-template-columns:1fr}
 }
 
+
+
+/* ===== Combat impact splats v10.43 ===== */
+#combat .fighter{position:relative;overflow:hidden}
+.combatImpactBurst{position:absolute;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:combatBurstFade .72s ease-out forwards}
+.combatImpactBurst::before{content:"";width:88px;height:88px;border-radius:48% 52% 44% 56%;background:radial-gradient(circle at 46% 44%,#d8251c 0 16%,#9e110d 17% 43%,#5c0705 44% 61%,transparent 63%);filter:drop-shadow(0 3px 1px rgba(0,0,0,.65));transform:rotate(var(--burst-rot,0deg)) scale(.3);animation:combatSplatPop .48s cubic-bezier(.16,.78,.34,1.2) forwards}
+.combatImpactBurst::after{content:"✦";position:absolute;font:bold 66px/1 Georgia,serif;color:#fff0b0;text-shadow:0 0 8px #ffb000,0 3px 0 #7a1208;transform:scale(.2) rotate(-12deg);opacity:.95;animation:combatFlashPop .38s ease-out forwards}
+.combatImpactBurst.heroHit::before{background:radial-gradient(circle at 46% 44%,#c81915 0 16%,#85100c 17% 45%,#430604 46% 62%,transparent 64%)}
+.combatImpactBurst.criticalHit::before{width:112px;height:112px}
+.combatImpactBurst.criticalHit::after{content:"CRITICAL!";font-size:22px;padding:8px 10px;background:#b51610;border:3px solid #fff0b0;box-shadow:3px 3px 0 #000;transform:rotate(-7deg) scale(.25)}
+.combatImpactBurst.killHit::after{content:"KILL!";font-size:28px;padding:7px 11px;background:#111;color:#fff0b0;border:3px solid #b51610;box-shadow:3px 3px 0 #000;transform:rotate(6deg) scale(.25)}
+.combatImpactBurst.missHit::before{display:none}
+.combatImpactBurst.missHit::after{content:"MISS";font-size:27px;color:#111;text-shadow:none;background:#fff0b0;border:3px solid #111;padding:6px 9px;box-shadow:3px 3px 0 #000;transform:rotate(-5deg) scale(.25)}
+.combatScreenFlash{position:fixed;inset:0;z-index:390;pointer-events:none;background:rgba(190,18,12,.18);animation:combatScreenFlash .28s ease-out forwards}
+@keyframes combatSplatPop{0%{transform:rotate(var(--burst-rot,0deg)) scale(.2);opacity:0}55%{transform:rotate(var(--burst-rot,0deg)) scale(1.18);opacity:1}100%{transform:rotate(var(--burst-rot,0deg)) scale(1);opacity:.9}}
+@keyframes combatFlashPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}65%{transform:scale(1.15) rotate(-4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.95}}
+@keyframes combatBurstFade{0%,68%{opacity:1}100%{opacity:0}}
+@keyframes combatScreenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+@media(max-width:800px){.combatImpactBurst::before{width:68px;height:68px}.combatImpactBurst::after{font-size:48px}.combatImpactBurst.criticalHit::after,.combatImpactBurst.killHit::after,.combatImpactBurst.missHit::after{font-size:17px}}
+
 </style>
 <!--
 8BITBOD
@@ -1090,6 +1110,7 @@ Changes:
 <!-- v10.39: Fixed and polished ranged combat presentation. Fireball now appears as a usable range 1–3 item when equipped/carried, costs 2 AP, rolls 3 dice and is consumed only after choosing a target. Bow, Ice Staff and Fireball now first frame the hero, target monster and connecting corridor, then play their projectile/effect before resolving a kill or monster charge. Mobile cinematic combat now uses a smaller 38% height bottom panel and a wider, higher camera frame so both full miniatures remain visible above the controls. -->
 <!-- v10.40: Reorganised the character sheet into Hands, Attire, Companions and Inventory. Invisibility Cloak now uses a dedicated Attire slot and is active only while worn, not while held or stored. Companions is plural and Loyal Bear remains space-free. Artifacts, crystals, bells, consumables and spare equipment continue to use normal inventory capacity. Existing saves gain the new Attire slot automatically. -->
 <!-- v10.42: Follow-up code audit. Monster PNG fallbacks now remain fully opaque and are darkened by colour tint instead of alpha, so the Goblin cannot appear ghost-like even when its GLB falls back to PNG. Asset cache version updated; Flying Daggers ranged consumption and charge flow rechecked. -->
+<!-- v10.43: Restored combat-screen impact splats. Physical hits, criticals, killing blows, hero damage and misses now animate directly over the appropriate fighter card with a brief screen flash. The effect is procedural and works even when optional assets/effects PNG files are absent. Killing animations remain visible briefly before combat closes. -->
 <!-- v10.41: Code-check fixes. Living GLB monster materials are cloned and normalised so exported alpha settings cannot make the Goblin appear transparent; dungeon darkness now dims monster colour rather than lowering miniature opacity. Flying Daggers are now a true one-use ranged spell: range 1-3, 2 AP, 2 dice damage, using the same target selection, cinematic corridor framing, Dragon immunity and surviving-monster charge/no-escape rules as the other ranged attacks. -->
 </head>
 <body class="lightingOn">
@@ -1191,9 +1212,9 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=10.42"></script>
+<script src="assets/assets.js?v=10.43"></script>
 <script>
-const VERSION='v10.42';
+const VERSION='v10.43';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2240,6 +2261,22 @@ function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.mon
  runAway,
  combat.noEscape||combat.mustFightRound
 );combatItemButtons(b);}
+function showCombatImpact(target='monster',kind='hit'){
+ const fighters=document.querySelectorAll('#combat .fighter');
+ const host=target==='hero'?fighters[0]:fighters[1];
+ if(!host)return;
+ host.querySelectorAll('.combatImpactBurst').forEach(el=>el.remove());
+ const burst=document.createElement('div');
+ burst.className='combatImpactBurst '+(target==='hero'?'heroHit ':'')+kind+'Hit';
+ burst.style.setProperty('--burst-rot',Math.floor(Math.random()*50-25)+'deg');
+ host.appendChild(burst);
+ const flash=document.createElement('div');
+ flash.className='combatScreenFlash';
+ document.body.appendChild(flash);
+ setTimeout(()=>burst.remove(),760);
+ setTimeout(()=>flash.remove(),320);
+}
+
 function combatItemButtons(wrap){const p=state.player;allCarriedItems().forEach((it,idx)=>{if((it.type==='spell'||it.type==='consumable'||it.use)&&it.use!=='teleport')addBtn(wrap,(it.icon||'?')+' '+it.name,'gold',()=>useInventoryIndex(idx));});}
 
 function diceHTML(label,rolls){return '<div class="diceGroup"><span class="diceLabel">'+label+'</span>'+rolls.map(v=>'<span class="die">'+v+'</span>').join('')+'</div>';}
@@ -2286,10 +2323,12 @@ function resolveFightRound(){
  combat.mustFightRound=false;
  document.getElementById('combatLog').textContent=text;
  log(text,'combat');
- if(crit){playSound('critical');playCurrentTileEffect('critical',850);}else if(damageToMonster>0){playCurrentTileEffect('hit',650);}
- else if(pt!==mt)playSound('hit');
- if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');killMonster();return;}
- if(p.health<=0){playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');death();return;}
+ if(crit){playSound('critical');playCurrentTileEffect('critical',850);showCombatImpact('monster',m.health<=0?'kill':'critical');}
+ else if(damageToMonster>0){playCurrentTileEffect('hit',650);showCombatImpact('monster',m.health<=0?'kill':'hit');}
+ else if(mt>pt){playSound('hit');showCombatImpact('hero',p.health<=0?'kill':'hit');}
+ else{showCombatImpact('monster','miss');}
+ if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');setTimeout(()=>killMonster(),430);return;}
+ if(p.health<=0){playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');setTimeout(()=>death(),430);return;}
  if(mt>pt)playSound('heroHurt');
  render();renderCombat();
 }
