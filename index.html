@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.45</title>
+<title>Bag of Dungeon 3D v10.46</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -979,11 +979,11 @@ body.cinematicCombat #compass{
 
 
 
-/* ===== Combat impact splats and damage numbers v10.44 ===== */
+/* ===== Combat impact splats and damage numbers v10.46 ===== */
 #combat .fighter{position:relative;overflow:hidden}
-.combatImpactBurst{position:absolute;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:combatBurstFade 1.44s ease-out forwards}
-.combatImpactBurst::before{content:"";width:88px;height:88px;border-radius:48% 52% 44% 56%;background:radial-gradient(circle at 46% 44%,#d8251c 0 16%,#9e110d 17% 43%,#5c0705 44% 61%,transparent 63%);filter:drop-shadow(0 3px 1px rgba(0,0,0,.65));transform:rotate(var(--burst-rot,0deg)) scale(.3);animation:combatSplatPop .96s cubic-bezier(.16,.78,.34,1.2) forwards}
-.combatImpactText{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transform:scale(.2) rotate(-10deg);opacity:.95;animation:combatFlashPop .84s ease-out forwards;text-align:center}
+.combatImpactBurst{position:absolute;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:combatBurstFade .72s ease-out forwards}
+.combatImpactBurst::before{content:"";width:88px;height:88px;border-radius:48% 52% 44% 56%;background:radial-gradient(circle at 46% 44%,#d8251c 0 16%,#9e110d 17% 43%,#5c0705 44% 61%,transparent 63%);filter:drop-shadow(0 3px 1px rgba(0,0,0,.65));transform:rotate(var(--burst-rot,0deg)) scale(.3);animation:combatSplatPop .48s cubic-bezier(.16,.78,.34,1.2) forwards}
+.combatImpactText{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transform:scale(.2) rotate(-10deg);opacity:.95;animation:combatFlashPop .42s ease-out forwards;text-align:center}
 .combatDamageNumber{font:bold 48px/1 Georgia,serif;color:#fff0b0;-webkit-text-stroke:2px #680b06;text-shadow:0 0 8px #ffb000,0 4px 0 #5b0805,3px 3px 0 #000}
 .combatImpactLabel{font:bold 17px/1 Georgia,serif;color:#fff0b0;background:#b51610;border:2px solid #fff0b0;padding:4px 7px;box-shadow:2px 2px 0 #000;white-space:nowrap}
 .combatImpactBurst.heroHit::before{background:radial-gradient(circle at 46% 44%,#c81915 0 16%,#85100c 17% 45%,#430604 46% 62%,transparent 64%)}
@@ -994,12 +994,16 @@ body.cinematicCombat #compass{
 .combatImpactBurst.missHit .combatImpactText{transform:rotate(-5deg) scale(.25)}
 .combatImpactBurst.missHit .combatDamageNumber{display:none}
 .combatImpactBurst.missHit .combatImpactLabel{font-size:27px;color:#111;text-shadow:none;background:#fff0b0;border:3px solid #111;padding:6px 9px}
-.combatScreenFlash{position:fixed;inset:0;z-index:390;pointer-events:none;background:rgba(190,18,12,.18);animation:combatScreenFlash .56s ease-out forwards}
+.combatScreenFlash{position:fixed;inset:0;z-index:390;pointer-events:none;background:rgba(190,18,12,.18);animation:combatScreenFlash .28s ease-out forwards}
 @keyframes combatSplatPop{0%{transform:rotate(var(--burst-rot,0deg)) scale(.2);opacity:0}55%{transform:rotate(var(--burst-rot,0deg)) scale(1.18);opacity:1}100%{transform:rotate(var(--burst-rot,0deg)) scale(1);opacity:.9}}
 @keyframes combatFlashPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}65%{transform:scale(1.15) rotate(-4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.95}}
-@keyframes combatBurstFade{0%,85%{opacity:1}100%{opacity:0}}
+@keyframes combatBurstFade{0%,68%{opacity:1}100%{opacity:0}}
 @keyframes combatScreenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
 @media(max-width:800px){.combatImpactBurst::before{width:68px;height:68px}.combatDamageNumber{font-size:38px;-webkit-text-stroke-width:1px}.combatImpactLabel{font-size:13px}.combatImpactBurst.killHit .combatImpactLabel,.combatImpactBurst.missHit .combatImpactLabel{font-size:17px}}
+
+
+.itemLegend{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px;margin:6px 0}
+.itemLegend div{padding:2px 4px;border:1px solid #000;background:#fff6d8}
 
 </style>
 <!--
@@ -1136,7 +1140,14 @@ Changes:
       <div class="brand3DTitle">3D</div>
     </div>
     <div class="box" id="stats"></div>
-    <div class="box" id="inventory"></div>
+    <div class="box" id="inventory">
+<div class="itemLegend">
+<div>🏹 Ranged Weapon</div>
+<div>✨ Spell (1 use)</div>
+<div>🧪 Potion (1 use)</div>
+<div>🐻 Companion</div>
+</div>
+</div>
     <div class="box" id="killTally"></div><div class="box"><div class="sectionTitle">Quest Log</div><div id="log"></div></div>
   </aside>
   <main id="main">
