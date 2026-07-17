@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.59</title>
+<title>Bag of Dungeon 3D v10.60</title>
 
 <!--
 8BITBOD
@@ -1328,6 +1328,22 @@ button,input,select,textarea{font-family:var(--bod-sans)}
   body.cinematicCombat #combatBtns{grid-column:1/3;grid-row:2}
 }
 
+
+/* ===== Combat interaction lock v10.60 =====
+   While a fight is active, the board is visual only. This prevents accidental
+   monster, item, tile, movement or camera interactions behind the combat tray. */
+body.combatActive #viewport,
+body.combatActive #threeBoard,
+body.combatActive #camera3d,
+body.combatActive #world{
+  pointer-events:none!important;
+  cursor:default!important;
+  touch-action:none!important;
+}
+body.combatActive #main{
+  touch-action:none!important;
+}
+
 </style>
 <!--
 8BITBOD
@@ -1455,6 +1471,7 @@ Changes:
 <!-- v10.57: Added a resilient loading-logo path resolver. It first requests the exact required path assets/ui/bod3d-logo.png, then automatically checks common GitHub case/folder variants if that request returns 404. The browser console now reports the path that successfully loaded or a clear missing-file error. No model, board or selector sizing changes. -->
 <!-- v10.58: Corrected the loading-screen logo filename casing to the exact GitHub asset name bod3D-logo.png. The project URL remains /BOD3D/ and the logo now loads from ./assets/ui/bod3D-logo.png. No loading-screen, hero-preview, board-model or gameplay sizing changes. -->
 <!-- v10.59: Reworked desktop/laptop combat into a wide lower-screen tray. Hero and monster cards sit side by side, with dice, combat log and action buttons in a separate right-hand column. Added shallow-screen compression so combat controls remain visible on laptop browser windows. Mobile combat behaviour is unchanged. -->
+<!-- v10.60: Added a complete combat interaction lock. While combat is active, the board, 3D models, tiles, dropped items, movement and camera controls ignore taps and clicks. Monster and item inspection functions now have defensive combat guards, including Three.js canvas actions. Any existing modal is closed when combat begins. Normal interaction is restored automatically when combat ends. -->
 </head>
 <body class="lightingOn">
 
@@ -1637,7 +1654,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.59';
+const VERSION='v10.60';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2541,6 +2558,7 @@ function promptHealingPool(tile){
  ]);
 }
 function openCombat(tile,options={}){
+ closeModal();
  const m=tile.monster;
  combat={
   tile,
@@ -3157,7 +3175,11 @@ function useItemObject(item){if(item.use==='iceStaff'){useItem(item);return;}use
 function useInventoryIndex(idx){const item=allCarriedItems()[idx];if(item)useItemObject(item);}
 
 function renderKillTally(){const el=document.getElementById('killTally');if(!el||!state)return;const counts={};state.player.killed.forEach(n=>counts[n]=(counts[n]||0)+1);const names=Object.keys(counts);el.innerHTML='<div class="sectionTitle">Monster Tally</div>'+(names.length?'<div class="killGrid">'+names.map(n=>'<span>'+n+'</span><b>×'+counts[n]+'</b>').join('')+'</div>':'<div class="small">No monsters defeated yet.</div>')+'<div class="killTotal">Total kills: '+state.player.killed.length+'</div>';}
-function showTileItems(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}const t=state.tiles[tileKey];if(!t||!t.droppedItems||!t.droppedItems.length)return;playSound('click');const here=tileKey===key(state.player.x,state.player.y);showModal('Items on this tile','',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div>${here?'You are standing on this tile. Choose an item to pick up.':'These items have been left on this tile. Move onto it to pick them up.'}</div><div class="tileItemList">${t.droppedItems.map((item,i)=>`<div class="tileItemCard"><div class="tileItemArt">${iconHTML(item.name,item.icon||'?')}</div><b>${item.name}</b><div class="small">${item.desc||''}</div>${here?`<button style="margin-top:7px" onclick="pickupDroppedFromTile('${tileKey}',${i})">Pick up</button>`:''}</div>`).join('')}</div>`;}
+
+function boardInteractionLocked(){
+ return !!combat || document.body.classList.contains('combatActive');
+}
+function showTileItems(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(boardInteractionLocked())return;const t=state.tiles[tileKey];if(!t||!t.droppedItems||!t.droppedItems.length)return;playSound('click');const here=tileKey===key(state.player.x,state.player.y);showModal('Items on this tile','',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div>${here?'You are standing on this tile. Choose an item to pick up.':'These items have been left on this tile. Move onto it to pick them up.'}</div><div class="tileItemList">${t.droppedItems.map((item,i)=>`<div class="tileItemCard"><div class="tileItemArt">${iconHTML(item.name,item.icon||'?')}</div><b>${item.name}</b><div class="small">${item.desc||''}</div>${here?`<button style="margin-top:7px" onclick="pickupDroppedFromTile('${tileKey}',${i})">Pick up</button>`:''}</div>`).join('')}</div>`;}
 function beginDroppedPickup(tileKey,idx){
  if(tileKey!==key(state.player.x,state.player.y)){toast('Move onto that tile first');return;}
  const t=state.tiles[tileKey];
@@ -3176,7 +3198,7 @@ function beginDroppedPickup(tileKey,idx){
  },0);
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
-function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}const t=state.tiles[tileKey],m=t&&t.monster;if(!m||(m.health<=0)||!(m.revealed||m.peeked))return;playSound('click');const status=m.revealed?'Revealed':'Viewed with Magic Sword';const ringNote=t.hasRing?'<div style="margin-top:12px;font-weight:bold">This monster is guarding the Ring of Creation.</div>':'';showModal(m.name,'',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div style="font-size:72px;line-height:1;margin-bottom:12px">${iconHTML(m.name,m.glyph||'👹')}</div><div><b>Health:</b> ${m.health} / ${m.maxHealth}</div><div><b>Combat:</b> ${m.dice}d6+${m.mod}</div><div><b>Status:</b> ${status}</div>${m.special?`<div style="margin-top:8px"><b>Special:</b> ${m.special}</div>`:''}${ringNote}`;}
+function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(boardInteractionLocked())return;const t=state.tiles[tileKey],m=t&&t.monster;if(!m||(m.health<=0)||!(m.revealed||m.peeked))return;playSound('click');const status=m.revealed?'Revealed':'Viewed with Magic Sword';const ringNote=t.hasRing?'<div style="margin-top:12px;font-weight:bold">This monster is guarding the Ring of Creation.</div>':'';showModal(m.name,'',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div style="font-size:72px;line-height:1;margin-bottom:12px">${iconHTML(m.name,m.glyph||'👹')}</div><div><b>Health:</b> ${m.health} / ${m.maxHealth}</div><div><b>Combat:</b> ${m.dice}d6+${m.mod}</div><div><b>Status:</b> ${status}</div>${m.special?`<div style="margin-top:8px"><b>Special:</b> ${m.special}</div>`:''}${ringNote}`;}
 function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
  const visible=t.droppedItems.slice(0,5);
  d.innerHTML+=`<span class="tileItemStack" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${visible.map((item,i)=>`<span class="tileItemMarker">${iconHTML(item.name,item.icon||'?')}${i===visible.length-1&&t.droppedItems.length>visible.length?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`).join('')}</span>`;
@@ -3196,7 +3218,7 @@ function renderWorld(){const world=document.getElementById('world');world.innerH
  if(teleportItem){d.addEventListener('click',e=>teleportToTile(k,e));}
 }const h=document.createElement('div');h.className='hero';h.innerHTML=state.charDef?iconHTML(state.charDef.name,state.charDef.glyph):iconHTML('Hero','🧑');const heroSize=TILE;const heroOffset=0;h.style.left=(state.player.x*STEP+heroOffset)+'px';h.style.top=(state.player.y*STEP+heroOffset)+'px';world.appendChild(h);wireBoardModels(h);applyPan();applyView3D();if(window.BOD3D&&view3d.enabled)window.BOD3D.render(state);}
 window.BOD3DAction=function(type,tileKey){
- if(!state)return;
+ if(!state||boardInteractionLocked())return;
  if(type==='monster'){
   if(rangedMode)fireRangedAt(tileKey);
   else showMonsterStats(tileKey);
