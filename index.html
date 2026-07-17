@@ -1684,7 +1684,7 @@ const MODEL_HEIGHT_MM={
 };
 
 const MODEL_BASELINE_MM=41;
-const MODEL_BASELINE_SCENE_HEIGHT=1.62;
+const MODEL_BASELINE_SCENE_HEIGHT=1.62*.6; // scaled to ~60% per request — models were too large
 
 function modelKeyFromPath(path){
  const clean=String(path||'').split('?')[0];
@@ -4211,10 +4211,6 @@ function fitHeroPreviewModel(model){
  model.updateMatrixWorld(true);
  const box=new THREE.Box3().setFromObject(model);
  const size=box.getSize(new THREE.Vector3());
- const center=box.getCenter(new THREE.Vector3());
- model.position.x-=center.x;
- model.position.z-=center.z;
- model.position.y-=box.min.y;
  const maxDim=Math.max(size.x,size.y,size.z)||1;
  const targetHeight=2.05;
  const scale=targetHeight/(size.y||maxDim);
@@ -4223,6 +4219,11 @@ function fitHeroPreviewModel(model){
  const scaledBox=new THREE.Box3().setFromObject(model);
  const scaledSize=scaledBox.getSize(new THREE.Vector3());
  const scaledCenter=scaledBox.getCenter(new THREE.Vector3());
+
+ // Centre the model on the pivot that will be rotated (see selectHeroPreview),
+ // not on the model itself — a model's own position offset does not move its
+ // rotation origin, so this alone would still let it swing around whatever
+ // point its source .glb happens to use as (0,0,0), same as Sirrus vs. the rest.
  model.position.x-=scaledCenter.x;
  model.position.z-=scaledCenter.z;
  model.position.y-=scaledBox.min.y;
@@ -4257,10 +4258,18 @@ async function selectHeroPreview(character){
   const gltf=await gltfLoader.loadAsync(src);
   if(token!==heroPreviewToken)return false;
   clearHeroPreviewModel();
-  heroPreviewModel=gltf.scene;
-  normaliseHeroPreviewMaterials(heroPreviewModel);
-  fitHeroPreviewModel(heroPreviewModel);
-  heroPreviewModel.rotation.y=-Math.PI/2;
+  const raw=gltf.scene;
+  normaliseHeroPreviewMaterials(raw);
+  fitHeroPreviewModel(raw);
+
+  // Rotate this pivot, not "raw" directly. The pivot's own origin is exactly
+  // the model's visual centre (raw is offset to sit centred inside it), so
+  // spinning the pivot turns the hero in place instead of swinging it
+  // around whatever point its source .glb happens to use as its origin.
+  const pivot=new THREE.Group();
+  pivot.add(raw);
+  pivot.rotation.y=-Math.PI/2;
+  heroPreviewModel=pivot;
   heroPreviewScene.add(heroPreviewModel);
   heroPreviewClockStart=performance.now();
   heroPreviewLoading?.classList.add('hidden');
@@ -5088,11 +5097,19 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
  model.updateMatrixWorld(true);
  const scaled=new THREE.Box3().setFromObject(model);
  const centre=scaled.getCenter(new THREE.Vector3());
- model.position.set(x*TILE-centre.x,TILE_THICKNESS-scaled.min.y+.025,y*TILE-centre.z);
- model.rotation.y=rotationY;
- markClickable(model,type,key);
- boardGroup.add(model);
- return model;
+
+ // Centre the model at the pivot's local origin, then rotate the pivot
+ // (not the model). Rotating the model directly would spin it around
+ // whatever origin its source .glb happens to use, not its own visual
+ // centre, making it appear to swing/orbit instead of turning in place.
+ model.position.set(-centre.x,-scaled.min.y+.025,-centre.z);
+ const pivot=new THREE.Group();
+ pivot.position.set(x*TILE,TILE_THICKNESS,y*TILE);
+ pivot.rotation.y=rotationY;
+ pivot.add(model);
+ markClickable(pivot,type,key);
+ boardGroup.add(pivot);
+ return pivot;
 }
 async function addHero(character,player,token){
  const file=characterModelFile(character);
