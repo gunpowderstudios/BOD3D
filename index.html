@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.51</title>
+<title>Bag of Dungeon 3D v10.52</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -1064,7 +1064,7 @@ body.cinematicCombat #compass{
 
 
 
-/* ===== Combat impact splats and damage numbers v10.51 ===== */
+/* ===== Combat impact splats and damage numbers v10.52 ===== */
 #combat .fighter{position:relative;overflow:hidden}
 .combatImpactBurst{position:absolute;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:combatBurstFade var(--impact-duration,1.6s) ease-out forwards}
 .combatImpactBurst::before{content:"";width:88px;height:88px;border-radius:48% 52% 44% 56%;background:radial-gradient(circle at 46% 44%,#d8251c 0 16%,#9e110d 17% 43%,#5c0705 44% 61%,transparent 63%);filter:drop-shadow(0 3px 1px rgba(0,0,0,.65));transform:rotate(var(--burst-rot,0deg)) scale(.3);animation:combatSplatPop .58s cubic-bezier(.16,.78,.34,1.2) forwards}
@@ -1111,6 +1111,37 @@ button,input,select,textarea{font-family:var(--bod-sans)}
  .heroSpecialBlock strong{font-size:20px}
  .heroSpecialBlock span{font-size:13px}
  .chooseHeroBtn{font-size:15px;padding:7px 16px}
+}
+
+
+.heroPreviewWrap{
+ transition:opacity .26s ease,transform .34s cubic-bezier(.22,.75,.25,1);
+ will-change:opacity,transform;
+}
+.heroPreviewWrap.heroLeavingLeft{opacity:0;transform:translateX(-42px) scale(.97)}
+.heroPreviewWrap.heroLeavingRight{opacity:0;transform:translateX(42px) scale(.97)}
+.heroPreviewWrap.heroEnteringLeft{animation:heroEnterLeft .42s cubic-bezier(.2,.78,.25,1)}
+.heroPreviewWrap.heroEnteringRight{animation:heroEnterRight .42s cubic-bezier(.2,.78,.25,1)}
+@keyframes heroEnterLeft{
+ from{opacity:0;transform:translateX(-42px) scale(.97)}
+ to{opacity:1;transform:translateX(0) scale(1)}
+}
+@keyframes heroEnterRight{
+ from{opacity:0;transform:translateX(42px) scale(.97)}
+ to{opacity:1;transform:translateX(0) scale(1)}
+}
+.heroArrow.selectorBusy{opacity:.42;pointer-events:none}
+@media(max-width:520px){
+ .heroPreviewWrap.heroLeavingLeft{transform:translateX(-24px) scale(.98)}
+ .heroPreviewWrap.heroLeavingRight{transform:translateX(24px) scale(.98)}
+ @keyframes heroEnterLeft{
+  from{opacity:0;transform:translateX(-24px) scale(.98)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+ }
+ @keyframes heroEnterRight{
+  from{opacity:0;transform:translateX(24px) scale(.98)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+ }
 }
 
 </style>
@@ -1199,7 +1230,7 @@ Changes:
 <!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
 <!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
 <!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
-<!-- v10.51: Hero life-loss polish. On losing a life (before game over), the hero should fall, pause, automatically respawn on the START tile, call the existing Centre Hero camera routine, then fade back into play with the remaining lives displayed. -->
+<!-- v10.52: Hero life-loss polish. On losing a life (before game over), the hero should fall, pause, automatically respawn on the START tile, call the existing Centre Hero camera routine, then fade back into play with the remaining lives displayed. -->
 <!-- v10.15: Corrected the persistent hero movement fix. The hero now moves by the exact change in tile coordinates rather than reapplying the GLB model-origin offset, which could throw some characters far away from the dungeon. Added automatic drift detection and safe rebuilding if a hero ever leaves its intended tile. -->
 <!-- v10.16: Added cinematic tabletop encounters. On entering combat, the camera smoothly zooms toward the monster tile, the hero and monster step apart like physical miniatures and rotate to face each other, and the combat panel fades in while the dungeon remains visible. Closing combat restores the exploration camera and positions. -->
 <!-- v10.17: Improved cinematic encounters and added persistent battlefield history. Hero/monster spacing now uses each GLB's real bounding size so bases, weapons and large creatures do not collide. The camera automatically frames both complete miniatures. Defeated monsters remain on their tile as tipped-over, darkened corpses with procedural blood stains, including ranged kills, so zooming out shows the hero's progress through the dungeon. -->
@@ -1358,9 +1389,9 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=10.51"></script>
+<script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.51';
+const VERSION='v10.52';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1373,10 +1404,15 @@ const CHARACTERS=[
  {id:'galhorn',name:'Galhorn the Elf',glyph:'🏹',desc:'Master archer, quick and sharp.',maxHealth:9,maxAp:6,baseDice:2,baseMod:1,special:'Dead-eye',specialDesc:'Natural 6 in combat gives an instant kill.'}
 ];
 let selectedCharacterIndex=0;
+let heroSelectorBusy=false;
+let queuedHeroDirection=0;
 function selectedCharacter(){return CHARACTERS[selectedCharacterIndex]||CHARACTERS[0];}
-function updateCharacterSelection(direction=0){
- selectedCharacterIndex=(selectedCharacterIndex+direction+CHARACTERS.length)%CHARACTERS.length;
- const c=selectedCharacter();
+function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function setHeroSelectorBusy(busy){
+ heroSelectorBusy=busy;
+ document.querySelectorAll('.heroArrow').forEach(btn=>btn.classList.toggle('selectorBusy',busy));
+}
+function updateHeroInfo(c){
  const panel=document.getElementById('heroInfoPanel');
  panel.classList.remove('changing');void panel.offsetWidth;panel.classList.add('changing');
  document.getElementById('selectedHeroName').textContent=c.name;
@@ -1390,7 +1426,40 @@ function updateCharacterSelection(direction=0){
  fallback.innerHTML=iconHTML(c.name,c.glyph);
  const dots=document.getElementById('heroDots');
  dots.innerHTML=CHARACTERS.map((_,i)=>'<button type="button" class="heroDot '+(i===selectedCharacterIndex?'active':'')+'" data-hero-index="'+i+'" aria-label="Choose hero '+(i+1)+'"></button>').join('');
- if(window.BODHeroPreview)window.BODHeroPreview.select(c);
+}
+async function updateCharacterSelection(direction=0){
+ direction=Math.sign(Number(direction)||0);
+ if(heroSelectorBusy){
+  if(direction)queuedHeroDirection=direction;
+  return;
+ }
+ const wrap=document.getElementById('heroPreviewWrap');
+ if(!direction){
+  updateHeroInfo(selectedCharacter());
+  if(window.BODHeroPreview)await window.BODHeroPreview.select(selectedCharacter());
+  return;
+ }
+ setHeroSelectorBusy(true);
+ const leavingClass=direction>0?'heroLeavingLeft':'heroLeavingRight';
+ const enteringClass=direction>0?'heroEnteringRight':'heroEnteringLeft';
+ wrap.classList.remove('heroEnteringLeft','heroEnteringRight','heroLeavingLeft','heroLeavingRight');
+ wrap.classList.add(leavingClass);
+ await waitMs(280);
+ selectedCharacterIndex=(selectedCharacterIndex+direction+CHARACTERS.length)%CHARACTERS.length;
+ const c=selectedCharacter();
+ updateHeroInfo(c);
+ if(window.BODHeroPreview)await window.BODHeroPreview.select(c);
+ wrap.classList.remove(leavingClass);
+ void wrap.offsetWidth;
+ wrap.classList.add(enteringClass);
+ await waitMs(440);
+ wrap.classList.remove(enteringClass);
+ setHeroSelectorBusy(false);
+ if(queuedHeroDirection){
+  const queued=queuedHeroDirection;
+  queuedHeroDirection=0;
+  updateCharacterSelection(queued);
+ }
 }
 function renderCharSelect(){
  updateCharacterSelection(0);
@@ -1399,7 +1468,7 @@ function renderCharSelect(){
  const choose=document.getElementById('chooseHeroBtn');
  if(prev&&!prev.dataset.wired){prev.dataset.wired='1';prev.onclick=()=>updateCharacterSelection(-1);}
  if(next&&!next.dataset.wired){next.dataset.wired='1';next.onclick=()=>updateCharacterSelection(1);}
- if(choose&&!choose.dataset.wired){choose.dataset.wired='1';choose.onclick=()=>startGame(selectedCharacter());}
+ if(choose&&!choose.dataset.wired){choose.dataset.wired='1';choose.onclick=()=>{if(!heroSelectorBusy)startGame(selectedCharacter());};}
  const dots=document.getElementById('heroDots');
  if(dots&&!dots.dataset.wired){dots.dataset.wired='1';dots.addEventListener('click',e=>{const b=e.target.closest('[data-hero-index]');if(!b)return;selectedCharacterIndex=Number(b.dataset.heroIndex)||0;updateCharacterSelection(0);});}
  if(!document.body.dataset.heroKeysWired){
@@ -1409,10 +1478,30 @@ function renderCharSelect(){
    if(!select||select.classList.contains('hidden'))return;
    if(e.key==='ArrowLeft')updateCharacterSelection(-1);
    if(e.key==='ArrowRight')updateCharacterSelection(1);
-   if(e.key==='Enter')startGame(selectedCharacter());
+   if(e.key==='Enter'&&!heroSelectorBusy)startGame(selectedCharacter());
   });
  }
 }
+
+(function wireHeroSwipe(){
+ const wrap=document.getElementById('heroPreviewWrap');
+ if(!wrap||wrap.dataset.swipeWired)return;
+ wrap.dataset.swipeWired='1';
+ let startX=0,startY=0,tracking=false;
+ wrap.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1||heroSelectorBusy)return;
+  startX=e.touches[0].clientX;startY=e.touches[0].clientY;tracking=true;
+ },{passive:true});
+ wrap.addEventListener('touchend',e=>{
+  if(!tracking||heroSelectorBusy)return;
+  tracking=false;
+  const touch=e.changedTouches[0];
+  const dx=touch.clientX-startX,dy=touch.clientY-startY;
+  if(Math.abs(dx)<54||Math.abs(dx)<Math.abs(dy)*1.35)return;
+  updateCharacterSelection(dx<0?1:-1);
+ },{passive:true});
+})();
+
 function startGame(c){
  audio();
  if(window.BODHeroPreview)window.BODHeroPreview.pause();
@@ -4166,7 +4255,7 @@ async function selectHeroPreview(character){
  const src=modelPath(characterModelFile(character));
  try{
   const gltf=await gltfLoader.loadAsync(src);
-  if(token!==heroPreviewToken)return;
+  if(token!==heroPreviewToken)return false;
   clearHeroPreviewModel();
   heroPreviewModel=gltf.scene;
   normaliseHeroPreviewMaterials(heroPreviewModel);
@@ -4175,12 +4264,14 @@ async function selectHeroPreview(character){
   heroPreviewScene.add(heroPreviewModel);
   heroPreviewClockStart=performance.now();
   heroPreviewLoading?.classList.add('hidden');
+  return true;
  }catch(err){
-  if(token!==heroPreviewToken)return;
+  if(token!==heroPreviewToken)return false;
   clearHeroPreviewModel();
   heroPreviewLoading?.classList.add('hidden');
   if(heroPreviewFallback)heroPreviewFallback.style.display='flex';
   console.warn('Hero preview model failed:',src,err);
+  return false;
  }
 }
 function animateHeroPreview(now=performance.now()){
@@ -6421,6 +6512,7 @@ if(currentState)renderBoard(currentState);
 <script>
 window.RESPAWN_CAMERA_DELAY_MS=2000;
 window.RESPAWN_CENTER_ON_START=true;
-</script><!-- v10.51: Rebuilt the opening character selector as a cinematic hero carousel using the supplied embedded dungeon backdrop. One live GLB hero is shown at a time with previous/next arrows, keyboard navigation, a 3-second 180-degree turn, one-second pause and return turn. Stats, description, special ability, progress dots and Enter the Dungeon button update with the selected hero. Silhouette artwork remains as an automatic fallback if a GLB cannot load. -->
-<!-- v10.51: Refined cinematic hero selector. Removed the duplicate HTML logo/3D overlay so only the logo built into the supplied backdrop remains. Reduced hero model scale, pulled the preview camera back, changed rotation to a seamless continuous 360-degree turn, and tightened the layout for phones and short landscape screens. -->
+</script><!-- v10.52: Rebuilt the opening character selector as a cinematic hero carousel using the supplied embedded dungeon backdrop. One live GLB hero is shown at a time with previous/next arrows, keyboard navigation, a 3-second 180-degree turn, one-second pause and return turn. Stats, description, special ability, progress dots and Enter the Dungeon button update with the selected hero. Silhouette artwork remains as an automatic fallback if a GLB cannot load. -->
+<!-- v10.52: Refined cinematic hero selector. Removed the duplicate HTML logo/3D overlay so only the logo built into the supplied backdrop remains. Reduced hero model scale, pulled the preview camera back, changed rotation to a seamless continuous 360-degree turn, and tightened the layout for phones and short landscape screens. -->
+<!-- v10.52: Smoothed hero browsing. Character changes now fade and slide deliberately, wait for the next GLB to finish loading, restart rotation facing forward, and lock the arrows during the transition. Rapid tapping queues only the final next/previous request instead of loading several heroes at once. Added one-character-per-gesture mobile swiping with a deliberate horizontal threshold. -->
 
