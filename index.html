@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.40</title>
+<title>Bag of Dungeon 3D v10.41</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -1089,6 +1089,7 @@ Changes:
 <!-- v10.38: Expanded the hidden Developer Console with two complete-dungeon generators. One instantly lays the full shuffled dungeon, connects every tile, adds the Exit and reveals random monsters on the proper monster-marker tiles. The second creates the same complete random connected layout with floor tiles only—no monsters or item markers—for camera, lighting and layout testing. Both reset the hero safely to Start and centre the 3D camera after generation. -->
 <!-- v10.39: Fixed and polished ranged combat presentation. Fireball now appears as a usable range 1–3 item when equipped/carried, costs 2 AP, rolls 3 dice and is consumed only after choosing a target. Bow, Ice Staff and Fireball now first frame the hero, target monster and connecting corridor, then play their projectile/effect before resolving a kill or monster charge. Mobile cinematic combat now uses a smaller 38% height bottom panel and a wider, higher camera frame so both full miniatures remain visible above the controls. -->
 <!-- v10.40: Reorganised the character sheet into Hands, Attire, Companions and Inventory. Invisibility Cloak now uses a dedicated Attire slot and is active only while worn, not while held or stored. Companions is plural and Loyal Bear remains space-free. Artifacts, crystals, bells, consumables and spare equipment continue to use normal inventory capacity. Existing saves gain the new Attire slot automatically. -->
+<!-- v10.41: Code-check fixes. Living GLB monster materials are cloned and normalised so exported alpha settings cannot make the Goblin appear transparent; dungeon darkness now dims monster colour rather than lowering miniature opacity. Flying Daggers are now a true one-use ranged spell: range 1-3, 2 AP, 2 dice damage, using the same target selection, cinematic corridor framing, Dragon immunity and surviving-monster charge/no-escape rules as the other ranged attacks. -->
 </head>
 <body class="lightingOn">
 
@@ -1191,7 +1192,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.37"></script>
 <script>
-const VERSION='v10.40';
+const VERSION='v10.41';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1231,7 +1232,7 @@ const ITEM_MASTER=[
  {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: keep items and revive once.',apply:p=>{p.flags.insurance=true;p.other.push({name:'Acme Insurance',icon:'☂',desc:'Auto revive / keep items.'});}},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
  {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'Lay 2 dungeon tiles for 1 AP.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
- {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'1 use: 2 dice damage to a monster.',use:'daggers'},
+ {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
  {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.',apply:p=>equipBest('weapon',1,'Steel Sword','⚔')},
  {name:"Sorcerer's Skull",copies:1,type:'spell',icon:'☠',desc:'1 use: 1 dice damage to all on tile.',use:'skull'},
  {name:'Magic Sword',copies:1,type:'equipment',slot:'weapon',icon:'🗡',desc:'+2 combat roll. View adjacent monster.',apply:p=>equipBest('weapon',2,'Magic Sword','🗡')},
@@ -2065,6 +2066,14 @@ function startRangedAttack(type,item=null,consume=null){
   range=3;
   cost=2;
   label='Fireball';
+ }else if(type==='daggers'){
+  if(!item||item.use!=='daggers'){
+   toast('Carry Flying Daggers first');
+   return;
+  }
+  range=3;
+  cost=2;
+  label='Flying Daggers';
  }else{
   return;
  }
@@ -2168,6 +2177,13 @@ function fireRangedAt(tileKey,event){
    damage=roll(3).total;
    playSound('fireball');
    window.BOD3D?.playEffect?.('fireball',tileKey);
+   attack.consume?.();
+  }else if(attack.type==='daggers'){
+   weaponName='Flying Daggers';
+   damage=roll(2).total;
+   playSound('bow');
+   playTileEffect(tileKey,'arrow',850);
+   setTimeout(()=>playSound('arrowHit'),120);
    attack.consume?.();
   }
 
@@ -2366,7 +2382,11 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
   startRangedAttack('fireball',it,consume);
   return;
  }
- if(['bomb','daggers','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='daggers'){dmg=roll(2).total;cost=0;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
+ if(it.use==='daggers'){
+  startRangedAttack('daggers',it,consume);
+  return;
+ }
+ if(['bomb','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
  if(it.use==='tornado'&&combat){
  if(combat.noEscape){toast('There is no escape from this fight!');return;}
  msg='Tornado carries you safely away.';window.BOD3D?.playEffect?.('tornado');
@@ -4460,8 +4480,30 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
    o.castShadow=true;
    o.receiveShadow=true;
 
-   // GLB clones share resources with the cached source model.
-   // Prevent clearBoard() from disposing those resources during a lighting redraw.
+   // Clone materials per miniature. This prevents one model's darkness/opacity
+   // changes from altering the cached GLB or another monster using that material.
+   if(o.material){
+    o.material=Array.isArray(o.material)
+     ?o.material.map(material=>material.clone())
+     :o.material.clone();
+
+    const materials=Array.isArray(o.material)?o.material:[o.material];
+    materials.forEach(material=>{
+     // Some exported GLBs, notably the Goblin, can retain Alpha Blend settings.
+     // Start every living miniature fully solid; distance darkness is applied below.
+     material.transparent=false;
+     material.opacity=1;
+     material.alphaTest=0;
+     material.depthTest=true;
+     material.depthWrite=true;
+     material.side=THREE.FrontSide;
+     material.needsUpdate=true;
+     material.userData=material.userData||{};
+     material.userData.bodMiniatureMaterial=true;
+    });
+   }
+
+   // Geometry remains shared with the cached GLB and must not be disposed.
    o.userData.cached=true;
   }
  });
@@ -4496,8 +4538,24 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
   const materials=Array.isArray(o.material)?o.material:[o.material];
   materials.forEach(material=>{
    if(material.emissive)material.emissive.setHex(0x000000);
-   material.transparent=darkness>.01;
-   material.opacity=Math.max(.15,1-darkness);
+
+   // Living miniatures stay opaque. Darkness is represented by colour rather
+   // than alpha, preventing the Goblin and other GLBs appearing ghost-like.
+   material.transparent=false;
+   material.opacity=1;
+   material.depthWrite=true;
+   material.depthTest=true;
+
+   if(material.color){
+    const base=material.userData.bodBaseColour
+     ?new THREE.Color(material.userData.bodBaseColour)
+     :material.color.clone();
+    if(!material.userData.bodBaseColour){
+     material.userData.bodBaseColour='#'+base.getHexString();
+    }
+    const shade=Math.max(.18,1-darkness*.82);
+    material.color.copy(base).multiplyScalar(shade);
+   }
    material.needsUpdate=true;
   });
  });
