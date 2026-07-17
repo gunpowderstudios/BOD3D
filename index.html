@@ -3008,6 +3008,7 @@ function testerAddToBackpack(name){
   p.slots.right?.name===name ||
   p.slots.armour?.name===name ||
   p.slots.boots?.name===name ||
+  p.slots.cloak?.name===name ||
   p.companionBear?.name===name;
  if(equippedElsewhere){
   toast(name+' is already equipped');
@@ -3044,7 +3045,7 @@ function testerClearEquipment(){
   p.ap=Math.min(p.ap,p.maxAp);
  }
 
- p.slots={left:null,right:null,armour:null,boots:null};
+ p.slots={left:null,right:null,armour:null,boots:null,cloak:null};
  p.companionBear=null;
  syncEquipment();
  log('[TEST] Equipment cleared without dropping tester items.','system');
