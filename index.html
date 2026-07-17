@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.37</title>
+<title>Bag of Dungeon 3D v10.38</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -1083,6 +1083,7 @@ Changes:
 <!-- v10.35: Fixed secret Item Tester duplication. Re-equipping Ice Staff or any other tester item no longer drops the previous loadout onto the dungeon tile. Tester replacements are now non-physical, duplicate copies of the selected item are removed from laid tiles, repeated selection is ignored, and Clear Equipment no longer spills tester items onto the board. -->
 <!-- v10.36: Added a hidden consolidated Developer Console. Press Control/Ctrl + Alt/Option + Shift + D to access Item Tester, Save/Load, Asset Manager, Sound Manager, hero restoration, Ring controls, camera centring, monster spawning/revealing/removal and current-tile loot cleanup. Existing individual secret shortcuts remain available. -->
 <!-- v10.37: Rebuilt Sound Manager source detection. Each sound now reports Browser override, GitHub sound loaded, or GitHub sound missing/unreadable and displays the actual/expected file path. GitHub audio is actively tested rather than inferred only from SOUND_PATHS, conventional assets/sounds/<key>.mp3/.ogg/.wav files are discovered automatically, playback uses the active source, and cache-busting ensures newly uploaded sounds replace stale browser copies. -->
+<!-- v10.38: Expanded the hidden Developer Console with two complete-dungeon generators. One instantly lays the full shuffled dungeon, connects every tile, adds the Exit and reveals random monsters on the proper monster-marker tiles. The second creates the same complete random connected layout with floor tiles only—no monsters or item markers—for camera, lighting and layout testing. Both reset the hero safely to Start and centre the 3D camera after generation. -->
 </head>
 <body class="lightingOn">
 
@@ -1185,7 +1186,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.37"></script>
 <script>
-const VERSION='v10.37';
+const VERSION='v10.38';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -3098,6 +3099,187 @@ function developerRestore(){
  toast('Health and AP restored');
 }
 
+
+function shuffledDirections(){
+ return shuffle(['N','E','S','W']);
+}
+
+function validRotationsForConnection(kind,requiredDirection){
+ const rotations=[];
+ for(let rotation=0;rotation<4;rotation++){
+  if(openings(kind,rotation)[requiredDirection])rotations.push(rotation);
+ }
+ return rotations;
+}
+
+function developerBuildCompleteDungeon(withMonsters){
+ if(!state)return;
+
+ if(!confirm(
+  withMonsters
+   ?'Replace the current dungeon with a complete random dungeon containing revealed monsters?'
+   :'Replace the current dungeon with a complete random tiles-only dungeon?'
+ ))return;
+
+ closeDeveloperConsole();
+ closeModal();
+ closeCombat();
+
+ // Reset transient actions before rebuilding the board.
+ placement=null;
+ rangedMode=null;
+ teleportItem=null;
+ pendingItemQueue=[];
+ state.gameOver=false;
+ state.exitPlaced=false;
+ state.ringActivated=false;
+ state.ringKey=null;
+ state.ringNumber=null;
+ state.ringRoll=null;
+
+ // Reset the hero to the Start tile while retaining the current character/loadout.
+ state.player.x=0;
+ state.player.y=0;
+ state.player.prevX=0;
+ state.player.prevY=0;
+ state.player.facing='S';
+ state.player.ap=state.player.maxAp;
+
+ // Fresh random bags.
+ const deck=createTileDeck();
+ state.monsterDeck=expanded(MONSTER_MASTER);
+ state.itemDeck=expanded(ITEM_MASTER);
+ state.tileDiscard=[];
+ state.monsterDiscard=[];
+ state.itemDiscard=[];
+
+ const generated={
+  '0,0':{
+   kind:'start',
+   opens:{...TILE_BASE.start},
+   rot:0,
+   visited:true
+  }
+ };
+
+ const frontier=[{x:0,y:0}];
+
+ function findPlacement(raw){
+  const candidates=[];
+
+  for(const origin of frontier){
+   const originTile=generated[key(origin.x,origin.y)];
+   if(!originTile)continue;
+
+   for(const direction of shuffledDirections()){
+    if(!originTile.opens[direction])continue;
+
+    const delta=DIRS[direction];
+    const x=origin.x+delta.dx;
+    const y=origin.y+delta.dy;
+    const tileKey=key(x,y);
+    if(generated[tileKey])continue;
+
+    const required=delta.opp;
+    const rotations=validRotationsForConnection(raw.kind,required);
+    if(!rotations.length)continue;
+
+    candidates.push({
+     x,y,
+     direction,
+     rot:rotations[Math.floor(Math.random()*rotations.length)]
+    });
+   }
+  }
+
+  if(!candidates.length)return null;
+  return candidates[Math.floor(Math.random()*candidates.length)];
+ }
+
+ // Lay every ordinary tile in the real deck.
+ while(deck.length){
+  const raw=deck.pop();
+  const placementChoice=findPlacement(raw);
+
+  if(!placementChoice){
+   console.warn('Complete dungeon generation stopped early.',raw);
+   break;
+  }
+
+  const tile={
+   ...raw,
+   rot:placementChoice.rot,
+   opens:openings(raw.kind,placementChoice.rot),
+   visited:false
+  };
+
+  if(withMonsters){
+   maybePopulate(tile);
+
+   if(tile.monsterPending){
+    tile.monster=drawMonster();
+    tile.monsterPending=false;
+    if(tile.monster)tile.monster.revealed=true;
+   }
+  }else{
+   delete tile.monsterMarker;
+   delete tile.mNumber;
+   delete tile.monsterPending;
+   delete tile.monster;
+   delete tile.itemMarker;
+   delete tile.itemPending;
+   delete tile.item;
+  }
+
+  generated[key(placementChoice.x,placementChoice.y)]=tile;
+  frontier.push({x:placementChoice.x,y:placementChoice.y});
+  state.tileDiscard.push(raw);
+ }
+
+ // Add the Exit as the final connected tile.
+ const exitRaw={kind:'exit'};
+ const exitPlacement=findPlacement(exitRaw);
+
+ if(exitPlacement){
+  const exitTile={
+   kind:'exit',
+   rot:exitPlacement.rot,
+   opens:openings('exit',exitPlacement.rot),
+   visited:false
+  };
+
+  generated[key(exitPlacement.x,exitPlacement.y)]=exitTile;
+  state.exitPlaced=true;
+ }
+
+ state.tiles=generated;
+ state.tileDeck=[];
+
+ if(withMonsters){
+  log('[TEST] Spawned a complete random dungeon with revealed monsters.','system');
+ }else{
+  log('[TEST] Spawned a complete random tiles-only dungeon.','system');
+ }
+
+ // Reset Three.js tracking so the rebuilt board and hero appear reliably.
+ if(window.BOD3D){
+  window.BOD3D.resetHeroFacing?.();
+  window.BOD3D.resetHeroTracking?.();
+ }
+
+ render();
+
+ setTimeout(()=>{
+  window.BOD3D?.centreOnHero?.();
+ },80);
+
+ toast(
+  withMonsters
+   ?'Complete dungeon and monsters spawned'
+   :'Complete tiles-only dungeon spawned'
+ );
+}
+
 function developerAction(action){
  switch(action){
   case 'items':
@@ -3130,6 +3312,12 @@ function developerAction(action){
    break;
   case 'spawn-monster':
    developerSpawnMonster();
+   break;
+  case 'spawn-dungeon-monsters':
+   developerBuildCompleteDungeon(true);
+   break;
+  case 'spawn-dungeon-tiles':
+   developerBuildCompleteDungeon(false);
    break;
   case 'reveal-monsters':
    developerRevealMonsters();
@@ -5493,6 +5681,8 @@ if(currentState)renderBoard(currentState);
           <button type="button" data-dev-action="spawn-monster">Spawn on Current Tile</button>
         </div>
         <div class="devConsoleGrid">
+          <button type="button" data-dev-action="spawn-dungeon-monsters">Spawn Complete Dungeon + Monsters</button>
+          <button type="button" data-dev-action="spawn-dungeon-tiles">Spawn Complete Dungeon — Tiles Only</button>
           <button type="button" data-dev-action="reveal-monsters">Reveal All Laid Monsters</button>
           <button type="button" data-dev-action="kill-monster">Kill Current-Tile Monster</button>
           <button type="button" data-dev-action="ring-tile">Place Ring on Current Tile</button>
