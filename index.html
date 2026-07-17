@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.56</title>
-<link rel="preload" as="image" href="./assets/ui/bod3d-logo.png?v=10.56">
+<title>Bag of Dungeon 3D v10.58</title>
 
 <!--
 8BITBOD
@@ -1304,11 +1303,44 @@ Changes:
 <!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
 <!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
 <!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
+<!-- v10.57: Added a resilient loading-logo path resolver. It first requests the exact required path assets/ui/bod3d-logo.png, then automatically checks common GitHub case/folder variants if that request returns 404. The browser console now reports the path that successfully loaded or a clear missing-file error. No model, board or selector sizing changes. -->
+<!-- v10.58: Corrected the loading-screen logo filename casing to the exact GitHub asset name bod3D-logo.png. The project URL remains /BOD3D/ and the logo now loads from ./assets/ui/bod3D-logo.png. No loading-screen, hero-preview, board-model or gameplay sizing changes. -->
 </head>
 <body class="lightingOn">
 
 <div id="charSelect" style="--loading-backdrop:url('assets/ui/loading-screen.jpg')">
-  <img class="heroSelectLogo" src="./assets/ui/bod3d-logo.png?v=10.56" alt="Bag of Dungeon" decoding="async">
+  <img id="heroSelectLogo" class="heroSelectLogo" src="assets/ui/bod3D-logo.png?v=10.58" alt="Bag of Dungeon" decoding="async">
+  
+<script>
+(function(){
+ const logo=document.getElementById('heroSelectLogo');
+ if(!logo)return;
+
+ const candidates=[
+  './assets/ui/bod3D-logo.png?v=10.58',
+  'assets/ui/bod3D-logo.png?v=10.58'
+ ];
+ let candidateIndex=0;
+
+ logo.addEventListener('load',()=>{
+  console.info('BOD3D logo loaded:',logo.currentSrc||logo.src);
+ });
+
+ logo.addEventListener('error',()=>{
+  candidateIndex++;
+  if(candidateIndex<candidates.length){
+   console.warn('BOD3D logo failed; trying:',candidates[candidateIndex]);
+   logo.src=candidates[candidateIndex];
+  }else{
+   console.error(
+    'BOD3D logo could not be found. Expected GitHub file: assets/ui/bod3D-logo.png'
+   );
+   logo.style.display='none';
+  }
+ });
+})();
+</script>
+
   <div class="heroSelectShade"></div>
   <div class="heroSelectContent">
     <div class="heroStage">
@@ -1432,7 +1464,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.56';
+const VERSION='v10.58';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
