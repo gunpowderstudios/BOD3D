@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.68</title>
+<title>Bag of Dungeon 3D v10.69</title>
 
 <!--
 8BITBOD
@@ -1511,6 +1511,7 @@ Changes:
 <!-- v10.65: Improved monster encounter staging. When entering a newly revealed monster tile, the hero now moves to the screen-left combat position first while the monster waits above the screen-right position. After the hero movement finishes, the monster drops into its combat position and lands before the cinematic fight staging completes. -->
 <!-- v10.67: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
+<!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 </head>
 <body class="lightingOn">
 
@@ -6060,33 +6061,13 @@ function finishRangedAttack(){
 function beginCombatScene(tileKey){
  pendingCombatTileKey=tileKey;
 
- // Start the encounter by pushing the camera in toward the monster tile.
- // The hero is moved to the left during the redraw, while the monster remains
- // suspended on the right for MONSTER_REVEAL_PAUSE_MS before its drop begins.
- const [tx,tz]=String(tileKey).split(',').map(Number);
- if(Number.isFinite(tx)&&Number.isFinite(tz)){
-  const target=new THREE.Vector3(tx*TILE,.72,tz*TILE);
-  const forward=new THREE.Vector3();
-  camera.getWorldDirection(forward);
-  forward.y=0;
-  if(forward.lengthSq()<.0001)forward.set(0,0,-1);
-  forward.normalize();
-  const mobile=window.innerWidth<=800;
-  const revealPosition=target.clone().addScaledVector(
-   forward.clone().negate(),
-   mobile?6.4:4.8
-  );
-  revealPosition.y=mobile?5.0:3.5;
-  cameraLockedToHero=false;
-  lastCameraHeroPosition=null;
-  // Run just after the combat-triggered redraw so normal hero centring cannot
-  // immediately cancel the cinematic push-in.
-  setTimeout(()=>{
-   if(pendingCombatTileKey===tileKey&&!combatScene){
-    startCameraTween(revealPosition,target,620);
-   }
-  },40);
- }
+ // Do not perform a temporary push-in before the real combat framing.
+ // The encounter remains in the current exploration view while the hero takes
+ // position and the monster reveal/drop completes. As soon as the monster has
+ // landed, stageCombatScene() calculates the true hero + monster bounds and the
+ // camera moves directly to that final framing in one smooth transition.
+ cameraLockedToHero=false;
+ lastCameraHeroPosition=null;
 
  const started=performance.now();
  const tryStage=()=>{
