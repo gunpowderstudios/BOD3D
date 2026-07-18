@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.71</title>
+<title>Bag of Dungeon 3D v10.72</title>
 
 <!--
 8BITBOD
@@ -1513,7 +1513,7 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.71: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.72: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 </head>
 <body class="lightingOn">
 
@@ -1696,7 +1696,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.71';
+const VERSION='v10.72';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -7119,6 +7119,64 @@ if(currentState)renderBoard(currentState);
   if(!install()){
     let tries=0; const timer=setInterval(()=>{if(install()||++tries>80)clearInterval(timer);},50);
   }
+})();
+</script>
+
+
+<script>
+/* v10.72 — Start-screen distant monster ambience */
+(function () {
+  const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
+  let distantMonstersAudio = null;
+
+  function startDistantMonstersAmbience() {
+    if (!distantMonstersAudio) {
+      distantMonstersAudio = new Audio(START_AMBIENCE_PATH);
+      distantMonstersAudio.loop = true;
+      distantMonstersAudio.volume = 0.28;
+      distantMonstersAudio.preload = 'auto';
+    }
+    const p = distantMonstersAudio.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        // Browser autoplay fallback: start on the player's first interaction.
+        const resume = () => {
+          distantMonstersAudio.play().catch(() => {});
+          window.removeEventListener('pointerdown', resume);
+          window.removeEventListener('keydown', resume);
+          window.removeEventListener('touchstart', resume);
+        };
+        window.addEventListener('pointerdown', resume, { once: true });
+        window.addEventListener('keydown', resume, { once: true });
+        window.addEventListener('touchstart', resume, { once: true, passive: true });
+      });
+    }
+  }
+
+  function stopDistantMonstersAmbience() {
+    if (!distantMonstersAudio) return;
+    distantMonstersAudio.pause();
+    distantMonstersAudio.currentTime = 0;
+  }
+
+  window.startDistantMonstersAmbience = startDistantMonstersAmbience;
+  window.stopDistantMonstersAmbience = stopDistantMonstersAmbience;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startDistantMonstersAmbience, { once: true });
+  } else {
+    startDistantMonstersAmbience();
+  }
+
+  // Stop ambience when a start/enter/play control is used.
+  document.addEventListener('click', function (event) {
+    const el = event.target && event.target.closest ? event.target.closest('button, [role="button"]') : null;
+    if (!el) return;
+    const label = ((el.id || '') + ' ' + (el.className || '') + ' ' + (el.textContent || '')).toLowerCase();
+    if (/(start|enter|play|begin|adventure)/.test(label)) {
+      setTimeout(stopDistantMonstersAmbience, 50);
+    }
+  }, true);
 })();
 </script>
 
