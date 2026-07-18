@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.72</title>
+<title>Bag of Dungeon 3D v10.73</title>
 
 <!--
 8BITBOD
@@ -1513,7 +1513,7 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.72: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.73: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 </head>
 <body class="lightingOn">
 
@@ -1696,7 +1696,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.72';
+const VERSION='v10.73';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -7124,7 +7124,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.72 — Start-screen distant monster ambience */
+/* v10.73 — Start-screen distant monster ambience */
 (function () {
   const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
   let distantMonstersAudio = null;
@@ -7161,6 +7161,45 @@ if(currentState)renderBoard(currentState);
 
   window.startDistantMonstersAmbience = startDistantMonstersAmbience;
   window.stopDistantMonstersAmbience = stopDistantMonstersAmbience;
+
+  // Stop the ambience as soon as the start/loading screen disappears and dungeon play begins.
+  function watchForDungeonEntry() {
+    const observer = new MutationObserver(() => {
+      const candidates = [
+        document.getElementById('loadingScreen'),
+        document.getElementById('loading-screen'),
+        document.getElementById('startScreen'),
+        document.getElementById('start-screen'),
+        document.querySelector('.loading-screen'),
+        document.querySelector('.start-screen'),
+        document.querySelector('.loadingScreen'),
+        document.querySelector('.startScreen')
+      ].filter(Boolean);
+
+      if (!candidates.length) return;
+      const startVisible = candidates.some(el => {
+        const s = getComputedStyle(el);
+        return s.display !== 'none' && s.visibility !== 'hidden' &&
+               s.opacity !== '0' && el.getClientRects().length > 0;
+      });
+      if (!startVisible) {
+        stopDistantMonstersAmbience();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'hidden']
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', watchForDungeonEntry, { once: true });
+  } else {
+    watchForDungeonEntry();
+  }
+
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startDistantMonstersAmbience, { once: true });
