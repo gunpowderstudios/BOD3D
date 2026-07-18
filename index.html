@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.67</title>
+<title>Bag of Dungeon 3D v10.68</title>
 
 <!--
 8BITBOD
@@ -1510,6 +1510,7 @@ Changes:
 <!-- v10.64: Fixed newly revealed monsters freezing in mid-air when combat staging started before their drop animation had landed. Combat staging now waits for the monster drop to complete. Restored 3D swipe/orbit camera interaction during combat while retaining the gameplay interaction lock, so monster taps no longer open stat popups and tiles/items/movement remain disabled until the fight ends. -->
 <!-- v10.65: Improved monster encounter staging. When entering a newly revealed monster tile, the hero now moves to the screen-left combat position first while the monster waits above the screen-right position. After the hero movement finishes, the monster drops into its combat position and lands before the cinematic fight staging completes. -->
 <!-- v10.67: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
+<!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 </head>
 <body class="lightingOn">
 
@@ -1692,7 +1693,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.67';
+const VERSION='v10.68';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -4682,7 +4683,7 @@ const MONSTER_DROP_HEIGHT=2.6;
 const MONSTER_DROP_MS=380;
 // Fresh melee encounters pause long enough for the camera to zoom in and the
 // monster reveal sound to play before the miniature drops into the fight.
-const MONSTER_REVEAL_PAUSE_MS=2000;
+const MONSTER_REVEAL_PAUSE_MS=1000;
 const monsterDrops=[];
 let cameraShakeState=null;
 
@@ -5933,17 +5934,35 @@ function stageCombatScene(tileKey){
  encounterTarget.y=Math.max(.58,encounterTarget.y*.48);
 
  const mobileCombat=window.innerWidth<=800;
+
+ // Fit the complete encounter into the visible play area. This uses the actual
+ // combined hero + monster bounds, so very large monsters such as the Reacher
+ // automatically pull the camera farther back instead of clipping off-screen.
+ const encounterSphere=encounterBounds.getBoundingSphere(new THREE.Sphere());
+ const vFov=THREE.MathUtils.degToRad(camera.fov||50);
+ const canvasAspect=Math.max(.45,(canvas.clientWidth||window.innerWidth)/Math.max(1,(canvas.clientHeight||window.innerHeight)));
+ // The combat tray occupies the lower part of the screen, effectively reducing
+ // the useful vertical framing area. Use a conservative virtual aspect ratio.
+ const usableHeightFraction=mobileCombat?.56:.68;
+ const effectiveAspect=Math.max(.45,canvasAspect/usableHeightFraction);
+ const hFov=2*Math.atan(Math.tan(vFov/2)*effectiveAspect);
+ const limitingFov=Math.min(vFov,hFov);
+ const sphereFitDistance=encounterSphere.radius/Math.max(.12,Math.sin(limitingFov/2));
+ const fitMargin=mobileCombat?1.55:1.42;
+
  const cameraDistance=Math.max(
-  mobileCombat?7.0:5.4,
-  encounterSize.x*(mobileCombat?2.55:2.05),
-  encounterSize.z*(mobileCombat?2.55:2.05),
-  encounterSize.y*(mobileCombat?2.1:1.7)
+  mobileCombat?7.6:6.2,
+  encounterSize.x*(mobileCombat?2.9:2.45),
+  encounterSize.z*(mobileCombat?2.9:2.45),
+  encounterSize.y*(mobileCombat?2.45:2.05),
+  sphereFitDistance*fitMargin
  );
  const cinematicPosition=encounterTarget.clone()
   .addScaledVector(forward.clone().negate(),cameraDistance);
  cinematicPosition.y=Math.max(
-  mobileCombat?5.1:3.7,
-  encounterSize.y*(mobileCombat?1.35:1.05)+(mobileCombat?2.3:1.7)
+  mobileCombat?5.5:4.2,
+  encounterSize.y*(mobileCombat?1.5:1.25)+(mobileCombat?2.6:2.15),
+  encounterSphere.radius*(mobileCombat?1.55:1.35)+2.0
  );
 
  heroTurn=null;
@@ -6075,7 +6094,7 @@ function beginCombatScene(tileKey){
   if(stageCombatScene(tileKey))return;
   // A newly revealed monster may still be falling. Keep checking until its
   // landing animation is complete instead of freezing combat at the air position.
-  if(performance.now()-started<1200)setTimeout(tryStage,50);
+  if(performance.now()-started<2600)setTimeout(tryStage,50);
  };
  tryStage();
 }
