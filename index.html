@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.75</title>
+<title>Bag of Dungeon 3D v10.77</title>
 
 <!--
 8BITBOD
@@ -1130,28 +1130,87 @@ body.cinematicCombat #compass{
 @keyframes combatBurstFade{0%,78%{opacity:1}100%{opacity:0}}
 @keyframes combatScreenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
 
-/* Screen-wide blood splats: scattered anywhere in the viewport (not confined
-   to the fighter card), reusing the same organic blob shape as the card-level
-   impact burst. Count/size scale with hit/critical/kill in JS. */
+/* Screen-wide blood splats: varied slash, burst, drip and mist shapes.
+   Damage controls size/count in JS; each hit picks random styles and trajectories. */
 .screenBloodSplat{
  position:fixed;z-index:395;pointer-events:none;
  left:var(--splat-x,50%);top:var(--splat-y,50%);
- width:var(--splat-size,70px);height:var(--splat-size,70px);
- border-radius:46% 54% 42% 58%;
- background:radial-gradient(circle at 44% 42%,#e5291d 0 15%,#a3120e 16% 42%,#5c0705 43% 62%,transparent 64%);
+ width:var(--splat-size,90px);height:var(--splat-size,90px);
+ transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.15);
+ transform-origin:50% 50%;opacity:0;
  filter:drop-shadow(0 3px 2px rgba(0,0,0,.7));
- transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.2);
- opacity:0;
- animation:screenSplatPop var(--splat-duration,900ms) cubic-bezier(.14,.8,.3,1.15) forwards;
+ animation:screenSplatPop var(--splat-duration,1100ms) cubic-bezier(.12,.75,.22,1) forwards;
 }
-.screenBloodSplat.heroSplat{
- background:radial-gradient(circle at 44% 42%,#ff6a54 0 15%,#c81915 16% 44%,#5c0705 45% 63%,transparent 65%);
+.screenBloodSplat::before,.screenBloodSplat::after{content:"";position:absolute;inset:0;pointer-events:none}
+.screenBloodSplat.heavySlash{
+ border-radius:48% 52% 44% 56%;
+ background:
+  radial-gradient(ellipse at 42% 48%,#e52b1e 0 13%,#a6110d 14% 37%,#600705 38% 52%,transparent 54%),
+  conic-gradient(from 18deg at 45% 50%,transparent 0 7%,#8e0b08 8% 11%,transparent 12% 21%,#b91812 22% 25%,transparent 26% 100%);
 }
+.screenBloodSplat.heavySlash::before{
+ inset:35% -58% 38% -52%;
+ background:linear-gradient(90deg,transparent,#6f0806 10%,#c71a13 34%,#8b0b08 72%,transparent);
+ border-radius:60% 10% 55% 12%;
+ transform:rotate(-17deg);
+}
+.screenBloodSplat.heavySlash::after{
+ background:
+  radial-gradient(circle at 9% 25%,#a50e0b 0 2%,transparent 2.7%),
+  radial-gradient(circle at 18% 72%,#c51a13 0 1.8%,transparent 2.5%),
+  radial-gradient(circle at 82% 20%,#8d0a07 0 2.4%,transparent 3%),
+  radial-gradient(circle at 93% 67%,#bd1711 0 1.5%,transparent 2.2%);
+}
+.screenBloodSplat.diagonalSlash{
+ width:calc(var(--splat-size,90px)*1.7);height:calc(var(--splat-size,90px)*.52);
+ border-radius:70% 18% 72% 14%;
+ background:linear-gradient(90deg,transparent 0 3%,#6c0705 7%,#d02519 36%,#8e0b08 70%,transparent 97%);
+}
+.screenBloodSplat.diagonalSlash::before{
+ inset:-80% 5% -80% 12%;
+ background:repeating-linear-gradient(98deg,transparent 0 12%,#9d0d09 13% 15%,transparent 16% 27%);
+ opacity:.8;
+}
+.screenBloodSplat.scatterBurst{
+ border-radius:50%;
+ background:
+  radial-gradient(circle at 50% 50%,#df281c 0 10%,#9f100c 11% 25%,transparent 27%),
+  radial-gradient(circle at 20% 28%,#a8110d 0 5%,transparent 6%),
+  radial-gradient(circle at 79% 20%,#c41912 0 4%,transparent 5%),
+  radial-gradient(circle at 16% 76%,#7d0806 0 3.5%,transparent 4.5%),
+  radial-gradient(circle at 83% 74%,#b9140f 0 5%,transparent 6%);
+}
+.screenBloodSplat.scatterBurst::before{
+ inset:-28%;
+ background:repeating-conic-gradient(from 0deg,transparent 0 13deg,#8e0b08 14deg 17deg,transparent 18deg 35deg);
+ clip-path:polygon(48% 0,54% 36%,71% 5%,62% 41%,100% 23%,67% 47%,96% 58%,65% 55%,82% 100%,57% 63%,49% 100%,46% 62%,9% 94%,37% 55%,0 60%,34% 48%,5% 25%,39% 41%);
+}
+.screenBloodSplat.dripSpatter{
+ background:
+  radial-gradient(ellipse at 50% 27%,#d52218 0 15%,#950d09 16% 34%,transparent 36%),
+  linear-gradient(90deg,transparent 16%,#8b0a07 18% 22%,transparent 24% 41%,#ba1510 43% 49%,transparent 51% 68%,#760705 70% 74%,transparent 76%);
+}
+.screenBloodSplat.dripSpatter::before{
+ top:28%;height:110%;
+ background:linear-gradient(90deg,transparent 18%,#850906 19% 22%,transparent 23% 45%,#a30e0b 46% 50%,transparent 51% 70%,#6f0605 71% 73%,transparent 74%);
+ filter:blur(.3px);
+}
+.screenBloodSplat.mistSpeckle{
+ background:
+  radial-gradient(circle at 12% 22%,#a90f0b 0 2%,transparent 2.8%),
+  radial-gradient(circle at 31% 62%,#d21f17 0 1.5%,transparent 2.2%),
+  radial-gradient(circle at 48% 35%,#8d0a07 0 2.4%,transparent 3%),
+  radial-gradient(circle at 67% 72%,#bd1711 0 1.7%,transparent 2.4%),
+  radial-gradient(circle at 86% 29%,#780705 0 2%,transparent 2.7%),
+  radial-gradient(circle at 74% 48%,#d5261a 0 1.2%,transparent 2%);
+}
+.screenBloodSplat.heroSplat{filter:sepia(.08) saturate(1.2) drop-shadow(0 3px 2px rgba(0,0,0,.7))}
 @keyframes screenSplatPop{
- 0%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.15);opacity:0}
- 18%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1.12);opacity:1}
- 28%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1);opacity:.95}
- 100%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1);opacity:0}
+ 0%{transform:translate(-50%,-50%) translate(calc(var(--sweep-x)*-.35),calc(var(--sweep-y)*-.35)) rotate(var(--splat-rot,0deg)) scale(.08);opacity:0}
+ 14%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1.13);opacity:1}
+ 27%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1);opacity:.96}
+ 78%{opacity:.82}
+ 100%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1.02);opacity:0}
 }
 
 @media(max-width:800px){.combatImpactBurst::before{width:68px;height:68px}.combatDamageNumber{font-size:38px;-webkit-text-stroke-width:1px}.combatImpactLabel{font-size:13px}.combatImpactBurst.killHit .combatImpactLabel,.combatImpactBurst.missHit .combatImpactLabel{font-size:17px}}
@@ -1513,10 +1572,10 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.75: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.77: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 
 <style>
-/* v10.75 — Centre combat panel within the black 3D play area */
+/* v10.77 — Centre combat panel within the black 3D play area */
 @media (min-width: 701px) {
   #combatPanel {
     left: calc(var(--sidebar-width, 230px) + (100vw - var(--sidebar-width, 230px)) / 2) !important;
@@ -1526,6 +1585,8 @@ Changes:
 }
 </style>
 
+<!-- v10.77: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
+<!-- v10.77: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
 </head>
 <body class="lightingOn">
 
@@ -1708,7 +1769,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.75';
+const VERSION='v10.77';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1856,7 +1917,7 @@ const ITEM_MASTER=[
  {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: keep items and revive once.',apply:p=>{p.flags.insurance=true;p.other.push({name:'Acme Insurance',icon:'☂',desc:'Auto revive / keep items.'});}},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
  {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'Lay 2 dungeon tiles for 1 AP.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
- {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
+ {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Can fly around connected corners. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
  {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.',apply:p=>equipBest('weapon',1,'Steel Sword','⚔')},
  {name:"Sorcerer's Skull",copies:1,type:'spell',icon:'☠',desc:'1 use: 1 dice damage to all on tile.',use:'skull'},
  {name:'Magic Sword',copies:1,type:'equipment',slot:'weapon',icon:'🗡',desc:'+2 combat roll. View adjacent monster.',apply:p=>equipBest('weapon',2,'Magic Sword','🗡')},
@@ -2095,7 +2156,7 @@ function monsterLandSoundKey(name){
 }
 
 const SOUND_DEFS=[
- ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click'],
+ ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['sword','Hand weapon attack'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click'],
  // One landing-thud sound per monster, played when its reveal drop-in
  // animation hits the floor. File names follow the usual kebab convention,
  // e.g. Goblin -> assets/sounds/land-goblin.mp3, Giant Snake -> land-giant-snake.mp3.
@@ -2107,7 +2168,7 @@ function loadSounds(){try{USER_SOUNDS=JSON.parse(localStorage.getItem('bodDigita
 function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.stringify(USER_SOUNDS));localStorage.setItem('bodDigitalSoundVolume',String(soundVolume));localStorage.setItem('bodDigitalSoundOn',String(soundOn));}catch(e){alert('This sound is too large for browser storage. Use a shorter/compressed MP3 or add it to assets/sounds on GitHub.');}}
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
 function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
-function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
+function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
 const GITHUB_SOUND_CACHE={};
 
 function soundKeyFilename(key){
@@ -2679,7 +2740,33 @@ function openCombat(tile,options={}){
  renderCombat();
 }
 function connectedDistance(fromKey,toKey,maxRange){if(fromKey===toKey)return 0;const q=[[fromKey,0]],seen=new Set([fromKey]);while(q.length){const [kk,dst]=q.shift();if(dst>=maxRange)continue;const [x,y]=kk.split(',').map(Number),t=state.tiles[kk];if(!t)continue;for(const dir of dirOrder){if(!t.opens[dir])continue;const dd=DIRS[dir],nk=key(x+dd.dx,y+dd.dy),nt=state.tiles[nk];if(!nt||!nt.opens[dd.opp]||seen.has(nk))continue;if(nk===toKey)return dst+1;seen.add(nk);q.push([nk,dst+1]);}}return Infinity;}
-function rangedTargets(range){const from=key(state.player.x,state.player.y),out=[];for(const [kk,t] of Object.entries(state.tiles)){if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;const distance=connectedDistance(from,kk,range);if(distance>=1&&distance<=range)out.push({key:kk,distance});}return out;}
+function straightCorridorDistance(fromKey,toKey,maxRange){
+ if(fromKey===toKey)return 0;
+ const [fx,fy]=fromKey.split(',').map(Number),[tx,ty]=toKey.split(',').map(Number);
+ let dir=null,steps=0;
+ if(fx===tx){dir=ty<fy?'N':'S';steps=Math.abs(ty-fy);}
+ else if(fy===ty){dir=tx<fx?'W':'E';steps=Math.abs(tx-fx);}
+ else return Infinity;
+ if(steps<1||steps>maxRange)return Infinity;
+ let x=fx,y=fy;
+ const dd=DIRS[dir];
+ for(let i=0;i<steps;i++){
+  const t=state.tiles[key(x,y)];
+  const nx=x+dd.dx,ny=y+dd.dy,nt=state.tiles[key(nx,ny)];
+  if(!t||!nt||!t.opens[dir]||!nt.opens[dd.opp])return Infinity;
+  x=nx;y=ny;
+ }
+ return steps;
+}
+function rangedTargets(range,allowCorners=false){
+ const from=key(state.player.x,state.player.y),out=[];
+ for(const [kk,t] of Object.entries(state.tiles)){
+  if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;
+  const distance=allowCorners?connectedDistance(from,kk,range):straightCorridorDistance(from,kk,range);
+  if(distance>=1&&distance<=range)out.push({key:kk,distance});
+ }
+ return out;
+}
 function startRangedAttack(type,item=null,consume=null){
  const p=state.player;
  let weapon=null,range=0,cost=0,label='';
@@ -2718,7 +2805,7 @@ function startRangedAttack(type,item=null,consume=null){
 
  if(p.ap<cost){toast('Not enough AP');return;}
 
- const targets=rangedTargets(range);
+ const targets=rangedTargets(range,type==='daggers');
  if(!targets.length){
   toast('No monsters in range');
   return;
@@ -2737,7 +2824,7 @@ function startRangedAttack(type,item=null,consume=null){
 
  closeModal();
  toast('Choose a monster in range');
- log(label+' ready: choose a monster at range 1-'+range+'.','system');
+ log(label+' ready: choose a monster at range 1-'+range+(type==='daggers'?' along any connected path.':' in a straight corridor.') ,'system');
  render();
 }
 function cancelRangedAttack(){rangedMode=null;toast('Ranged attack cancelled');render();}
@@ -2808,18 +2895,18 @@ function fireRangedAt(tileKey,event){
   }else if(attack.type==='iceStaff'){
    weaponName='Ice Staff';
    damage=roll(2).total;
-   playSound('ice');
+   playSound('spell');
    window.BOD3D?.playEffect?.('ice',tileKey);
   }else if(attack.type==='fireball'){
    weaponName='Fireball';
    damage=roll(3).total;
-   playSound('fireball');
+   playSound('spell');
    window.BOD3D?.playEffect?.('fireball',tileKey);
    attack.consume?.();
   }else if(attack.type==='daggers'){
    weaponName='Flying Daggers';
    damage=roll(2).total;
-   playSound('bow');
+   playSound('spell');
    playTileEffect(tileKey,'arrow',850);
    setTimeout(()=>playSound('arrowHit'),120);
    attack.consume?.();
@@ -2904,31 +2991,41 @@ function showCombatImpact(target='monster',kind='hit',damage=0){
  document.body.appendChild(flash);
  setTimeout(()=>burst.remove(),duration+80);
  setTimeout(()=>flash.remove(),flashDuration+40);
- if(kind!=='miss')spawnScreenBloodSplats(target,kind);
+ if(kind!=='miss')spawnScreenBloodSplats(target,kind,safeDamage);
  return duration;
 }
 
-// Screen-wide blood spray, separate from the card-confined burst above.
-// Splats land anywhere in the viewport for a bigger, flashier hit.
-const SCREEN_SPLAT_COUNT={hit:2,critical:4,kill:6};
-const SCREEN_SPLAT_BASE_SIZE={hit:60,critical:85,kill:110};
-function spawnScreenBloodSplats(target='monster',kind='hit'){
- const count=SCREEN_SPLAT_COUNT[kind]||SCREEN_SPLAT_COUNT.hit;
- const baseSize=(SCREEN_SPLAT_BASE_SIZE[kind]||SCREEN_SPLAT_BASE_SIZE.hit)*(window.innerWidth<800?.7:1);
+// Screen-wide sword-and-sorcery blood spray, separate from the card-confined burst above.
+// Random styles and positions; larger damage creates larger, denser splats.
+const SCREEN_SPLAT_COUNT={hit:3,critical:5,kill:8};
+const SCREEN_SPLAT_BASE_SIZE={hit:70,critical:105,kill:145};
+const SCREEN_SPLAT_STYLES=['heavySlash','diagonalSlash','scatterBurst','dripSpatter','mistSpeckle'];
+function spawnScreenBloodSplats(target='monster',kind='hit',damage=0){
+ const damageValue=Math.max(1,Number(damage)||1);
+ const damageScale=Math.min(2.15,.72+damageValue*.12);
+ const count=(SCREEN_SPLAT_COUNT[kind]||SCREEN_SPLAT_COUNT.hit)+Math.min(3,Math.floor(damageValue/4));
+ const baseSize=(SCREEN_SPLAT_BASE_SIZE[kind]||SCREEN_SPLAT_BASE_SIZE.hit)*damageScale*(window.innerWidth<800?.62:1);
+ const direction=Math.random()<.5?1:-1;
  for(let i=0;i<count;i++){
   const splat=document.createElement('div');
-  splat.className='screenBloodSplat'+(target==='hero'?' heroSplat':'');
-  const size=Math.round(baseSize*(.7+Math.random()*.6));
-  const duration=750+Math.random()*450;
+  const style=SCREEN_SPLAT_STYLES[Math.floor(Math.random()*SCREEN_SPLAT_STYLES.length)];
+  splat.className='screenBloodSplat '+style+(target==='hero'?' heroSplat':'');
+  const emphasis=i===0?1.35:1;
+  const size=Math.round(baseSize*(.45+Math.random()*.7)*emphasis);
+  const duration=900+Math.random()*650;
+  const x=8+Math.random()*84;
+  const y=8+Math.random()*78;
+  const sweepX=direction*(25+Math.random()*90);
+  const sweepY=(Math.random()-.5)*90;
   splat.style.setProperty('--splat-size',size+'px');
   splat.style.setProperty('--splat-rot',Math.floor(Math.random()*360)+'deg');
   splat.style.setProperty('--splat-duration',Math.round(duration)+'ms');
-  // Keep splats out of the extreme edges so they read as "on screen",
-  // not clipped against the browser chrome.
-  splat.style.setProperty('--splat-x',(12+Math.random()*76)+'vw');
-  splat.style.setProperty('--splat-y',(14+Math.random()*66)+'vh');
+  splat.style.setProperty('--splat-x',x+'vw');
+  splat.style.setProperty('--splat-y',y+'vh');
+  splat.style.setProperty('--sweep-x',sweepX+'px');
+  splat.style.setProperty('--sweep-y',sweepY+'px');
   document.body.appendChild(splat);
-  setTimeout(()=>splat.remove(),duration+60);
+  setTimeout(()=>splat.remove(),duration+80);
  }
 }
 
@@ -2978,8 +3075,8 @@ function resolveFightRound(){
  combat.mustFightRound=false;
  document.getElementById('combatLog').textContent=text;
  log(text,'combat');
- if(crit){playSound('critical');playCurrentTileEffect('critical',850);showCombatImpact('monster',m.health<=0?'kill':'critical',damageToMonster);}
- else if(damageToMonster>0){playCurrentTileEffect('hit',650);showCombatImpact('monster',m.health<=0?'kill':'hit',damageToMonster);}
+ if(crit){playSound('sword');playSound('critical');playCurrentTileEffect('critical',850);showCombatImpact('monster',m.health<=0?'kill':'critical',damageToMonster);}
+ else if(damageToMonster>0){playSound('sword');playCurrentTileEffect('hit',650);showCombatImpact('monster',m.health<=0?'kill':'hit',damageToMonster);}
  else if(mt>pt){playSound('hit');showCombatImpact('hero',p.health<=0?'kill':'hit',damageToHero);}
  else{showCombatImpact('monster','miss',0);}
  if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');setTimeout(()=>killMonster(),combatImpactDuration('kill'));return;}
@@ -3106,7 +3203,7 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
  if(it.use==='smallChest'){const r=roll(1).total;if(r<=2){p.health-=2;msg='Chest trap! Take 2 damage.';}else{awardItem();msg='Small Chest opened: draw 1 item.';}used=true;}
  if(it.use==='largeChest'){const r=roll(1).total;if(r<=2){p.health-=5;msg='Large Chest trap! Take 5 damage.';}else{awardItem();awardItem();msg='Large Chest opened: draw 2 items.';}used=true;}
  if(it.use==='teleport'){showTeleport(it);used=false;}
- if(msg){if(it.use==='fireball'){playSound('fireball');playCurrentTileEffect('fireball',1000);}else if(it.use==='bomb'){playCurrentTileEffect('explosion',950);sndSpell();}else if(it.name==='Ice Staff'){playSound('ice');playCurrentTileEffect('ice',900);}else if(it.use==='healthPotion'){playSound('heal');playCurrentTileEffect('heal',1000);}else if(it.use==='teleport')playSound('teleport');else sndSpell();log(msg,it.use==='healthPotion'?'heal':'loot');toast(msg);} if(used&&consume)consume(); if(m&&m.health<=0){killMonster();return;} if(p.health<=0){death();return;}render();if(combat)renderCombat();}
+ if(msg){if(it.use==='fireball'){playSound('spell');playCurrentTileEffect('fireball',1000);}else if(it.use==='bomb'){playCurrentTileEffect('explosion',950);sndSpell();}else if(it.name==='Ice Staff'){playSound('spell');playCurrentTileEffect('ice',900);}else if(it.use==='healthPotion'){playSound('heal');playCurrentTileEffect('heal',1000);}else if(it.use==='teleport')playSound('teleport');else sndSpell();log(msg,it.use==='healthPotion'?'heal':'loot');toast(msg);} if(used&&consume)consume(); if(m&&m.health<=0){killMonster();return;} if(p.health<=0){death();return;}render();if(combat)renderCombat();}
 function showTeleport(item){
  if(!item||!carriedHas(item)){toast('Teleport Crystal is not being carried');return;}
  teleportItem=item;
@@ -7136,7 +7233,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.75 — Start-screen distant monster ambience */
+/* v10.77 — Start-screen distant monster ambience */
 (function () {
   const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
   let distantMonstersAudio = null;
@@ -7233,7 +7330,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.75 — Explicit start-screen/dungeon ambience handoff */
+/* v10.77 — Explicit start-screen/dungeon ambience handoff */
 (function () {
   const DUNGEON_AMBIENCE_PATH = './assets/sounds/dungeon-sounds.mp3';
   let dungeonAmbienceAudio = null;
