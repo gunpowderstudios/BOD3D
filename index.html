@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.62</title>
+<title>Bag of Dungeon 3D v10.63</title>
 
 <!--
 8BITBOD
@@ -1508,6 +1508,7 @@ Changes:
 <!-- v10.59: Reworked desktop/laptop combat into a wide lower-screen tray. Hero and monster cards sit side by side, with dice, combat log and action buttons in a separate right-hand column. Added shallow-screen compression so combat controls remain visible on laptop browser windows. Mobile combat behaviour is unchanged. -->
 <!-- v10.60: Added a complete combat interaction lock. While combat is active, the board, 3D models, tiles, dropped items, movement and camera controls ignore taps and clicks. Monster and item inspection functions now have defensive combat guards, including Three.js canvas actions. Any existing modal is closed when combat begins. Normal interaction is restored automatically when combat ends. -->
 <!-- v10.62: Added optional character-sheet slot symbols from assets/ui/. Left and Right Hand display hand-symbol.png plus spell-symbol.png; Armour uses armour.png; Boots uses boots.png; Attire uses attire.png; Companions can use companions.png. Missing PNGs hide automatically, so the UI remains usable before artwork is uploaded. -->
+<!-- v10.63: Fixed startup/loading-screen regression introduced by monster landing sound effects. monsterLandSoundKey is now defined before SOUND_DEFS is constructed, preventing a startup ReferenceError while preserving the new per-monster landing sounds and reveal effects. -->
 </head>
 <body class="lightingOn">
 
@@ -1690,7 +1691,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.62';
+const VERSION='v10.63';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2068,6 +2069,14 @@ window.getBODState=()=>state;
 let view3d={enabled:true};
 let cameraRotateDrag=null;
 let audioCtx=null,soundOn=true;
+// Monster landing sound key must be defined before SOUND_DEFS is built.
+// Keeping it in this main script prevents the loading/character-select startup
+// from failing before the later Three.js renderer script has executed.
+function monsterLandSoundKey(name){
+ if(name==='Red Dragon')return 'landDragon';
+ return 'land'+String(name||'').replace(/[’']/g,'').replace(/&/g,'And').replace(/[^a-zA-Z0-9]+/g,'');
+}
+
 const SOUND_DEFS=[
  ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click'],
  // One landing-thud sound per monster, played when its reveal drop-in
@@ -4675,16 +4684,6 @@ let cameraShakeState=null;
 
 function triggerCameraShake(duration=240,magnitude=.14){
  cameraShakeState={started:performance.now(),duration,magnitude};
-}
-
-// Sound key convention matches the rest of the file's per-monster asset
-// lookups (see monsterAssetFilename). "Giant Snake" -> landGiantSnake, which
-// the existing sound resolver will look for as assets/sounds/land-giant-snake.mp3
-// (or assets/sounds/landgiantsnake.mp3). "Red Dragon" -> landDragon, matching
-// the dragon.glb/dragon.png special case used everywhere else.
-function monsterLandSoundKey(name){
- if(name==='Red Dragon')return 'landDragon';
- return 'land'+String(name||'').replace(/[’']/g,'').replace(/&/g,'And').replace(/[^a-zA-Z0-9]+/g,'');
 }
 
 function startMonsterDrop(pivot,restY,monsterName){
