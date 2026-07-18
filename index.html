@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.63</title>
+<title>Bag of Dungeon 3D v10.66</title>
 
 <!--
 8BITBOD
@@ -1509,6 +1509,7 @@ Changes:
 <!-- v10.63: Fixed startup/loading-screen regression introduced by monster landing sound effects. monsterLandSoundKey is now defined before SOUND_DEFS is constructed, preventing a startup ReferenceError while preserving the new per-monster landing sounds and reveal effects. -->
 <!-- v10.64: Fixed newly revealed monsters freezing in mid-air when combat staging started before their drop animation had landed. Combat staging now waits for the monster drop to complete. Restored 3D swipe/orbit camera interaction during combat while retaining the gameplay interaction lock, so monster taps no longer open stat popups and tiles/items/movement remain disabled until the fight ends. -->
 <!-- v10.65: Improved monster encounter staging. When entering a newly revealed monster tile, the hero now moves to the screen-left combat position first while the monster waits above the screen-right position. After the hero movement finishes, the monster drops into its combat position and lands before the cinematic fight staging completes. -->
+<!-- v10.66: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
 </head>
 <body class="lightingOn">
 
@@ -1691,7 +1692,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.65';
+const VERSION='v10.66';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -4679,6 +4680,9 @@ let rangedCameraScene=null;
 // long the fall takes, and the in-flight list of drops currently animating.
 const MONSTER_DROP_HEIGHT=2.6;
 const MONSTER_DROP_MS=380;
+// Fresh melee encounters pause long enough for the camera to zoom in and the
+// monster reveal sound to play before the miniature drops into the fight.
+const MONSTER_REVEAL_PAUSE_MS=2000;
 const monsterDrops=[];
 let cameraShakeState=null;
 
@@ -5481,7 +5485,7 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
   pivot,
   dropRestY,
   monsterName,
-  pendingCombatTileKey===key?HERO_MOVE_MS+70:0
+  pendingCombatTileKey===key?MONSTER_REVEAL_PAUSE_MS:0
  );
  return pivot;
 }
@@ -6036,6 +6040,35 @@ function finishRangedAttack(){
 
 function beginCombatScene(tileKey){
  pendingCombatTileKey=tileKey;
+
+ // Start the encounter by pushing the camera in toward the monster tile.
+ // The hero is moved to the left during the redraw, while the monster remains
+ // suspended on the right for MONSTER_REVEAL_PAUSE_MS before its drop begins.
+ const [tx,tz]=String(tileKey).split(',').map(Number);
+ if(Number.isFinite(tx)&&Number.isFinite(tz)){
+  const target=new THREE.Vector3(tx*TILE,.72,tz*TILE);
+  const forward=new THREE.Vector3();
+  camera.getWorldDirection(forward);
+  forward.y=0;
+  if(forward.lengthSq()<.0001)forward.set(0,0,-1);
+  forward.normalize();
+  const mobile=window.innerWidth<=800;
+  const revealPosition=target.clone().addScaledVector(
+   forward.clone().negate(),
+   mobile?6.4:4.8
+  );
+  revealPosition.y=mobile?5.0:3.5;
+  cameraLockedToHero=false;
+  lastCameraHeroPosition=null;
+  // Run just after the combat-triggered redraw so normal hero centring cannot
+  // immediately cancel the cinematic push-in.
+  setTimeout(()=>{
+   if(pendingCombatTileKey===tileKey&&!combatScene){
+    startCameraTween(revealPosition,target,620);
+   }
+  },40);
+ }
+
  const started=performance.now();
  const tryStage=()=>{
   if(pendingCombatTileKey!==tileKey)return;
