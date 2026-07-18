@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.82</title>
+<title>Bag of Dungeon 3D v10.83</title>
 
 <!--
 8BITBOD
@@ -1572,10 +1572,10 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.82: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.83: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 
 <style>
-/* v10.82 — Centre combat panel within the black 3D play area */
+/* v10.83 — Centre combat panel within the black 3D play area */
 @media (min-width: 701px) {
   #combatPanel {
     left: calc(var(--sidebar-width, 230px) + (100vw - var(--sidebar-width, 230px)) / 2) !important;
@@ -1585,12 +1585,13 @@ Changes:
 }
 </style>
 
-<!-- v10.82: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
-<!-- v10.82: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
-<!-- v10.82: Monster reveal/drop now defaults to assets/sounds/monster.mp3 through the existing monsterReveal sound key, ready for individual monster-specific overrides later. -->
-<!-- v10.82: Monster reveal timing tightened: once the combat camera reaches its final fitted frame, the monster immediately begins its drop. The monster.mp3 reveal sound remains tied to the encounter. -->
-<!-- v10.82: Fixed monster landing sound timing. A monster is now marked as having completed its reveal only when its drop actually lands, so per-monster landing sounds such as assets/sounds/landgoblin.mp3 fire from the physical landing event instead of being pre-empted when the model is first created. -->
-<!-- v10.82: Monster reveal audio now checks for a monster-specific landing sound first. If landgoblin.mp3 exists, Goblin encounters suppress the generic monster.mp3 and play only landgoblin.mp3 on physical landing. Dungeon ambience remains a separate persistent loop and automatically resumes after tab/browser suspension. -->
+<!-- v10.83: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
+<!-- v10.83: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
+<!-- v10.83: Monster reveal/drop now defaults to assets/sounds/monster.mp3 through the existing monsterReveal sound key, ready for individual monster-specific overrides later. -->
+<!-- v10.83: Monster reveal timing tightened: once the combat camera reaches its final fitted frame, the monster immediately begins its drop. The monster.mp3 reveal sound remains tied to the encounter. -->
+<!-- v10.83: Fixed monster landing sound timing. A monster is now marked as having completed its reveal only when its drop actually lands, so per-monster landing sounds such as assets/sounds/landgoblin.mp3 fire from the physical landing event instead of being pre-empted when the model is first created. -->
+<!-- v10.83: Monster reveal audio now checks for a monster-specific landing sound first. If landgoblin.mp3 exists, Goblin encounters suppress the generic monster.mp3 and play only landgoblin.mp3 on physical landing. Dungeon ambience remains a separate persistent loop and automatically resumes after tab/browser suspension. -->
+<!-- v10.83: Chests are now dungeon objects, not inventory items. Finding a Small or Large Chest leaves it visibly on the current tile and offers Open Chest or Leave It. Leaving keeps it on the tile for a later visit; opening resolves the existing chest trap/reward and removes the chest. Chest tiles cannot be picked up into the backpack. -->
 </head>
 <body class="lightingOn">
 
@@ -1773,7 +1774,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.82';
+const VERSION='v10.83';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2173,7 +2174,7 @@ function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.string
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
 function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
 function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
-// v10.82: Default monster reveal/drop sound. Individual monster sounds can override this later.
+// v10.83: Default monster reveal/drop sound. Individual monster sounds can override this later.
 window.SOUND_PATHS=window.SOUND_PATHS||{};
 window.SOUND_PATHS.monsterReveal='assets/sounds/monster.mp3';
 
@@ -2507,6 +2508,7 @@ const BOOTS_NAMES=new Set(['Magic Boots']);
 const CLOAK_NAMES=new Set(['Invisibility Cloak']);
 let pendingItemQueue=[];
 function isBear(item){return item&&item.name==='Loyal Bear';}
+function isChest(item){return !!item&&['Small Chest','Large Chest'].includes(item.name);}
 function isTwoHanded(item){return !!item&&TWO_HANDED_NAMES.has(item.name);}
 function isArmour(item){return !!item&&ARMOUR_NAMES.has(item.name);}
 function isBoots(item){return !!item&&BOOTS_NAMES.has(item.name);}
@@ -2553,7 +2555,20 @@ function pDamageReduction(){const e=state.player.equipment;return applyEquipment
 function pDice(){return state.player.baseDice+(state.player.equipment.bear?1:0)+(state.player.temp.strength?1:0)}
 function drawMonster(){let m=state.monsterDeck.pop();if(!m)return null;if(m.name==='Mirror Monster'){m.maxHealth=state.player.health;m.health=state.player.health;m.dice=pDice();m.mod=pCombatMod();} else m.health=m.maxHealth; m.revealed=false; return m;}
 function drawItem(){const it=state.itemDeck.pop();if(!it)return null;return {...it};}
-function awardItem(item=drawItem()){if(!item)return log('No items left in the item deck.','system');log('Found '+item.name+'.','loot');addToInventory(item,getTile(state.player.x,state.player.y));}
+function awardItem(item=drawItem()){
+ if(!item)return log('No items left in the item deck.','system');
+ const tile=getTile(state.player.x,state.player.y);
+ log('Found '+item.name+'.','loot');
+ if(isChest(item)){
+  tile.droppedItems=tile.droppedItems||[];
+  tile.droppedItems.push(item);
+  sndItem();
+  render();
+  setTimeout(()=>offerChestOnTile(key(state.player.x,state.player.y),item),40);
+  return true;
+ }
+ return addToInventory(item,tile);
+}
 function maybePopulate(tile){ if(tile.monsterMarker) tile.monsterPending=true; if(tile.itemMarker) tile.itemPending=true; }
 function startPlace(dir){const p=state.player;const freeTorchLay=!!(p.equipment.torch&&p.flags.torchFreeLay);if(p.ap<1&&!freeTorchLay)return;const raw=state.tileDeck.pop();if(!raw){log('No dungeon tiles left.','system');return;}placement={dir,kind:raw.kind,rot:0,raw};showPlacement();}
 function showPlacement(){const need=DIRS[placement.dir].opp;document.getElementById('placeInfo').textContent='Drawn: '+TILE_LABEL[placement.kind]+' — placing to the '+placement.dir+'.';document.getElementById('tilePreview').innerHTML=tileSVG({kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot)});document.getElementById('placeBtn').disabled=!openings(placement.kind,placement.rot)[need];document.getElementById('placement').classList.add('open');}
@@ -3387,7 +3402,7 @@ window.peekMonster=function(dir){const p=state.player,d=DIRS[dir],t=getTile(p.x+
 function carriedAt(slot){return state.player.slots[slot];}
 window.inspectCarried=function(slot){const item=carriedAt(slot);if(item)inspectItemObject(item);};window.inspectBackpack=function(idx){const item=state.player.backpack[idx];if(item)inspectItemObject(item);};window.inspectBear=function(){if(state.player.companionBear)inspectItemObject(state.player.companionBear);};
 function inspectItemObject(item){const buttons=[];const eq=equippedSlotFor(item);if(item.type==='equipment'||isHandItem(item)||isAttire(item)){if(eq&&eq!=='companion')buttons.push({text:'Move to Backpack',fn:()=>{if(unequipItem(item)){closeModal();render();}}});if(isArmour(item)&&eq!=='armour')buttons.push({text:'Wear Armour',cls:'green',fn:()=>{if(equipToSlot(item,'armour')){closeModal();render();}}});else if(isBoots(item)&&eq!=='boots')buttons.push({text:'Wear Boots',cls:'green',fn:()=>{if(equipToSlot(item,'boots')){closeModal();render();}}});else if(isCloak(item)&&eq!=='attire')buttons.push({text:'Wear Attire',cls:'green',fn:()=>{if(equipToSlot(item,'cloak')){closeModal();render();}}});else if(isHandItem(item)&&eq!=='both hands'){buttons.push({text:isTwoHanded(item)?'Equip Both Hands':'Equip Left Hand',cls:'green',fn:()=>{if(equipToSlot(item,'left')){closeModal();render();}}});if(!isTwoHanded(item))buttons.push({text:'Equip Right Hand',cls:'green',fn:()=>{if(equipToSlot(item,'right')){closeModal();render();}}});}}
- if(item.type==='spell'||item.type==='consumable'||item.use)buttons.push({text:'Use',cls:'green',fn:()=>{closeModal();useItemObject(item);}});buttons.push({text:'Drop',cls:'red',fn:()=>dropItemObject(item)});buttons.push({text:'Close',fn:closeModal});showModal(item.name,(item.desc||'Item')+(eq?'\n\nActive: '+eq:''),buttons);}
+ if(!isChest(item)&&(item.type==='spell'||item.type==='consumable'||item.use))buttons.push({text:'Use',cls:'green',fn:()=>{closeModal();useItemObject(item);}});buttons.push({text:'Drop',cls:'red',fn:()=>dropItemObject(item)});buttons.push({text:'Close',fn:closeModal});showModal(item.name,(item.desc||'Item')+(eq?'\n\nActive: '+eq:''),buttons);}
 function useItemObject(item){if(item.use==='iceStaff'){useItem(item);return;}useItem(item,()=>{removeFromCurrentLocation(item);state.itemDiscard.push(item);syncEquipment();render();});}
 function useInventoryIndex(idx){const item=allCarriedItems()[idx];if(item)useItemObject(item);}
 
@@ -3396,12 +3411,80 @@ function renderKillTally(){const el=document.getElementById('killTally');if(!el|
 function boardInteractionLocked(){
  return !!combat || document.body.classList.contains('combatActive');
 }
-function showTileItems(tileKey,event){if(event){event.preventDefault();event.stopPropagation();}if(boardInteractionLocked())return;const t=state.tiles[tileKey];if(!t||!t.droppedItems||!t.droppedItems.length)return;playSound('click');const here=tileKey===key(state.player.x,state.player.y);showModal('Items on this tile','',[{text:'Close',fn:closeModal}]);document.getElementById('modalBody').innerHTML=`<div>${here?'You are standing on this tile. Choose an item to pick up.':'These items have been left on this tile. Move onto it to pick them up.'}</div><div class="tileItemList">${t.droppedItems.map((item,i)=>`<div class="tileItemCard"><div class="tileItemArt">${iconHTML(item.name,item.icon||'?')}</div><b>${item.name}</b><div class="small">${item.desc||''}</div>${here?`<button style="margin-top:7px" onclick="pickupDroppedFromTile('${tileKey}',${i})">Pick up</button>`:''}</div>`).join('')}</div>`;}
+
+function removeTileItemObject(tile,item){
+ if(!tile||!tile.droppedItems)return false;
+ const idx=tile.droppedItems.indexOf(item);
+ if(idx<0)return false;
+ tile.droppedItems.splice(idx,1);
+ if(!tile.droppedItems.length)delete tile.droppedItems;
+ return true;
+}
+function openChestOnTile(tileKey,item){
+ const tile=state.tiles[tileKey];
+ if(!tile||!item||!isChest(item))return;
+ if(tileKey!==key(state.player.x,state.player.y)){toast('Move onto the chest tile first');return;}
+ removeTileItemObject(tile,item);
+ const p=state.player;
+ const r=roll(1).total;
+ let msg='';
+ if(item.use==='smallChest'){
+  if(r<=2){p.health-=2;msg='Small Chest trap! Take 2 damage.';}
+  else{awardItem();msg='Small Chest opened: draw 1 item.';}
+ }else{
+  if(r<=2){p.health-=5;msg='Large Chest trap! Take 5 damage.';}
+  else{awardItem();awardItem();msg='Large Chest opened: draw 2 items.';}
+ }
+ state.itemDiscard.push(item);
+ playSound('spell');
+ log(msg,p.health<=0?'combat':'loot');
+ toast(msg);
+ closeModal();
+ render();
+ if(p.health<=0)death();
+}
+function offerChestOnTile(tileKey,item){
+ const tile=state.tiles[tileKey];
+ if(!tile||!item||!isChest(item)||!tile.droppedItems||!tile.droppedItems.includes(item))return;
+ const here=tileKey===key(state.player.x,state.player.y);
+ const buttons=[
+  ...(here?[{text:'Open Chest',cls:'green',fn:()=>openChestOnTile(tileKey,item)}]:[]),
+  {text:'Leave It',fn:closeModal}
+ ];
+ showModal(
+  item.name,
+  (item.desc||'A chest sits on this tile.')+
+  (here?'\n\nOpen it now, or leave it here and return later.':'\n\nMove onto this tile to open it.'),
+  buttons
+ );
+}
+
+function showTileItems(tileKey,event){
+ if(event){event.preventDefault();event.stopPropagation();}
+ if(boardInteractionLocked())return;
+ const t=state.tiles[tileKey];
+ if(!t||!t.droppedItems||!t.droppedItems.length)return;
+ playSound('click');
+ const here=tileKey===key(state.player.x,state.player.y);
+ showModal('Items on this tile','',[{text:'Close',fn:closeModal}]);
+ document.getElementById('modalBody').innerHTML=`<div>${here?'You are standing on this tile.':'Move onto this tile to interact with what is here.'}</div><div class="tileItemList">${t.droppedItems.map((item,i)=>{
+  const action=isChest(item)
+   ?(here?`<button style="margin-top:7px" onclick="openChestFromTile('${tileKey}',${i})">Open Chest</button>`:'<div class="small" style="margin-top:7px">Chest left unopened</div>')
+   :(here?`<button style="margin-top:7px" onclick="pickupDroppedFromTile('${tileKey}',${i})">Pick up</button>`:'');
+  return `<div class="tileItemCard"><div class="tileItemArt">${iconHTML(item.name,item.icon||'?')}</div><b>${item.name}</b><div class="small">${item.desc||''}</div>${action}</div>`;
+ }).join('')}</div>`;
+}
+window.openChestFromTile=function(tileKey,idx){
+ const t=state.tiles[tileKey];
+ if(!t||!t.droppedItems||!t.droppedItems[idx]||!isChest(t.droppedItems[idx]))return;
+ openChestOnTile(tileKey,t.droppedItems[idx]);
+};
 function beginDroppedPickup(tileKey,idx){
  if(tileKey!==key(state.player.x,state.player.y)){toast('Move onto that tile first');return;}
  const t=state.tiles[tileKey];
  if(!t||!t.droppedItems||!t.droppedItems[idx]){toast('That item is no longer on the tile');return;}
  const item=t.droppedItems[idx];
+ if(isChest(item)){offerChestOnTile(tileKey,item);return;}
  closeModal();
  // Start the carry-placement choice first. Remove the floor item only once it has
  // successfully entered the pending pickup queue, preventing silent disappearance.
@@ -7255,7 +7338,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.82 — Start-screen distant monster ambience */
+/* v10.83 — Start-screen distant monster ambience */
 (function () {
   const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
   let distantMonstersAudio = null;
@@ -7352,7 +7435,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.82 — Explicit start-screen/dungeon ambience handoff */
+/* v10.83 — Explicit start-screen/dungeon ambience handoff */
 (function () {
   const DUNGEON_AMBIENCE_PATH = './assets/sounds/dungeon-sounds.mp3';
   let dungeonAmbienceAudio = null;
@@ -7429,7 +7512,7 @@ if(currentState)renderBoard(currentState);
 
 
 <style>
-/* v10.82 — Keep remaining dungeon contents a mystery */
+/* v10.83 — Keep remaining dungeon contents a mystery */
 #counts,#tileCount,#monsterCount,#itemCount,
 .tilesCount,.monstersCount,.itemsCount,
 .tileCount,.monsterCount,.itemCount,
