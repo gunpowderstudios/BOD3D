@@ -1123,10 +1123,37 @@ body.cinematicCombat #compass{
 .combatImpactBurst.missHit .combatDamageNumber{display:none}
 .combatImpactBurst.missHit .combatImpactLabel{font-size:27px;color:#111;text-shadow:none;background:#fff0b0;border:3px solid #111;padding:6px 9px}
 .combatScreenFlash{position:fixed;inset:0;z-index:390;pointer-events:none;background:rgba(190,18,12,.18);animation:combatScreenFlash .28s ease-out forwards}
+.combatScreenFlash.criticalHit{background:rgba(210,30,10,.3);animation-duration:.4s}
+.combatScreenFlash.killHit{background:rgba(180,10,8,.42);animation-duration:.55s}
 @keyframes combatSplatPop{0%{transform:rotate(var(--burst-rot,0deg)) scale(.2);opacity:0}55%{transform:rotate(var(--burst-rot,0deg)) scale(1.18);opacity:1}100%{transform:rotate(var(--burst-rot,0deg)) scale(1);opacity:.9}}
 @keyframes combatFlashPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}65%{transform:scale(1.15) rotate(-4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.95}}
 @keyframes combatBurstFade{0%,78%{opacity:1}100%{opacity:0}}
 @keyframes combatScreenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+
+/* Screen-wide blood splats: scattered anywhere in the viewport (not confined
+   to the fighter card), reusing the same organic blob shape as the card-level
+   impact burst. Count/size scale with hit/critical/kill in JS. */
+.screenBloodSplat{
+ position:fixed;z-index:395;pointer-events:none;
+ left:var(--splat-x,50%);top:var(--splat-y,50%);
+ width:var(--splat-size,70px);height:var(--splat-size,70px);
+ border-radius:46% 54% 42% 58%;
+ background:radial-gradient(circle at 44% 42%,#e5291d 0 15%,#a3120e 16% 42%,#5c0705 43% 62%,transparent 64%);
+ filter:drop-shadow(0 3px 2px rgba(0,0,0,.7));
+ transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.2);
+ opacity:0;
+ animation:screenSplatPop var(--splat-duration,900ms) cubic-bezier(.14,.8,.3,1.15) forwards;
+}
+.screenBloodSplat.heroSplat{
+ background:radial-gradient(circle at 44% 42%,#ff6a54 0 15%,#c81915 16% 44%,#5c0705 45% 63%,transparent 65%);
+}
+@keyframes screenSplatPop{
+ 0%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.15);opacity:0}
+ 18%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1.12);opacity:1}
+ 28%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1);opacity:.95}
+ 100%{transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(1);opacity:0}
+}
+
 @media(max-width:800px){.combatImpactBurst::before{width:68px;height:68px}.combatDamageNumber{font-size:38px;-webkit-text-stroke-width:1px}.combatImpactLabel{font-size:13px}.combatImpactBurst.killHit .combatImpactLabel,.combatImpactBurst.missHit .combatImpactLabel{font-size:17px}}
 
 
@@ -2042,7 +2069,12 @@ let view3d={enabled:true};
 let cameraRotateDrag=null;
 let audioCtx=null,soundOn=true;
 const SOUND_DEFS=[
- ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click']
+ ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click'],
+ // One landing-thud sound per monster, played when its reveal drop-in
+ // animation hits the floor. File names follow the usual kebab convention,
+ // e.g. Goblin -> assets/sounds/land-goblin.mp3, Giant Snake -> land-giant-snake.mp3.
+ ...MONSTER_MASTER.map(m=>[monsterLandSoundKey(m.name),m.name+' lands']),
+ ['landDragon','Red Dragon lands']
 ];
 let USER_SOUNDS={},soundVolume=.8;
 function loadSounds(){try{USER_SOUNDS=JSON.parse(localStorage.getItem('bodDigitalSoundsV45')||'{}')}catch(e){USER_SOUNDS={}};soundVolume=Number(localStorage.getItem('bodDigitalSoundVolume')||'.8');soundOn=localStorage.getItem('bodDigitalSoundOn')!=='false';}
@@ -2840,12 +2872,38 @@ function showCombatImpact(target='monster',kind='hit',damage=0){
    (label?'<div class="combatImpactLabel">'+label+'</div>':'')+
    '</div>';
  host.appendChild(burst);
+ const flashDuration=kind==='kill'?550:kind==='critical'?400:280;
  const flash=document.createElement('div');
- flash.className='combatScreenFlash';
+ flash.className='combatScreenFlash '+(kind==='kill'?'killHit':kind==='critical'?'criticalHit':'');
  document.body.appendChild(flash);
  setTimeout(()=>burst.remove(),duration+80);
- setTimeout(()=>flash.remove(),420);
+ setTimeout(()=>flash.remove(),flashDuration+40);
+ if(kind!=='miss')spawnScreenBloodSplats(target,kind);
  return duration;
+}
+
+// Screen-wide blood spray, separate from the card-confined burst above.
+// Splats land anywhere in the viewport for a bigger, flashier hit.
+const SCREEN_SPLAT_COUNT={hit:2,critical:4,kill:6};
+const SCREEN_SPLAT_BASE_SIZE={hit:60,critical:85,kill:110};
+function spawnScreenBloodSplats(target='monster',kind='hit'){
+ const count=SCREEN_SPLAT_COUNT[kind]||SCREEN_SPLAT_COUNT.hit;
+ const baseSize=(SCREEN_SPLAT_BASE_SIZE[kind]||SCREEN_SPLAT_BASE_SIZE.hit)*(window.innerWidth<800?.7:1);
+ for(let i=0;i<count;i++){
+  const splat=document.createElement('div');
+  splat.className='screenBloodSplat'+(target==='hero'?' heroSplat':'');
+  const size=Math.round(baseSize*(.7+Math.random()*.6));
+  const duration=750+Math.random()*450;
+  splat.style.setProperty('--splat-size',size+'px');
+  splat.style.setProperty('--splat-rot',Math.floor(Math.random()*360)+'deg');
+  splat.style.setProperty('--splat-duration',Math.round(duration)+'ms');
+  // Keep splats out of the extreme edges so they read as "on screen",
+  // not clipped against the browser chrome.
+  splat.style.setProperty('--splat-x',(12+Math.random()*76)+'vw');
+  splat.style.setProperty('--splat-y',(14+Math.random()*66)+'vh');
+  document.body.appendChild(splat);
+  setTimeout(()=>splat.remove(),duration+60);
+ }
 }
 
 function combatItemButtons(wrap){const p=state.player;allCarriedItems().forEach((it,idx)=>{if((it.type==='spell'||it.type==='consumable'||it.use)&&it.use!=='teleport')addBtn(wrap,(it.icon||'?')+' '+it.name,'gold',()=>useInventoryIndex(idx));});}
@@ -4608,6 +4666,43 @@ let combatScene=null;
 let cameraTween=null;
 let rangedCameraScene=null;
 
+// Monster reveal drop-in: how high above the tile the monster starts, how
+// long the fall takes, and the in-flight list of drops currently animating.
+const MONSTER_DROP_HEIGHT=2.6;
+const MONSTER_DROP_MS=380;
+const monsterDrops=[];
+let cameraShakeState=null;
+
+function triggerCameraShake(duration=240,magnitude=.14){
+ cameraShakeState={started:performance.now(),duration,magnitude};
+}
+
+// Sound key convention matches the rest of the file's per-monster asset
+// lookups (see monsterAssetFilename). "Giant Snake" -> landGiantSnake, which
+// the existing sound resolver will look for as assets/sounds/land-giant-snake.mp3
+// (or assets/sounds/landgiantsnake.mp3). "Red Dragon" -> landDragon, matching
+// the dragon.glb/dragon.png special case used everywhere else.
+function monsterLandSoundKey(name){
+ if(name==='Red Dragon')return 'landDragon';
+ return 'land'+String(name||'').replace(/[’']/g,'').replace(/&/g,'And').replace(/[^a-zA-Z0-9]+/g,'');
+}
+
+function startMonsterDrop(pivot,restY,monsterName){
+ monsterDrops.push({
+  pivot,
+  restY,
+  monsterName,
+  started:performance.now(),
+  duration:MONSTER_DROP_MS
+ });
+}
+
+function landMonster(drop){
+ drop.pivot.position.y=drop.restY;
+ triggerCameraShake(240,.16);
+ if(drop.monsterName)playSound(monsterLandSoundKey(drop.monsterName));
+}
+
 const spellEffects=[];
 const spellEffectGroup=new THREE.Group();
 spellEffectGroup.name='Spell Effects';
@@ -5213,6 +5308,12 @@ async function addTile(key,t,token){
 
  if((t.monsterPending)||(t.monster&&t.monster.health>0)){
   if(t.monster&&(t.monster.revealed||t.monster.peeked)){
+   // Only the very first time this monster instance is drawn should it drop
+   // in from above with a ground-shake and landing sound. Every later
+   // redraw (movement, tile placement, camera moves) must place it quietly
+   // at rest, or it would appear to fall again on every re-render.
+   const playDrop=!t.monster._dropped;
+   t.monster._dropped=true;
    await addMonsterMiniature(
     'assets/models/'+monsterFile(t.monster.name),
     monsterPng(t.monster.name),
@@ -5221,7 +5322,9 @@ async function addTile(key,t,token){
     'monster',
     key,
     token,
-    monsterFacingRadians(x,y,latestState&&latestState.player)
+    monsterFacingRadians(x,y,latestState&&latestState.player),
+    playDrop,
+    t.monster.name
    );
   }else{
    await addSprite('assets/ui/hiddenmonster.png',x,y,.9,.1,'hidden',key,token);
@@ -5250,7 +5353,7 @@ async function addSprite(path,x,y,size,height,type,key,token){
  boardGroup.add(s);
  return s;
 }
-async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
+async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0,playDrop=false,monsterName=''){
  const source=await loadModel(modelPath);
  if(token!==renderToken)return;
  if(!source){
@@ -5316,6 +5419,10 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
  pivot.rotation.y=rotationY;
  pivot.add(model);
  pivot.visible=objectVisibleAtTile(x,y);
+ // Reveal drop: start elevated above the tile. startMonsterDrop() (called
+ // once the pivot is in the scene, below) animates it down to TILE_THICKNESS.
+ const dropRestY=TILE_THICKNESS;
+ if(playDrop)pivot.position.y=dropRestY+MONSTER_DROP_HEIGHT;
  const darkness=darknessForTile(x,y);
  model.traverse(o=>{
   if(!o.material)return;
@@ -5346,6 +5453,7 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
 
  markClickable(pivot,type,key);
  boardGroup.add(pivot);
+ if(playDrop)startMonsterDrop(pivot,dropRestY,monsterName);
  return pivot;
 }
 
@@ -6556,6 +6664,21 @@ function animate(now){
 
  updateSpellEffects(now);
 
+ if(monsterDrops.length){
+  for(let i=monsterDrops.length-1;i>=0;i--){
+   const drop=monsterDrops[i];
+   const t=Math.min(1,(now-drop.started)/drop.duration);
+   // Ease-in (t*t) so the fall accelerates like gravity rather than
+   // moving at a constant speed.
+   const startY=drop.restY+MONSTER_DROP_HEIGHT;
+   drop.pivot.position.y=startY+(drop.restY-startY)*(t*t);
+   if(t>=1){
+    landMonster(drop);
+    monsterDrops.splice(i,1);
+   }
+  }
+ }
+
  const floatTime=now*.001;
  boardGroup.traverse(object=>{
   if(object.userData?.floatObject){
@@ -6681,11 +6804,34 @@ function animate(now){
   }
  }
 
+ // Ground-shake for monster landings. Applied last (after every other camera
+ // positioning above) and fully subtracted back out straight after the render
+ // call, so it can never drift or fight with camera locking/tweening on
+ // later frames — each frame's shake is a one-off nudge, not a persisted state.
+ let shakeOffset=null;
+ if(cameraShakeState){
+  const t=(now-cameraShakeState.started)/cameraShakeState.duration;
+  if(t>=1){
+   cameraShakeState=null;
+  }else{
+   const decay=1-t;
+   const mag=cameraShakeState.magnitude*decay;
+   shakeOffset=new THREE.Vector3(
+    (Math.random()*2-1)*mag,
+    (Math.random()*2-1)*mag*.6,
+    (Math.random()*2-1)*mag
+   );
+   camera.position.add(shakeOffset);
+  }
+ }
+
  if(enabled){
   controls.update();
   updateCompass();
   renderer.render(scene,camera);
  }
+
+ if(shakeOffset)camera.position.sub(shakeOffset);
 }
 animate();
 resize();
