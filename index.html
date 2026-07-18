@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.73</title>
+<title>Bag of Dungeon 3D v10.74</title>
 
 <!--
 8BITBOD
@@ -1513,7 +1513,7 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.73: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.74: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 </head>
 <body class="lightingOn">
 
@@ -1696,7 +1696,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.73';
+const VERSION='v10.74';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -7124,7 +7124,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.73 — Start-screen distant monster ambience */
+/* v10.74 — Start-screen distant monster ambience */
 (function () {
   const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
   let distantMonstersAudio = null;
@@ -7216,6 +7216,72 @@ if(currentState)renderBoard(currentState);
       setTimeout(stopDistantMonstersAmbience, 50);
     }
   }, true);
+})();
+</script>
+
+
+<script>
+/* v10.74 — Explicit start-screen/dungeon ambience handoff */
+(function () {
+  const DUNGEON_AMBIENCE_PATH = './assets/sounds/dungeon-sounds.mp3';
+  let dungeonAmbienceAudio = null;
+
+  function startDungeonAmbience() {
+    if (window.stopDistantMonstersAmbience) window.stopDistantMonstersAmbience();
+    if (!dungeonAmbienceAudio) {
+      dungeonAmbienceAudio = new Audio(DUNGEON_AMBIENCE_PATH);
+      dungeonAmbienceAudio.loop = true;
+      dungeonAmbienceAudio.volume = 0.28;
+      dungeonAmbienceAudio.preload = 'auto';
+    }
+    dungeonAmbienceAudio.play().catch(() => {});
+  }
+
+  function stopDungeonAmbience() {
+    if (!dungeonAmbienceAudio) return;
+    dungeonAmbienceAudio.pause();
+    dungeonAmbienceAudio.currentTime = 0;
+  }
+
+  window.startDungeonAmbience = startDungeonAmbience;
+  window.stopDungeonAmbience = stopDungeonAmbience;
+
+  // The character-selection overlay is the reliable boundary between start screen and dungeon.
+  function syncAmbienceToGameScreen() {
+    const charSelect = document.getElementById('charSelect');
+    if (!charSelect) return;
+
+    const style = getComputedStyle(charSelect);
+    const inDungeon =
+      charSelect.classList.contains('hidden') ||
+      charSelect.hidden ||
+      style.display === 'none' ||
+      style.visibility === 'hidden';
+
+    if (inDungeon) {
+      if (window.stopDistantMonstersAmbience) window.stopDistantMonstersAmbience();
+      startDungeonAmbience();
+    } else {
+      stopDungeonAmbience();
+    }
+  }
+
+  function installAmbienceHandoff() {
+    const charSelect = document.getElementById('charSelect');
+    if (!charSelect) return;
+    syncAmbienceToGameScreen();
+
+    new MutationObserver(syncAmbienceToGameScreen).observe(charSelect, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden']
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installAmbienceHandoff, { once: true });
+  } else {
+    installAmbienceHandoff();
+  }
 })();
 </script>
 
