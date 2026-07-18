@@ -1364,20 +1364,18 @@ button,input,select,textarea{font-family:var(--bod-sans)}
 }
 
 
-/* ===== Combat interaction lock v10.60 =====
-   While a fight is active, the board is visual only. This prevents accidental
-   monster, item, tile, movement or camera interactions behind the combat tray. */
+/* ===== Combat camera interaction v10.64 =====
+   During combat the 3D board remains swipe/drag enabled so the player can orbit
+   around the staged hero and monster. Gameplay clicks remain blocked by
+   boardInteractionLocked(), so tapping a monster cannot open its stats popup
+   and tiles/items/movement cannot be activated until combat ends. */
 body.combatActive #viewport,
-body.combatActive #threeBoard,
-body.combatActive #camera3d,
-body.combatActive #world{
-  pointer-events:none!important;
-  cursor:default!important;
+body.combatActive #threeBoard{
+  pointer-events:auto!important;
+  cursor:grab!important;
   touch-action:none!important;
 }
-body.combatActive #main{
-  touch-action:none!important;
-}
+body.combatActive #viewport.dragging{cursor:grabbing!important;}
 
 </style>
 <!--
@@ -1509,6 +1507,7 @@ Changes:
 <!-- v10.60: Added a complete combat interaction lock. While combat is active, the board, 3D models, tiles, dropped items, movement and camera controls ignore taps and clicks. Monster and item inspection functions now have defensive combat guards, including Three.js canvas actions. Any existing modal is closed when combat begins. Normal interaction is restored automatically when combat ends. -->
 <!-- v10.62: Added optional character-sheet slot symbols from assets/ui/. Left and Right Hand display hand-symbol.png plus spell-symbol.png; Armour uses armour.png; Boots uses boots.png; Attire uses attire.png; Companions can use companions.png. Missing PNGs hide automatically, so the UI remains usable before artwork is uploaded. -->
 <!-- v10.63: Fixed startup/loading-screen regression introduced by monster landing sound effects. monsterLandSoundKey is now defined before SOUND_DEFS is constructed, preventing a startup ReferenceError while preserving the new per-monster landing sounds and reveal effects. -->
+<!-- v10.64: Fixed newly revealed monsters freezing in mid-air when combat staging started before their drop animation had landed. Combat staging now waits for the monster drop to complete. Restored 3D swipe/orbit camera interaction during combat while retaining the gameplay interaction lock, so monster taps no longer open stat popups and tiles/items/movement remain disabled until the fight ends. -->
 </head>
 <body class="lightingOn">
 
@@ -4696,6 +4695,10 @@ function startMonsterDrop(pivot,restY,monsterName){
  });
 }
 
+function monsterIsDropping(pivot){
+ return monsterDrops.some(drop=>drop.pivot===pivot);
+}
+
 function landMonster(drop){
  drop.pivot.position.y=drop.restY;
  triggerCameraShake(240,.16);
@@ -5829,6 +5832,10 @@ function stageCombatScene(tileKey){
  const monster=findMonsterAtTile(tileKey);
  if(!monster)return false;
 
+ // Never capture the monster's temporary airborne position as its combat base.
+ // Let the reveal drop finish first, then stage the cinematic fight at ground level.
+ if(monsterIsDropping(monster))return false;
+
  if(combatScene&&combatScene.tileKey===tileKey&&combatScene.monster===monster)return true;
 
  const [tx,tz]=tileKey.split(',').map(Number);
@@ -5993,11 +6000,15 @@ function finishRangedAttack(){
 
 function beginCombatScene(tileKey){
  pendingCombatTileKey=tileKey;
- if(!stageCombatScene(tileKey)){
-  setTimeout(()=>{
-   if(pendingCombatTileKey===tileKey)stageCombatScene(tileKey);
-  },120);
- }
+ const started=performance.now();
+ const tryStage=()=>{
+  if(pendingCombatTileKey!==tileKey)return;
+  if(stageCombatScene(tileKey))return;
+  // A newly revealed monster may still be falling. Keep checking until its
+  // landing animation is complete instead of freezing combat at the air position.
+  if(performance.now()-started<1200)setTimeout(tryStage,50);
+ };
+ tryStage();
 }
 function endCombatScene(){
  pendingCombatTileKey=null;
