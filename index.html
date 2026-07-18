@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.66</title>
+<title>Bag of Dungeon 3D v10.67</title>
 
 <!--
 8BITBOD
@@ -1509,7 +1509,7 @@ Changes:
 <!-- v10.63: Fixed startup/loading-screen regression introduced by monster landing sound effects. monsterLandSoundKey is now defined before SOUND_DEFS is constructed, preventing a startup ReferenceError while preserving the new per-monster landing sounds and reveal effects. -->
 <!-- v10.64: Fixed newly revealed monsters freezing in mid-air when combat staging started before their drop animation had landed. Combat staging now waits for the monster drop to complete. Restored 3D swipe/orbit camera interaction during combat while retaining the gameplay interaction lock, so monster taps no longer open stat popups and tiles/items/movement remain disabled until the fight ends. -->
 <!-- v10.65: Improved monster encounter staging. When entering a newly revealed monster tile, the hero now moves to the screen-left combat position first while the monster waits above the screen-right position. After the hero movement finishes, the monster drops into its combat position and lands before the cinematic fight staging completes. -->
-<!-- v10.66: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
+<!-- v10.67: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
 </head>
 <body class="lightingOn">
 
@@ -1692,7 +1692,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.66';
+const VERSION='v10.67';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -7039,6 +7039,51 @@ if(currentState)renderBoard(currentState);
     </div>
   </div>
 </div>
+
+
+<script>
+/* v10.67 — smooth hero-follow camera. Keeps the hero centred after normal movement,
+   but respects manual camera control (zoom/rotate/pan) until the next movement settles. */
+(function(){
+  let manualCameraUntil=0;
+  const MANUAL_GRACE_MS=1800;
+  const markManual=()=>{manualCameraUntil=performance.now()+MANUAL_GRACE_MS;};
+
+  ['wheel','pointerdown','touchstart'].forEach(type=>{
+    window.addEventListener(type,e=>{
+      const t=e.target;
+      if(t && (t.closest?.('#viewport') || t.closest?.('#threeBoard') || t.closest?.('#zoomIn') || t.closest?.('#zoomOut') || t.closest?.('#centreBtn') || t.closest?.('#viewBtn') || t.closest?.('#compass'))) markManual();
+    },{passive:true,capture:true});
+  });
+
+  // Wrap renderBoard so ordinary hero moves smoothly bring the dungeon back under the hero.
+  const install=()=>{
+    if(typeof window.renderBoard!=='function' || window.__bodHeroFollowInstalled)return false;
+    window.__bodHeroFollowInstalled=true;
+    const original=window.renderBoard;
+    window.renderBoard=async function(state){
+      const result=await original.apply(this,arguments);
+      try{
+        if(!state || !state.player) return result;
+        if(document.body.classList.contains('combatActive')) return result;
+        if(performance.now()<manualCameraUntil) return result;
+        const centre=window.centreCameraOnHero || (typeof centreCameraOnHero==='function'?centreCameraOnHero:null);
+        if(typeof centre==='function'){
+          const world=document.getElementById('world');
+          if(world) world.classList.add('cameraSmooth');
+          centre();
+          setTimeout(()=>world&&world.classList.remove('cameraSmooth'),360);
+        }
+      }catch(e){console.warn('Hero follow camera:',e);}
+      return result;
+    };
+    return true;
+  };
+  if(!install()){
+    let tries=0; const timer=setInterval(()=>{if(install()||++tries>80)clearInterval(timer);},50);
+  }
+})();
+</script>
 
 </body>
 </html>
