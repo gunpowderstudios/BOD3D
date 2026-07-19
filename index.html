@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.90</title>
+<title>Bag of Dungeon 3D v10.91</title>
 
 <!--
 8BITBOD
@@ -1572,10 +1572,10 @@ Changes:
 <!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
 <!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
 <!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
-<!-- v10.90: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+<!-- v10.91: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
 
 <style>
-/* v10.90 — Centre combat panel within the black 3D play area */
+/* v10.91 — Centre combat panel within the black 3D play area */
 @media (min-width: 701px) {
   #combatPanel {
     left: calc(var(--sidebar-width, 230px) + (100vw - var(--sidebar-width, 230px)) / 2) !important;
@@ -1585,21 +1585,21 @@ Changes:
 }
 </style>
 
-<!-- v10.90: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
-<!-- v10.90: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
-<!-- v10.90: Monster reveal/drop now defaults to assets/sounds/monster.mp3 through the existing monsterReveal sound key, ready for individual monster-specific overrides later. -->
-<!-- v10.90: Monster reveal timing tightened: once the combat camera reaches its final fitted frame, the monster immediately begins its drop. The monster.mp3 reveal sound remains tied to the encounter. -->
-<!-- v10.90: Fixed monster landing sound timing. A monster is now marked as having completed its reveal only when its drop actually lands, so per-monster landing sounds such as assets/sounds/landgoblin.mp3 fire from the physical landing event instead of being pre-empted when the model is first created. -->
-<!-- v10.90: Monster reveal audio now checks for a monster-specific landing sound first. If landgoblin.mp3 exists, Goblin encounters suppress the generic monster.mp3 and play only landgoblin.mp3 on physical landing. Dungeon ambience remains a separate persistent loop and automatically resumes after tab/browser suspension. -->
-<!-- v10.90: Chests are now dungeon objects, not inventory items. Finding a Small or Large Chest leaves it visibly on the current tile and offers Open Chest or Leave It. Leaving keeps it on the tile for a later visit; opening resolves the existing chest trap/reward and removes the chest. Chest tiles cannot be picked up into the backpack. -->
+<!-- v10.91: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
+<!-- v10.91: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
+<!-- v10.91: Monster reveal/drop now defaults to assets/sounds/monster.mp3 through the existing monsterReveal sound key, ready for individual monster-specific overrides later. -->
+<!-- v10.91: Monster reveal timing tightened: once the combat camera reaches its final fitted frame, the monster immediately begins its drop. The monster.mp3 reveal sound remains tied to the encounter. -->
+<!-- v10.91: Fixed monster landing sound timing. A monster is now marked as having completed its reveal only when its drop actually lands, so per-monster landing sounds such as assets/sounds/landgoblin.mp3 fire from the physical landing event instead of being pre-empted when the model is first created. -->
+<!-- v10.91: Monster reveal audio now checks for a monster-specific landing sound first. If landgoblin.mp3 exists, Goblin encounters suppress the generic monster.mp3 and play only landgoblin.mp3 on physical landing. Dungeon ambience remains a separate persistent loop and automatically resumes after tab/browser suspension. -->
+<!-- v10.91: Chests are now dungeon objects, not inventory items. Finding a Small or Large Chest leaves it visibly on the current tile and offers Open Chest or Leave It. Leaving keeps it on the tile for a later visit; opening resolves the existing chest trap/reward and removes the chest. Chest tiles cannot be picked up into the backpack. -->
 
 <style>
-/* v10.90 — Version number lives beneath the top-left 3D logo */
+/* v10.91 — Version number lives beneath the top-left 3D logo */
 #logoWrap,#gameLogoWrap,.logoWrap,.gameLogoWrap,.topLogo,.brandLogo{
   position:relative;
 }
 #logoWrap::after,#gameLogoWrap::after,.logoWrap::after,.gameLogoWrap::after,.topLogo::after,.brandLogo::after{
-  content:"v10.90";
+  content:"v10.91";
   display:block;
   text-align:center;
   margin-top:2px;
@@ -1611,9 +1611,9 @@ Changes:
 }
 </style>
 
-<!-- v10.90: Ranged attacks against hidden monsters now wait for the reveal/drop animation to complete before firing. Ice Staff, Fireball, Bow and Flying Daggers reveal the monster, let it land, pause briefly, then launch the projectile/effect. Already revealed monsters are attacked immediately. -->
-<!-- v10.90: Removed the vertical monster drop animation. Monsters now reveal already grounded with a quick 180ms scale-in impact, camera shake and landing sound. Hidden-monster ranged attacks reveal the grounded monster first, pause briefly, then fire, eliminating projectiles shooting upward during reveal. -->
-<!-- v10.90: Fixed chest reward placement. Chest UI closes before reward items are awarded, so item placement remains visible. Large Chest rewards resolve one at a time through the pending item queue. -->
+<!-- v10.91: Ranged attacks against hidden monsters now wait for the reveal/drop animation to complete before firing. Ice Staff, Fireball, Bow and Flying Daggers reveal the monster, let it land, pause briefly, then launch the projectile/effect. Already revealed monsters are attacked immediately. -->
+<!-- v10.91: Removed the vertical monster drop animation. Monsters now reveal already grounded with a quick 180ms scale-in impact, camera shake and landing sound. Hidden-monster ranged attacks reveal the grounded monster first, pause briefly, then fire, eliminating projectiles shooting upward during reveal. -->
+<!-- v10.91: Fixed chest reward placement. Chest UI closes before reward items are awarded, so item placement remains visible. Large Chest rewards resolve one at a time through the pending item queue. -->
 </head>
 <body class="lightingOn">
 
@@ -1796,7 +1796,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.90';
+const VERSION='v10.91';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2196,7 +2196,7 @@ function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.string
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
 function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
 function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
-// v10.90: Default monster reveal/drop sound. Individual monster sounds can override this later.
+// v10.91: Default monster reveal/drop sound. Individual monster sounds can override this later.
 window.SOUND_PATHS=window.SOUND_PATHS||{};
 window.SOUND_PATHS.monsterReveal='assets/sounds/monster.mp3';
 
@@ -4960,7 +4960,7 @@ function triggerCameraShake(duration=240,magnitude=.14){
 }
 
 function startMonsterDrop(pivot,restY,monsterName,delay=0,monsterState=null){
- // v10.90: grounded monster reveal — no vertical drop.
+ // v10.91: grounded monster reveal — no vertical drop.
  pivot.position.y=restY;
  if(monsterState)monsterState._dropped=true;
  const reveal=()=>{
@@ -7397,7 +7397,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.90 — Start-screen distant monster ambience */
+/* v10.91 — Start-screen distant monster ambience */
 (function () {
   const START_AMBIENCE_PATH = './assets/sounds/distant-monsters.mp3';
   let distantMonstersAudio = null;
@@ -7494,7 +7494,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.90 — Explicit start-screen/dungeon ambience handoff */
+/* v10.91 — Explicit start-screen/dungeon ambience handoff */
 (function () {
   const DUNGEON_AMBIENCE_PATH = './assets/sounds/dungeon-sounds.mp3';
   let dungeonAmbienceAudio = null;
@@ -7571,7 +7571,7 @@ if(currentState)renderBoard(currentState);
 
 
 <style>
-/* v10.90 — Keep remaining dungeon contents a mystery */
+/* v10.91 — Keep remaining dungeon contents a mystery */
 #counts,#tileCount,#monsterCount,#itemCount,
 .tilesCount,.monstersCount,.itemsCount,
 .tileCount,.monsterCount,.itemCount,
@@ -7605,7 +7605,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v10.90';
+  v.textContent='v10.91';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -7616,7 +7616,7 @@ if(currentState)renderBoard(currentState);
 
 
 <script>
-/* v10.90 — Definitively remove version text from Quest Log only */
+/* v10.91 — Definitively remove version text from Quest Log only */
 (function(){
  function cleanQuestLogVersion(){
   document.querySelectorAll('*').forEach(function(el){
@@ -7649,7 +7649,7 @@ if(currentState)renderBoard(currentState);
 }
 </style>
 <script>
-/* v10.90 — Move version from welcome Quest Log entry to beneath 3D logo */
+/* v10.91 — Move version from welcome Quest Log entry to beneath 3D logo */
 (function(){
  function fixVersionPlacement(){
   // Clean the actual welcome log entry, including dynamically generated text.
@@ -7675,7 +7675,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v10.90';
+   v.textContent='v10.91';
    mark.insertAdjacentElement('afterend',v);
   }
  }
@@ -7685,6 +7685,40 @@ if(currentState)renderBoard(currentState);
 })();
 </script>
 
+<style>
+#dungeonQuestIntro{position:fixed;inset:0;z-index:650;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.62)}
+#dungeonQuestIntro.open{display:flex}
+.dungeonQuestScroll{width:min(620px,92vw);min-height:340px;padding:58px 70px 52px;color:#000;text-align:center;background-color:var(--cream,#eadbb6);background-image:url('./assets/ui/scroll.png');background-position:center;background-repeat:no-repeat;background-size:100% 100%;border:4px solid #000;box-shadow:7px 7px 0 #000}
+.dungeonQuestScroll h2{margin:0 0 18px;font:800 clamp(28px,4vw,42px)/1.05 "Alegreya",Georgia,serif}
+.dungeonQuestScroll p{margin:0 auto 16px;max-width:470px;font:600 clamp(18px,2.4vw,25px)/1.28 "Alegreya",Georgia,serif}
+.dungeonQuestScroll .questWarning{font-weight:800}
+.dungeonQuestScroll button{margin-top:8px;min-width:190px;font-size:17px}
+@media(max-width:600px){.dungeonQuestScroll{min-height:300px;padding:42px 30px 38px}}
+</style>
+<div id="dungeonQuestIntro" aria-modal="true" role="dialog" aria-labelledby="dungeonQuestIntroTitle">
+ <div class="dungeonQuestScroll">
+  <h2 id="dungeonQuestIntroTitle">Your Quest</h2>
+  <p>Can you find and defeat the Red Dragon?</p>
+  <p class="questWarning">Be warned! She fights with 4 dice, and you only have 3 lives!</p>
+  <p>Good luck, adventurer. You’ll need it.</p>
+  <button type="button" id="enterDungeonQuestBtn">Enter the Dungeon</button>
+ </div>
+</div>
+<script>
+(function(){
+ let introShown=false;
+ function hidden(){const e=document.getElementById('charSelect');if(!e)return false;const s=getComputedStyle(e);return e.classList.contains('hidden')||e.hidden||s.display==='none'||s.visibility==='hidden'}
+ function show(){if(introShown)return;introShown=true;document.getElementById('dungeonQuestIntro')?.classList.add('open')}
+ function close(){document.getElementById('dungeonQuestIntro')?.classList.remove('open')}
+ function install(){
+  document.getElementById('enterDungeonQuestBtn')?.addEventListener('click',close);
+  const e=document.getElementById('charSelect');if(!e)return;
+  let was=hidden();
+  new MutationObserver(()=>{const now=hidden();if(now&&!was)setTimeout(show,120);was=now}).observe(e,{attributes:true,attributeFilter:['class','style','hidden']});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
+</script>
 </body>
 </html>
 
