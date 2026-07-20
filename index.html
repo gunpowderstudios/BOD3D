@@ -1630,7 +1630,7 @@ Changes:
 <!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
 <!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
 <!-- v10.95 dice mapping/clearance update: Corrected the default 2/5 face mapping, reset legacy dice calibration storage, and moved combat dice farther outward from hero/monster miniatures with stronger outward settling so resting dice do not intersect the character models on desktop or mobile. -->
-<!-- v10.97 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
+<!-- v10.98 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
 </head>
 <body class="lightingOn">
 
@@ -5112,7 +5112,7 @@ window.BODDice3D={
  calibration:DICE_FACE_QUATERNIONS
 };
 
-// v10.97 — explicit Developer Dice controller. Inline handlers use this so controls
+// v10.98 — explicit Developer Dice controller. Inline handlers use this so controls
 // work regardless of when the Developer Console itself was wired.
 (function installExplicitDiceDeveloperController(){
  const STORAGE='bod3dDiceTuningV1096';
@@ -7754,12 +7754,12 @@ if(currentState)renderBoard(currentState);
 
       <section class="devConsolePanel" data-dev-panel="dice">
         <div class="devDiceControls">
-          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1900 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1900"></div>
-          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">1.35</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="1.35"></div>
-          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">0.48</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="0.48"></div>
-          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.20</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.20"></div>
-          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.18</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.18"></div>
-          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.58</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.58"></div>
+          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1900 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1050"></div>
+          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">1.35</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="2.5"></div>
+          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">0.48</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="1"></div>
+          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.20</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.02"></div>
+          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.18</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.55"></div>
+          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.58</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.9"></div>
           <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.03</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.03"></div>
         </div>
         <div class="devConsoleNote"><b>Face calibration:</b> choose the black or red die and the result you want to calibrate. Show it, rotate it in 90° steps until that number is on top, then Save Face. Calibration is stored in this browser.</div>
@@ -8057,7 +8057,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v10.97';
+  v.textContent='v10.98';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -8127,7 +8127,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v10.97';
+   v.textContent='v10.98';
    mark.insertAdjacentElement('afterend',v);
   }
  }
@@ -8137,6 +8137,51 @@ if(currentState)renderBoard(currentState);
 })();
 </script>
 
+
+<script>
+// v10.98 dice ground-plane normaliser: keeps every settled die on the same board surface.
+(function(){
+  window.BOD3D_DICE_DEFAULTS = Object.assign({}, window.BOD3D_DICE_DEFAULTS || {}, {
+    duration:1050, dropHeight:2.5, bounce1:1, bounce2:0.02, bounce3:0.06, separation:0.55, spacing:0.9, floorOffset:0.2
+  });
+  function normaliseSettledDice(){
+    try{
+      const scene = window.scene || window.gameScene || window.threeScene;
+      const THREEref = window.THREE;
+      if(!scene || !THREEref) return;
+      const dice=[];
+      scene.traverse(o=>{
+        const n=(o.name||'').toLowerCase();
+        if(n.includes('dice') && o.visible && o.userData && (o.userData.isDice||o.userData.die||o.userData.diceType)) dice.push(o);
+      });
+      if(!dice.length) return;
+      let boardY = null;
+      // Prefer explicit shared plane values if the game exposes one.
+      const candidates=[window.diceBoardY,window.tileTopY,window.boardSurfaceY,window.DICE_BOARD_Y];
+      for(const v of candidates){ if(Number.isFinite(v)){ boardY=v; break; } }
+      if(boardY===null){
+        // Infer a common plane from the lowest current die bottoms, then use the minimum so none float above another.
+        const bottoms=dice.map(d=>{ const box=new THREEref.Box3().setFromObject(d); return box.min.y; }).filter(Number.isFinite);
+        if(!bottoms.length) return;
+        boardY=Math.min(...bottoms)-0.2;
+      }
+      const targetBottom=boardY+0.2;
+      dice.forEach(d=>{
+        const box=new THREEref.Box3().setFromObject(d);
+        if(!Number.isFinite(box.min.y)) return;
+        d.position.y += (targetBottom-box.min.y);
+      });
+    }catch(e){ console.warn('Dice ground normaliser:',e); }
+  }
+  // Run after likely roll durations; repeated briefly to catch staggered multi-die settles.
+  window.addEventListener('load',()=>{
+    setInterval(()=>{
+      if(document.hidden) return;
+      normaliseSettledDice();
+    },350);
+  });
+})();
+</script>
 </body>
 </html>
 
