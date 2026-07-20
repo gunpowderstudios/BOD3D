@@ -1633,7 +1633,8 @@ Changes:
 <!-- v10.98 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
 <!-- v10.99 dice grounding update: Each die now computes its own settled root height from the actual GLB bounding box after the final face rotation, so black and red dice share the same physical board surface. Dice are also cleared immediately when normal hero movement begins. User-tested dice animation values are now the built-in defaults. -->
 <!-- v11.00 dice pivot grounding fix: Dice clone geometry is now centred on the clone root before face rotation. The final resting Y is then calculated from the rotated world-space bounding box, preventing model-origin/pivot differences from making black dice sit lower than red dice. -->
-<!-- v11.01: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.01. -->
+<!-- v11.02: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.02. -->
+<!-- v11.02: Restored a clearly visible build number directly beneath the 3D logo in the sidebar. Updated permanent dice defaults to Floor Offset 0.03 while retaining Duration 1050, Drop Height 2.5, Bounce 1 1, Bounce 2 0.02, Bounce 3 0.06, Separation 0.55 and Spacing 0.9. Dice tuning storage namespace bumped so the new floor offset is not overridden by an older saved 0.20 value. -->
 </head>
 <body class="lightingOn">
 
@@ -1708,6 +1709,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.02</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1816,7 +1818,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.01';
+const VERSION='v11.02';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -4900,7 +4902,7 @@ const DICE_TUNING={
  outward:1.02,
  gap:.9,
  size:.62,
- floorOffset:.2
+ floorOffset:.03
 };
 let diceCalibrationDie=null;
 let diceCalibrationRole='hero';
@@ -5141,8 +5143,8 @@ window.BODDice3D={
 // v10.98 — explicit Developer Dice controller. Inline handlers use this so controls
 // work regardless of when the Developer Console itself was wired.
 (function installExplicitDiceDeveloperController(){
- const STORAGE='bod3dDiceTuningV1096';
- const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.2};
+ const STORAGE='bod3dDiceTuningV1102';
+ const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.03};
  const status=(msg)=>{const el=document.getElementById('devDiceStatus');if(el)el.textContent=msg;};
  const stop=(e)=>{if(e){e.preventDefault?.();e.stopPropagation?.();}return false;};
  const r6=()=>1+Math.floor(Math.random()*6);
@@ -5170,8 +5172,8 @@ window.BODDice3D={
 
 // v10.96 — persistent developer dice settings + reliable late button wiring.
 (function installDiceDeveloperReliability(){
- const STORAGE='bod3dDiceTuningV1096';
- const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.2};
+ const STORAGE='bod3dDiceTuningV1102';
+ const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.03};
  try{
   const saved=JSON.parse(localStorage.getItem(STORAGE)||'null');
   if(saved&&typeof saved==='object')window.BODDice3D.setTuning(saved);
@@ -7787,7 +7789,7 @@ if(currentState)renderBoard(currentState);
           <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.02</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.02"></div>
           <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.55</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.55"></div>
           <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.90</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.9"></div>
-          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.200</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.2"></div>
+          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.030</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.03"></div>
         </div>
         <div class="devConsoleNote"><b>Face calibration:</b> choose the black or red die and the result you want to calibrate. Show it, rotate it in 90° steps until that number is on top, then Save Face. Calibration is stored in this browser.</div>
         <div class="devConsoleRow">
@@ -8084,7 +8086,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v11.01';
+  v.textContent='v11.02';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -8154,7 +8156,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v11.01';
+   v.textContent='v11.02';
    mark.insertAdjacentElement('afterend',v);
   }
  }
@@ -8169,7 +8171,7 @@ if(currentState)renderBoard(currentState);
 // v10.98 dice ground-plane normaliser: keeps every settled die on the same board surface.
 (function(){
   window.BOD3D_DICE_DEFAULTS = Object.assign({}, window.BOD3D_DICE_DEFAULTS || {}, {
-    duration:1050, dropHeight:2.5, bounce1:1, bounce2:0.02, bounce3:0.06, separation:0.55, spacing:0.9, floorOffset:0.2
+    duration:1050, dropHeight:2.5, bounce1:1, bounce2:0.02, bounce3:0.06, separation:0.55, spacing:0.9, floorOffset:0.03
   });
   function normaliseSettledDice(){
     try{
