@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v10.91</title>
+<title>Bag of Dungeon 3D v10.92</title>
 
 <!--
 8BITBOD
@@ -1604,7 +1604,7 @@ Changes:
   position:relative;
 }
 #logoWrap::after,#gameLogoWrap::after,.logoWrap::after,.gameLogoWrap::after,.topLogo::after,.brandLogo::after{
-  content:"v10.91";
+  content:"v10.92";
   display:block;
   text-align:center;
   margin-top:2px;
@@ -1619,7 +1619,8 @@ Changes:
 <!-- v10.90: Ranged attacks against hidden monsters now wait for the reveal/drop animation to complete before firing. Ice Staff, Fireball, Bow and Flying Daggers reveal the monster, let it land, pause briefly, then launch the projectile/effect. Already revealed monsters are attacked immediately. -->
 <!-- v10.90: Removed the vertical monster drop animation. Monsters now reveal already grounded with a quick 180ms scale-in impact, camera shake and landing sound. Hidden-monster ranged attacks reveal the grounded monster first, pause briefly, then fire, eliminating projectiles shooting upward during reveal. -->
 <!-- v10.90: Fixed chest reward placement. Chest UI closes before reward items are awarded, so item placement remains visible. Large Chest rewards resolve one at a time through the pending item queue. -->
-<!-- v10.91: Mobile Centre now recentres the Three.js camera correctly; respawns hard-reset the hero model and camera onto Start; character-selector arrows are forced transparent with no cream button box; Witch's Claw text is solo-only; Chest copy now explains trap/loot possibilities and chest opening visibly rolls a die; added reusable 3D dice.glb roller for combat, chests and Ring-location rolls with existing dice.mp3/fallback clack audio. -->
+<!-- v10.92: Mobile Centre now recentres the Three.js camera correctly; respawns hard-reset the hero model and camera onto Start; character-selector arrows are forced transparent with no cream button box; Witch's Claw text is solo-only; Chest copy now explains trap/loot possibilities and chest opening visibly rolls a die; added reusable 3D dice.glb roller for combat, chests and Ring-location rolls with existing dice.mp3/fallback clack audio. -->
+<!-- v10.92 dice update: Hero combat dice now load assets/models/diceblack.glb and monster combat dice load assets/models/dicered.glb. Rolls are slower, lower and bouncier; combat dice are separated beside their respective miniatures and use tighter mobile spacing to stay within the cinematic frame. -->
 </head>
 <body class="lightingOn">
 
@@ -1802,7 +1803,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.91';
+const VERSION='v10.92';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -3125,7 +3126,7 @@ function fightRound(){
  showDice(Array.from({length:pDice()},()=>'?'),Array.from({length:m.dice},()=>'?'),true);
  document.getElementById('combatLog').textContent='Rolling dice...';
  playSound('dice');
- window.BODDice3D?.roll?.([...pr.rolls,...mr.rolls]);
+ window.BODDice3D?.rollCombat?.(pr.rolls,mr.rolls);
  renderCombat();
  setTimeout(()=>resolveFightRound(),1050);
 }
@@ -4800,11 +4801,12 @@ scene.add(boardGroup);
 const textureLoader=new THREE.TextureLoader();
 const gltfLoader=new GLTFLoader();
 
-// v10.91 — Reusable 3D dice roller. The exported dice.glb default pose is
-// calibrated as 6 on top, with 3 and 4 on opposite side faces.
+// v10.92 — Two-colour reusable 3D dice roller.
+// Hero dice use diceblack.glb; monster dice use dicered.glb.
+// The default exported pose is calibrated as 6 on top, with 3 and 4 on opposite side faces.
 const diceGroup=new THREE.Group();
 scene.add(diceGroup);
-let diceSourcePromise=null;
+const diceSourcePromises={hero:null,monster:null};
 let diceRollToken=0;
 const DICE_TOP_QUATERNIONS={
  6:new THREE.Quaternion(),
@@ -4817,18 +4819,18 @@ const DICE_TOP_QUATERNIONS={
 function clearDice3D(){
  while(diceGroup.children.length){
   const o=diceGroup.children.pop();
-  o?.traverse?.(n=>{
-   if(n.geometry&&n.userData?.diceOwnedGeometry)n.geometry.dispose?.();
-  });
+  o?.traverse?.(n=>{if(n.geometry&&n.userData?.diceOwnedGeometry)n.geometry.dispose?.();});
  }
 }
-async function getDiceSource(){
- if(!diceSourcePromise){
-  diceSourcePromise=gltfLoader.loadAsync(`assets/models/dice.glb?v=${encodeURIComponent(VERSION)}`)
+async function getDiceSource(role='hero'){
+ role=role==='monster'?'monster':'hero';
+ if(!diceSourcePromises[role]){
+  const file=role==='monster'?'dicered.glb':'diceblack.glb';
+  diceSourcePromises[role]=gltfLoader.loadAsync(`assets/models/${file}?v=${encodeURIComponent(VERSION)}`)
    .then(g=>g.scene)
-   .catch(err=>{console.error('Failed to load dice.glb',err);return null;});
+   .catch(err=>{console.error(`Failed to load ${file}`,err);return null;});
  }
- return diceSourcePromise;
+ return diceSourcePromises[role];
 }
 function prepareDieClone(source){
  const raw=source.clone(true);
@@ -4841,7 +4843,7 @@ function prepareDieClone(source){
  const box=new THREE.Box3().setFromObject(raw);
  const size=box.getSize(new THREE.Vector3());
  const maxDim=Math.max(size.x,size.y,size.z)||1;
- raw.scale.multiplyScalar(.72/maxDim);
+ raw.scale.multiplyScalar(.62/maxDim);
  const scaled=new THREE.Box3().setFromObject(raw);
  const c=scaled.getCenter(new THREE.Vector3());
  const root=new THREE.Group();
@@ -4849,30 +4851,46 @@ function prepareDieClone(source){
  root.add(raw);
  return root;
 }
-async function rollDice3D(values){
- values=(Array.isArray(values)?values:[values]).map(Number).filter(v=>v>=1&&v<=6).slice(0,6);
- if(!values.length)return;
- const token=++diceRollToken;
- const source=await getDiceSource();
- if(!source||token!==diceRollToken)return;
- clearDice3D();
+function diceLayout(role,count){
+ // During cinematic combat, keep hero dice just outside the hero and monster dice
+ // just outside the monster. The smaller mobile offset keeps both groups within frame.
+ const mobile=window.innerWidth<=800;
+ if(combatScene?.heroCombatPosition&&combatScene?.monsterCombatPosition){
+  const hero=combatScene.heroCombatPosition.clone();
+  const monster=combatScene.monsterCombatPosition.clone();
+  const axis=monster.clone().sub(hero);axis.y=0;
+  if(axis.lengthSq()<.001)axis.set(1,0,0);else axis.normalize();
+  const outward=mobile?.48:.72;
+  const centre=(role==='monster'?monster.clone().addScaledVector(axis,outward):hero.clone().addScaledVector(axis,-outward));
+  centre.y=TILE_THICKNESS+.03;
+  const across=new THREE.Vector3(-axis.z,0,axis.x);
+  const gap=mobile?.48:.58;
+  return Array.from({length:count},(_,i)=>centre.clone().addScaledVector(across,(i-(count-1)/2)*gap));
+ }
  const px=(latestState?.player?.x||0)*TILE;
  const pz=(latestState?.player?.y||0)*TILE;
- const spacing=.88;
- const startX=px-((values.length-1)*spacing)/2;
+ const gap=.58;
+ return Array.from({length:count},(_,i)=>new THREE.Vector3(px+(i-(count-1)/2)*gap,TILE_THICKNESS+.03,pz+1.05));
+}
+async function rollDiceSet(values,role='hero',token=++diceRollToken,keepMs=1700){
+ values=(Array.isArray(values)?values:[values]).map(Number).filter(v=>v>=1&&v<=6).slice(0,6);
+ if(!values.length)return [];
+ const source=await getDiceSource(role);
+ if(!source||token!==diceRollToken)return [];
+ const targets=diceLayout(role,values.length);
  const dice=[];
  values.forEach((value,i)=>{
   const die=prepareDieClone(source);
-  die.position.set(startX+i*spacing,TILE_THICKNESS+.03,pz+1.15);
+  const target=targets[i];
+  const side=(role==='monster'?1:-1);
   die.scale.setScalar(.01);
-  die.userData={value,start:performance.now()+i*45,duration:820+Math.random()*180,
-   startPos:die.position.clone(),
-   targetPos:new THREE.Vector3(startX+i*spacing,TILE_THICKNESS+.03,pz+1.15),
-   targetQuat:DICE_TOP_QUATERNIONS[value].clone(),
-   spin:new THREE.Vector3((5+Math.random()*4)*Math.PI,(5+Math.random()*5)*Math.PI,(5+Math.random()*4)*Math.PI)};
-  die.userData.startPos.y+=2.1+Math.random()*.55;
-  die.userData.startPos.x+=(Math.random()-.5)*1.4;
-  die.userData.startPos.z+=(Math.random()-.5)*.7;
+  die.userData={value,start:performance.now()+i*90,duration:1450+Math.random()*250,
+   startPos:target.clone(),targetPos:target.clone(),targetQuat:DICE_TOP_QUATERNIONS[value].clone(),
+   spin:new THREE.Vector3((3.5+Math.random()*2.5)*Math.PI,(4+Math.random()*3)*Math.PI,(3.5+Math.random()*2.5)*Math.PI)};
+  // A short inward toss rather than flying across the screen.
+  die.userData.startPos.y+=1.15+Math.random()*.25;
+  die.userData.startPos.x+=side*(.28+Math.random()*.16);
+  die.userData.startPos.z+=(Math.random()-.5)*.22;
   die.position.copy(die.userData.startPos);
   diceGroup.add(die);dice.push(die);
  });
@@ -4885,19 +4903,38 @@ async function rollDice3D(values){
    if(t<1)alive=true;
    const ease=1-Math.pow(1-t,3);
    die.position.lerpVectors(d.startPos,d.targetPos,ease);
-   die.position.y+=Math.sin(t*Math.PI)*.55 + Math.abs(Math.sin(t*Math.PI*3))*.12*(1-t);
+   // Low, diminishing bounces: one main hop and two little clacks.
+   const bounce1=Math.sin(Math.min(1,t/.68)*Math.PI)*.32*(1-Math.max(0,(t-.68)/.32));
+   const bounce2=t>.62?Math.abs(Math.sin((t-.62)*Math.PI*6))*.10*(1-t):0;
+   die.position.y+=Math.max(0,bounce1)+bounce2;
    const qSpin=new THREE.Quaternion().setFromEuler(new THREE.Euler(d.spin.x*t,d.spin.y*t,d.spin.z*t));
-   const settle=Math.max(0,(t-.68)/.32);
+   const settle=Math.max(0,(t-.70)/.30);
    die.quaternion.copy(qSpin).slerp(d.targetQuat,settle*settle*(3-2*settle));
-   const pop=Math.min(1,t/.10);
-   die.scale.setScalar(pop);
+   die.scale.setScalar(Math.min(1,t/.12));
   });
   if(alive)requestAnimationFrame(animateDice);
-  else setTimeout(()=>{if(token===diceRollToken)clearDice3D();},1450);
+  else setTimeout(()=>{if(token===diceRollToken)clearDice3D();},keepMs);
  };
  requestAnimationFrame(animateDice);
+ return dice;
 }
-window.BODDice3D={roll:rollDice3D,clear:clearDice3D};
+async function rollDice3D(values,role='hero'){
+ const token=++diceRollToken;
+ clearDice3D();
+ await rollDiceSet(values,role,token,1500);
+}
+async function rollCombatDice3D(heroValues,monsterValues){
+ const token=++diceRollToken;
+ clearDice3D();
+ // Load both models together, then animate both colour groups in the same roll.
+ await Promise.all([getDiceSource('hero'),getDiceSource('monster')]);
+ if(token!==diceRollToken)return;
+ await Promise.all([
+  rollDiceSet(heroValues,'hero',token,1900),
+  rollDiceSet(monsterValues,'monster',token,1900)
+ ]);
+}
+window.BODDice3D={roll:rollDice3D,rollCombat:rollCombatDice3D,clear:clearDice3D};
 
 
 const heroPreviewCanvas=document.getElementById('heroPreviewCanvas');
@@ -7731,7 +7768,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v10.91';
+  v.textContent='v10.92';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -7801,7 +7838,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v10.91';
+   v.textContent='v10.92';
    mark.insertAdjacentElement('afterend',v);
   }
  }
