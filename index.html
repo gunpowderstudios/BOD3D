@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.18</title>
+<title>Bag of Dungeon 3D v11.19</title>
 
 <!--
 8BITBOD
@@ -1945,7 +1945,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.18';
+const VERSION='v11.19';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -5017,6 +5017,12 @@ if(document.readyState==='loading'){
 
 function win(){state.gameOver=true;sndWin();closeCombat();showModal('YOU ESCAPED!','You defeated the Dragon and escaped with the Ring of Creation.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
 function lose(){state.gameOver=true;sndLose();closeCombat();showModal('GAME OVER','The dungeon claims another adventurer.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
+
+// v11.19: Clear any settled or still-animating dice on death and at the start of a new game.
+const deathWithoutDiceCleanup=death;
+death=function(){window.BODDice3D?.clear?.();return deathWithoutDiceCleanup.apply(this,arguments);};
+const newGameWithoutDiceCleanup=newGame;
+newGame=function(){window.BODDice3D?.clear?.();return newGameWithoutDiceCleanup.apply(this,arguments);};
 renderCharSelect();
 </script>
 
@@ -5190,6 +5196,10 @@ function clearDice3D(){
   const o=diceGroup.children.pop();
   o?.traverse?.(n=>{if(n.geometry&&n.userData?.diceOwnedGeometry)n.geometry.dispose?.();});
  }
+}
+function cancelAndClearDice3D(){
+ diceRollToken++;
+ clearDice3D();
 }
 async function getDiceSource(role='hero'){
  role=role==='monster'?'monster':'hero';
@@ -5408,7 +5418,7 @@ function setDiceTuning(partial={}){
 window.BODDice3D={
  roll:rollDice3D,
  rollCombat:rollCombatDice3D,
- clear:clearDice3D,
+ clear:cancelAndClearDice3D,
  tuning:DICE_TUNING,
  setTuning:setDiceTuning,
  showCalibration:showDiceCalibration,
@@ -8494,4 +8504,3 @@ window.RESPAWN_CENTER_ON_START=true;
 </script><!-- v10.52: Rebuilt the opening character selector as a cinematic hero carousel using the supplied embedded dungeon backdrop. One live GLB hero is shown at a time with previous/next arrows, keyboard navigation, a 3-second 180-degree turn, one-second pause and return turn. Stats, description, special ability, progress dots and Enter the Dungeon button update with the selected hero. Silhouette artwork remains as an automatic fallback if a GLB cannot load. -->
 <!-- v10.52: Refined cinematic hero selector. Removed the duplicate HTML logo/3D overlay so only the logo built into the supplied backdrop remains. Reduced hero model scale, pulled the preview camera back, changed rotation to a seamless continuous 360-degree turn, and tightened the layout for phones and short landscape screens. -->
 <!-- v10.52: Smoothed hero browsing. Character changes now fade and slide deliberately, wait for the next GLB to finish loading, restart rotation facing forward, and lock the arrows during the transition. Rapid tapping queues only the final next/previous request instead of loading several heroes at once. Added one-character-per-gesture mobile swiping with a deliberate horizontal threshold. -->
-
