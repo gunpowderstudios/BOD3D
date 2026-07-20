@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.12</title>
+<title>Bag of Dungeon 3D v11.13</title>
 
 <!--
 8BITBOD
@@ -579,7 +579,7 @@ body.threeMode.lightingOn #viewport::after{
 
 
 
-/* ===== Tester warning scroll v11.12 ===== */
+/* ===== Tester warning scroll v11.13 ===== */
 .testerWarningScroll{
   width:min(760px,94vw);
   max-width:760px;
@@ -1654,7 +1654,7 @@ Changes:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Alegreya+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- v10.53: Confirmed and retained the latest cinematic character-selection branch while finalising the Goblin and Flying Daggers fixes. Living monster GLB materials are cloned and normalised to full opacity so the Goblin cannot inherit transparent Alpha Blend settings. Flying Daggers remain a one-use ranged spell with range 1-3, 2 AP cost, 2 dice damage, connected-corridor targeting, Dragon immunity, cinematic framing and a surviving-monster charge with no escape. All v10.52 loading-screen, backdrop, dynamic logo, rotating hero selector, mobile UI and combat-impact features are preserved. -->
-<!-- v11.12: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
+<!-- v11.13: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
 <!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
 <!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
 <!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
@@ -1796,7 +1796,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.12</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.13</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1905,7 +1905,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.12';
+const VERSION='v11.13';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2849,7 +2849,7 @@ function promptOldSpikey(tile){
  const carried=allCarriedItems().filter(x=>!isBear(x));
  const buttons=[];
  if(carried.length)buttons.push({text:'Destroy an Item',cls:'red',fn:()=>chooseSpikeSacrifice(tile)});
- buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=2){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
+ buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=2){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playSound('hit');playSound('heroHurt');showCombatImpact('hero',state.player.health<=0?'kill':'hit',dmg);playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
  showModal('Old Spikey','Destroy one carried item to jam the mechanism, or roll a die. On 1–2 the trap springs and deals one die of direct damage.',buttons);
 }
 function chooseSpikeSacrifice(tile){const items=allCarriedItems().filter(x=>!isBear(x));showModal('Jam Old Spikey','Choose an item to destroy.',items.map(it=>({text:it.name,cls:'red',fn:()=>{dropDestroyedItem(it);closeModal();log('Destroyed '+it.name+' to jam Old Spikey.','system');render();}})).concat([{text:'Back',fn:()=>promptOldSpikey(tile)}]));}
