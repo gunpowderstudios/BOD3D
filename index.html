@@ -1628,6 +1628,7 @@ Changes:
 <!-- v10.92: Mobile Centre now recentres the Three.js camera correctly; respawns hard-reset the hero model and camera onto Start; character-selector arrows are forced transparent with no cream button box; Witch's Claw text is solo-only; Chest copy now explains trap/loot possibilities and chest opening visibly rolls a die; added reusable 3D dice.glb roller for combat, chests and Ring-location rolls with existing dice.mp3/fallback clack audio. -->
 <!-- v10.92 dice update: Hero combat dice now load assets/models/diceblack.glb and monster combat dice load assets/models/dicered.glb. Rolls are slower, lower and bouncier; combat dice are separated beside their respective miniatures and use tighter mobile spacing to stay within the cinematic frame. -->
 <!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
+<!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
 </head>
 <body class="lightingOn">
 
@@ -1810,7 +1811,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.92';
+const VERSION='v10.94';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -4550,7 +4551,8 @@ function wireDeveloperConsole(){
   bounce1:['diceBounce1','diceBounce1Value','bounce1',v=>Number(v).toFixed(2)],
   bounce2:['diceBounce2','diceBounce2Value','bounce2',v=>Number(v).toFixed(2)],
   spread:['diceSpread','diceSpreadValue','spread',v=>Number(v).toFixed(2)],
-  gap:['diceGap','diceGapValue','gap',v=>Number(v).toFixed(2)]
+  gap:['diceGap','diceGapValue','gap',v=>Number(v).toFixed(2)],
+  floorOffset:['diceFloorOffset','diceFloorOffsetValue','floorOffset',v=>Number(v).toFixed(3)]
  };
  Object.values(diceInputs).forEach(([inputId,valueId,key,format])=>{
   const input=document.getElementById(inputId),value=document.getElementById(valueId);
@@ -4568,6 +4570,11 @@ function wireDeveloperConsole(){
  document.getElementById('devTestMonsterDice')?.addEventListener('click',()=>window.BODDice3D?.roll?.([r6(),r6()],'monster'));
  document.getElementById('devTestCombatDice')?.addEventListener('click',()=>window.BODDice3D?.rollCombat?.([r6(),r6()],[r6(),r6()]));
  document.getElementById('devClearDice')?.addEventListener('click',()=>window.BODDice3D?.clear?.());
+ const calRole=document.getElementById('diceCalRole');
+ const calFace=document.getElementById('diceCalFace');
+ document.getElementById('diceCalShow')?.addEventListener('click',()=>window.BODDice3D?.showCalibration?.(calRole?.value||'hero',Number(calFace?.value||6)));
+ document.getElementById('diceCalSave')?.addEventListener('click',()=>{window.BODDice3D?.saveCalibration?.(calRole?.value||'hero',Number(calFace?.value||6));toast('Dice face calibration saved');});
+ consoleEl.querySelectorAll('[data-dice-cal-axis]').forEach(btn=>btn.addEventListener('click',()=>window.BODDice3D?.rotateCalibration?.(btn.dataset.diceCalAxis,Number(btn.dataset.diceCalAngle||0))));
 
  consoleEl.addEventListener('click',event=>{
   if(event.target===consoleEl){
@@ -4834,14 +4841,14 @@ scene.add(boardGroup);
 const textureLoader=new THREE.TextureLoader();
 const gltfLoader=new GLTFLoader();
 
-// v10.93 — Two-colour reusable 3D dice roller with tunable board-game bounce physics.
+// v10.94 — Two-colour reusable 3D dice roller with tunable board-game bounce physics and face calibration.
 // Hero dice use diceblack.glb; monster dice use dicered.glb.
 // Dice remain on the board until the next roll, then the previous dice are cleared.
 const diceGroup=new THREE.Group();
 scene.add(diceGroup);
 const diceSourcePromises={hero:null,monster:null};
 let diceRollToken=0;
-const DICE_TOP_QUATERNIONS={
+const DEFAULT_DICE_TOP_QUATERNIONS={
  6:new THREE.Quaternion(),
  1:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,0)),
  3:new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,-Math.PI/2)),
@@ -4849,17 +4856,43 @@ const DICE_TOP_QUATERNIONS={
  2:new THREE.Quaternion().setFromEuler(new THREE.Euler( Math.PI/2,0,0)),
  5:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0))
 };
+const DICE_CAL_STORAGE='bod3d-dice-calibration-v1';
+function cloneDefaultDiceCalibration(){
+ return {hero:{},monster:{}};
+}
+function loadDiceCalibration(){
+ const out=cloneDefaultDiceCalibration();
+ ['hero','monster'].forEach(role=>{
+  for(let face=1;face<=6;face++)out[role][face]=DEFAULT_DICE_TOP_QUATERNIONS[face].clone();
+ });
+ try{
+  const saved=JSON.parse(localStorage.getItem(DICE_CAL_STORAGE)||'{}');
+  ['hero','monster'].forEach(role=>{
+   for(let face=1;face<=6;face++){
+    const q=saved?.[role]?.[face];
+    if(Array.isArray(q)&&q.length===4)out[role][face]=new THREE.Quaternion(q[0],q[1],q[2],q[3]).normalize();
+   }
+  });
+ }catch(e){console.warn('Dice calibration could not be loaded',e);}
+ return out;
+}
+const DICE_FACE_QUATERNIONS=loadDiceCalibration();
 const DICE_TUNING={
- duration:1900,       // milliseconds
- dropHeight:1.35,     // first drop height above the tile
- bounce1:.48,         // first rebound height
- bounce2:.20,         // second rebound height
- bounce3:.07,         // tiny final hop
- spread:.18,          // gentle sideways settling movement
- outward:.72,         // distance outside hero/monster
- gap:.58,             // spacing between multiple dice
- size:.62             // die size in world units
+ duration:1900,
+ dropHeight:1.35,
+ bounce1:.48,
+ bounce2:.20,
+ bounce3:.07,
+ spread:.18,
+ outward:.72,
+ gap:.58,
+ size:.62,
+ floorOffset:.03
 };
+let diceCalibrationDie=null;
+let diceCalibrationRole='hero';
+let diceCalibrationFace=6;
+function diceRestY(){return TILE_THICKNESS+DICE_TUNING.floorOffset;}
 function clearDice3D(){
  while(diceGroup.children.length){
   const o=diceGroup.children.pop();
@@ -4898,7 +4931,7 @@ function prepareDieClone(source){
 }
 function diceLayout(role,count){
  const mobile=window.innerWidth<=800;
- const tileTop=TILE_THICKNESS+.004;
+ const tileTop=diceRestY();
  if(combatScene?.heroCombatPosition&&combatScene?.monsterCombatPosition){
   const hero=combatScene.heroCombatPosition.clone();
   const monster=combatScene.monsterCombatPosition.clone();
@@ -4950,7 +4983,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
   const settleDir=new THREE.Vector3(roleSign*.35,0,lateralSign).normalize();
   const settleOffset=settleDir.multiplyScalar(DICE_TUNING.spread*(.65+Math.random()*.7));
   const finalPos=target.clone().add(settleOffset);
-  finalPos.y=TILE_THICKNESS+.004;
+  finalPos.y=diceRestY();
   const startPos=target.clone();
   startPos.y=finalPos.y+DICE_TUNING.dropHeight;
   startPos.x+=roleSign*(.16+Math.random()*.12);
@@ -4962,7 +4995,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
    duration:DICE_TUNING.duration+Math.random()*140,
    startPos,
    targetPos:finalPos,
-   targetQuat:DICE_TOP_QUATERNIONS[value].clone(),
+   targetQuat:DICE_FACE_QUATERNIONS[role][value].clone(),
    bounce1:DICE_TUNING.bounce1*(.9+Math.random()*.2),
    bounce2:DICE_TUNING.bounce2*(.9+Math.random()*.2),
    bounce3:DICE_TUNING.bounce3*(.85+Math.random()*.3),
@@ -5001,7 +5034,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
    // Snap precisely to final tile-plane position and correct face; remain until next roll.
    dice.forEach(die=>{
     die.position.copy(die.userData.targetPos);
-    die.position.y=TILE_THICKNESS+.004;
+    die.position.y=diceRestY();
     die.quaternion.copy(die.userData.targetQuat);
     die.scale.setScalar(1);
    });
@@ -5025,6 +5058,32 @@ async function rollCombatDice3D(heroValues,monsterValues){
   rollDiceSet(monsterValues,'monster',token)
  ]);
 }
+async function showDiceCalibration(role='hero',face=6){
+ role=role==='monster'?'monster':'hero';face=Math.max(1,Math.min(6,Number(face)||6));
+ const token=++diceRollToken;clearDice3D();
+ const source=await getDiceSource(role);if(!source||token!==diceRollToken)return;
+ const die=prepareDieClone(source);
+ const positions=diceLayout(role,1);
+ die.position.copy(positions[0]);die.position.y=diceRestY();
+ die.quaternion.copy(DICE_FACE_QUATERNIONS[role][face]);
+ diceGroup.add(die);
+ diceCalibrationDie=die;diceCalibrationRole=role;diceCalibrationFace=face;
+}
+function rotateDiceCalibration(axis='y',degrees=90){
+ if(!diceCalibrationDie)return;
+ const angle=THREE.MathUtils.degToRad(Number(degrees)||0);
+ const e=new THREE.Euler(axis==='x'?angle:0,axis==='y'?angle:0,axis==='z'?angle:0,'XYZ');
+ const q=new THREE.Quaternion().setFromEuler(e);
+ diceCalibrationDie.quaternion.multiply(q).normalize();
+}
+function saveDiceCalibration(role=diceCalibrationRole,face=diceCalibrationFace){
+ role=role==='monster'?'monster':'hero';face=Math.max(1,Math.min(6,Number(face)||6));
+ if(!diceCalibrationDie)return;
+ DICE_FACE_QUATERNIONS[role][face].copy(diceCalibrationDie.quaternion).normalize();
+ const serial={hero:{},monster:{}};
+ ['hero','monster'].forEach(r=>{for(let f=1;f<=6;f++){const q=DICE_FACE_QUATERNIONS[r][f];serial[r][f]=[q.x,q.y,q.z,q.w];}});
+ try{localStorage.setItem(DICE_CAL_STORAGE,JSON.stringify(serial));}catch(e){console.warn('Dice calibration could not be saved',e);}
+}
 function setDiceTuning(partial={}){
  Object.keys(DICE_TUNING).forEach(key=>{
   if(partial[key]!==undefined&&Number.isFinite(Number(partial[key])))DICE_TUNING[key]=Number(partial[key]);
@@ -5036,7 +5095,11 @@ window.BODDice3D={
  rollCombat:rollCombatDice3D,
  clear:clearDice3D,
  tuning:DICE_TUNING,
- setTuning:setDiceTuning
+ setTuning:setDiceTuning,
+ showCalibration:showDiceCalibration,
+ rotateCalibration:rotateDiceCalibration,
+ saveCalibration:saveDiceCalibration,
+ calibration:DICE_FACE_QUATERNIONS
 };
 
 
@@ -7612,6 +7675,22 @@ if(currentState)renderBoard(currentState);
           <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.20</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.20"></div>
           <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.18</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.18"></div>
           <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.58</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.58"></div>
+          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.03</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.03"></div>
+        </div>
+        <div class="devConsoleNote"><b>Face calibration:</b> choose the black or red die and the result you want to calibrate. Show it, rotate it in 90° steps until that number is on top, then Save Face. Calibration is stored in this browser.</div>
+        <div class="devConsoleRow">
+          <select id="diceCalRole" aria-label="Dice colour"><option value="hero">Black hero die</option><option value="monster">Red monster die</option></select>
+          <select id="diceCalFace" aria-label="Face number"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select>
+          <button type="button" id="diceCalShow">Show Face</button>
+          <button type="button" id="diceCalSave">Save Face</button>
+        </div>
+        <div class="devConsoleGrid">
+          <button type="button" data-dice-cal-axis="x" data-dice-cal-angle="-90">Rotate X −90°</button>
+          <button type="button" data-dice-cal-axis="x" data-dice-cal-angle="90">Rotate X +90°</button>
+          <button type="button" data-dice-cal-axis="y" data-dice-cal-angle="-90">Rotate Y −90°</button>
+          <button type="button" data-dice-cal-axis="y" data-dice-cal-angle="90">Rotate Y +90°</button>
+          <button type="button" data-dice-cal-axis="z" data-dice-cal-angle="-90">Rotate Z −90°</button>
+          <button type="button" data-dice-cal-axis="z" data-dice-cal-angle="90">Rotate Z +90°</button>
         </div>
         <div class="devConsoleGrid">
           <button type="button" id="devTestHeroDice">Test 2 Black Dice</button>
