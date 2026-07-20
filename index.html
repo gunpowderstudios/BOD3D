@@ -1629,6 +1629,7 @@ Changes:
 <!-- v10.92 dice update: Hero combat dice now load assets/models/diceblack.glb and monster combat dice load assets/models/dicered.glb. Rolls are slower, lower and bouncier; combat dice are separated beside their respective miniatures and use tighter mobile spacing to stay within the cinematic frame. -->
 <!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
 <!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
+<!-- v10.95 dice mapping/clearance update: Corrected the default 2/5 face mapping, reset legacy dice calibration storage, and moved combat dice farther outward from hero/monster miniatures with stronger outward settling so resting dice do not intersect the character models on desktop or mobile. -->
 </head>
 <body class="lightingOn">
 
@@ -4853,10 +4854,10 @@ const DEFAULT_DICE_TOP_QUATERNIONS={
  1:new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,0)),
  3:new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,-Math.PI/2)),
  4:new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0, Math.PI/2)),
- 2:new THREE.Quaternion().setFromEuler(new THREE.Euler( Math.PI/2,0,0)),
- 5:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0))
+ 2:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)),
+ 5:new THREE.Quaternion().setFromEuler(new THREE.Euler( Math.PI/2,0,0))
 };
-const DICE_CAL_STORAGE='bod3d-dice-calibration-v1';
+const DICE_CAL_STORAGE='bod3d-dice-calibration-v2';
 function cloneDefaultDiceCalibration(){
  return {hero:{},monster:{}};
 }
@@ -4884,7 +4885,7 @@ const DICE_TUNING={
  bounce2:.20,
  bounce3:.07,
  spread:.18,
- outward:.72,
+ outward:1.02,
  gap:.58,
  size:.62,
  floorOffset:.03
@@ -4937,7 +4938,7 @@ function diceLayout(role,count){
   const monster=combatScene.monsterCombatPosition.clone();
   const axis=monster.clone().sub(hero);axis.y=0;
   if(axis.lengthSq()<.001)axis.set(1,0,0);else axis.normalize();
-  const outward=mobile?Math.min(DICE_TUNING.outward,.52):DICE_TUNING.outward;
+  const outward=mobile?Math.min(DICE_TUNING.outward,.72):Math.max(DICE_TUNING.outward,.92);
   const centre=(role==='monster'?monster.clone().addScaledVector(axis,outward):hero.clone().addScaledVector(axis,-outward));
   centre.y=tileTop;
   const across=new THREE.Vector3(-axis.z,0,axis.x);
@@ -4980,7 +4981,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
   const target=targets[i];
   const roleSign=role==='monster'?1:-1;
   const lateralSign=(i-(values.length-1)/2)||((i%2)*2-1);
-  const settleDir=new THREE.Vector3(roleSign*.35,0,lateralSign).normalize();
+  const settleDir=new THREE.Vector3(roleSign*.85,0,lateralSign*.72).normalize();
   const settleOffset=settleDir.multiplyScalar(DICE_TUNING.spread*(.65+Math.random()*.7));
   const finalPos=target.clone().add(settleOffset);
   finalPos.y=diceRestY();
