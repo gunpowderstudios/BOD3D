@@ -1630,6 +1630,7 @@ Changes:
 <!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
 <!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
 <!-- v10.95 dice mapping/clearance update: Corrected the default 2/5 face mapping, reset legacy dice calibration storage, and moved combat dice farther outward from hero/monster miniatures with stronger outward settling so resting dice do not intersect the character models on desktop or mobile. -->
+<!-- v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
 </head>
 <body class="lightingOn">
 
@@ -3484,13 +3485,12 @@ function removeTileItemObject(tile,item){
 }
 function openChestOnTile(tileKey,item){
  const tile=state.tiles[tileKey];
- if(!tile||!item||!isChest(item))return;
+ if(!tile||!item||!isChest(item)||!tile.droppedItems||!tile.droppedItems.includes(item))return;
  if(tileKey!==key(state.player.x,state.player.y)){toast('Move onto the chest tile first');return;}
  removeTileItemObject(tile,item);
  const p=state.player;
  const chestRoll=roll(1);
  const r=chestRoll.total;
- window.BODDice3D?.roll?.(chestRoll.rolls);
  playSound('dice');
  let msg='';
  let rewardCount=0;
@@ -3507,20 +3507,29 @@ function openChestOnTile(tileKey,item){
  playSound('spell');
  log(msg,p.health<=0?'combat':'loot');
  toast(msg);
-
- // Close chest UI first, then award rewards so the item placement dialog remains visible.
  closeModal();
  render();
 
- if(p.health<=0){
-  death();
-  return;
+ const finishChestResolution=()=>{
+  if(p.health<=0){death();return;}
+  for(let i=0;i<rewardCount;i++)awardItem();
+  // Defensive restart: if a dice/modal timing race ever interrupted the queue,
+  // explicitly resume the normal item-placement flow.
+  if(pendingItemQueue.length) setTimeout(processPendingItem,40);
+ };
+
+ // The 3D die is visual only, but chest resolution now waits for it to finish
+ // so its animation cannot overwrite or obscure the reward placement dialog.
+ const dicePromise=window.BODDice3D?.roll?.(chestRoll.rolls,'hero');
+ if(dicePromise&&typeof dicePromise.then==='function'){
+  dicePromise.then(()=>{
+   const wait=Math.max(0,Number(window.BODDice3D?.tuning?.duration||0))+120;
+   setTimeout(finishChestResolution,wait);
+  }).catch(()=>finishChestResolution());
+ }else{
+  finishChestResolution();
  }
-
- // Existing pending item queue handles these one at a time.
- for(let i=0;i<rewardCount;i++)awardItem();
 }
-
 function offerChestOnTile(tileKey,item){
  const tile=state.tiles[tileKey];
  if(!tile||!item||!isChest(item)||!tile.droppedItems||!tile.droppedItems.includes(item))return;
@@ -5102,6 +5111,51 @@ window.BODDice3D={
  saveCalibration:saveDiceCalibration,
  calibration:DICE_FACE_QUATERNIONS
 };
+
+// v10.96 — persistent developer dice settings + reliable late button wiring.
+(function installDiceDeveloperReliability(){
+ const STORAGE='bod3dDiceTuningV1096';
+ const DEFAULTS={duration:1900,dropHeight:1.35,bounce1:.48,bounce2:.20,bounce3:.06,spread:.18,gap:.58,floorOffset:.03};
+ try{
+  const saved=JSON.parse(localStorage.getItem(STORAGE)||'null');
+  if(saved&&typeof saved==='object')window.BODDice3D.setTuning(saved);
+ }catch(e){}
+ const save=()=>{try{localStorage.setItem(STORAGE,JSON.stringify(window.BODDice3D.tuning));}catch(e){}};
+ const syncUI=()=>{
+  const map={diceDuration:['duration',v=>Math.round(v)+' ms'],diceDrop:['dropHeight',v=>Number(v).toFixed(2)],diceBounce1:['bounce1',v=>Number(v).toFixed(2)],diceBounce2:['bounce2',v=>Number(v).toFixed(2)],diceSpread:['spread',v=>Number(v).toFixed(2)],diceGap:['gap',v=>Number(v).toFixed(2)],diceFloorOffset:['floorOffset',v=>Number(v).toFixed(3)]};
+  Object.entries(map).forEach(([id,[key,fmt]])=>{const el=document.getElementById(id);if(!el)return;el.value=window.BODDice3D.tuning[key];const val=document.getElementById(id+'Value')||document.getElementById(id.replace('dice','dice')+'Value');});
+  const vals={diceDurationValue:['duration',v=>Math.round(v)+' ms'],diceDropValue:['dropHeight',v=>Number(v).toFixed(2)],diceBounce1Value:['bounce1',v=>Number(v).toFixed(2)],diceBounce2Value:['bounce2',v=>Number(v).toFixed(2)],diceSpreadValue:['spread',v=>Number(v).toFixed(2)],diceGapValue:['gap',v=>Number(v).toFixed(2)],diceFloorOffsetValue:['floorOffset',v=>Number(v).toFixed(3)]};
+  Object.entries(vals).forEach(([id,[key,fmt]])=>{const el=document.getElementById(id);if(el)el.textContent=fmt(window.BODDice3D.tuning[key]);});
+ };
+ const copySettings=async()=>{
+  const t=window.BODDice3D.tuning;
+  const text=`BOD3D Dice Settings\nDuration: ${t.duration}\nDrop Height: ${t.dropHeight}\nBounce 1: ${t.bounce1}\nBounce 2: ${t.bounce2}\nBounce 3: ${t.bounce3}\nSeparation: ${t.spread}\nSpacing: ${t.gap}\nFloor Offset: ${t.floorOffset}`;
+  try{await navigator.clipboard.writeText(text);toast('Dice settings copied');}catch(e){prompt('Copy these dice settings:',text);}
+ };
+ document.addEventListener('input',e=>{
+  const ids={diceDuration:'duration',diceDrop:'dropHeight',diceBounce1:'bounce1',diceBounce2:'bounce2',diceSpread:'spread',diceGap:'gap',diceFloorOffset:'floorOffset'};
+  const key=ids[e.target?.id];if(!key)return;
+  window.BODDice3D.setTuning({[key]:Number(e.target.value)});save();syncUI();
+ });
+ // Delegated click fallback means these work even if the original console wiring ran before BODDice3D existed.
+ document.addEventListener('click',e=>{
+  const b=e.target.closest?.('button');if(!b)return;
+  const r6=()=>1+Math.floor(Math.random()*6);
+  let handled=true;
+  if(b.id==='devTestHeroDice'){window.BODDice3D.roll([r6(),r6()],'hero');}
+  else if(b.id==='devTestMonsterDice'){window.BODDice3D.roll([r6(),r6()],'monster');}
+  else if(b.id==='devTestCombatDice'){window.BODDice3D.rollCombat([r6(),r6()],[r6(),r6()]);}
+  else if(b.id==='devClearDice'){window.BODDice3D.clear();}
+  else if(b.id==='diceCalShow'){window.BODDice3D.showCalibration(document.getElementById('diceCalRole')?.value||'hero',Number(document.getElementById('diceCalFace')?.value||6));}
+  else if(b.id==='diceCalSave'){window.BODDice3D.saveCalibration(document.getElementById('diceCalRole')?.value||'hero',Number(document.getElementById('diceCalFace')?.value||6));toast('Dice face calibration saved');}
+  else if(b.dataset?.diceCalAxis){window.BODDice3D.rotateCalibration(b.dataset.diceCalAxis,Number(b.dataset.diceCalAngle||0));}
+  else if(b.id==='devCopyDiceSettings'){copySettings();}
+  else if(b.id==='devResetDiceSettings'){window.BODDice3D.setTuning(DEFAULTS);save();syncUI();toast('Dice settings reset');}
+  else handled=false;
+  if(handled){e.preventDefault();e.stopImmediatePropagation();}
+ },true);
+ setTimeout(syncUI,0);
+})();
 
 
 const heroPreviewCanvas=document.getElementById('heroPreviewCanvas');
@@ -7698,8 +7752,10 @@ if(currentState)renderBoard(currentState);
           <button type="button" id="devTestMonsterDice">Test 2 Red Dice</button>
           <button type="button" id="devTestCombatDice">Test Combat Dice</button>
           <button type="button" id="devClearDice">Clear Dice</button>
+          <button type="button" id="devCopyDiceSettings">Copy Dice Settings</button>
+          <button type="button" id="devResetDiceSettings">Reset Dice Defaults</button>
         </div>
-        <div class="devConsoleNote">Adjust the sliders, then press a Test button. Changes apply immediately and are for testing only; copy the values you like before replacing this HTML.</div>
+        <div class="devConsoleNote">Adjust the sliders and test the rolls. Settings are saved in this browser. Use Copy Dice Settings and paste the values back into chat when you want them made permanent.</div>
       </section>
 
       <section class="devConsolePanel" data-dev-panel="tools">
