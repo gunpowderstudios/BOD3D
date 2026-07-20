@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.08</title>
+<title>Bag of Dungeon 3D v11.09</title>
 
 <!--
 8BITBOD
@@ -579,7 +579,7 @@ body.threeMode.lightingOn #viewport::after{
 
 
 
-/* ===== Tester warning scroll v11.08 ===== */
+/* ===== Tester warning scroll v11.09 ===== */
 .testerWarningScroll{
   width:min(760px,94vw);
   max-width:760px;
@@ -1654,7 +1654,7 @@ Changes:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Alegreya+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- v10.53: Confirmed and retained the latest cinematic character-selection branch while finalising the Goblin and Flying Daggers fixes. Living monster GLB materials are cloned and normalised to full opacity so the Goblin cannot inherit transparent Alpha Blend settings. Flying Daggers remain a one-use ranged spell with range 1-3, 2 AP cost, 2 dice damage, connected-corridor targeting, Dragon immunity, cinematic framing and a surviving-monster charge with no escape. All v10.52 loading-screen, backdrop, dynamic logo, rotating hero selector, mobile UI and combat-impact features are preserved. -->
-<!-- v11.08: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
+<!-- v11.09: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
 <!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
 <!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
 <!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
@@ -1796,7 +1796,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.08</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.09</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1905,7 +1905,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.08';
+const VERSION='v11.09';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2045,18 +2045,18 @@ const MONSTER_MASTER=[
  {name:'Mirror Monster',copies:2,dice:0,mod:0,maxHealth:0,glyph:'◈',special:'Mirrors your current Health & Combat.'}
 ];
 const ITEM_MASTER=[
- {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'One fight: -1 damage from attacks, then discard.',apply:p=>equipBest('armour',1,'Rusty Armour','▤')},
- {name:'Steel Armour',copies:1,type:'equipment',slot:'armour',icon:'▥',desc:'-1 damage from attacks.',apply:p=>equipBest('armour',1,'Steel Armour','▥')},
- {name:'Magic Armour',copies:1,type:'equipment',slot:'armour',icon:'▦',desc:'-2 damage from attacks.',apply:p=>equipBest('armour',2,'Magic Armour','▦')},
+ {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'One fight: -1 damage from attacks, then discard.'},
+ {name:'Steel Armour',copies:1,type:'equipment',slot:'armour',icon:'▥',desc:'-1 damage from attacks.'},
+ {name:'Magic Armour',copies:1,type:'equipment',slot:'armour',icon:'▦',desc:'-2 damage from attacks.'},
  {name:'Magic Boots',copies:2,type:'equipment',slot:'boots',icon:'👢',desc:'+1 AP each turn.',apply:p=>{if(!p.equipment.boots){p.maxAp+=1;p.ap+=1;}p.equipment.boots={name:'Magic Boots',icon:'👢',value:1};}},
  {name:'Teleport Crystal',copies:1,type:'spell',icon:'◆',desc:'1 use: teleport to any revealed tile.',use:'teleport'},
  {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: keep items and revive once.',apply:p=>{p.flags.insurance=true;p.other.push({name:'Acme Insurance',icon:'☂',desc:'Auto revive / keep items.'});}},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
  {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'Lay 2 dungeon tiles for 1 AP.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
  {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Can fly around connected corners. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
- {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.',apply:p=>equipBest('weapon',1,'Steel Sword','⚔')},
+ {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.'},
  {name:"Sorcerer's Skull",copies:1,type:'spell',icon:'☠',desc:'1 use: 1 dice damage to all on tile.',use:'skull'},
- {name:'Magic Sword',copies:1,type:'equipment',slot:'weapon',icon:'🗡',desc:'+2 combat roll. View adjacent monster.',apply:p=>equipBest('weapon',2,'Magic Sword','🗡')},
+ {name:'Magic Sword',copies:1,type:'equipment',slot:'weapon',icon:'🗡',desc:'+2 combat roll. View adjacent monster.'},
  {name:'Bow',copies:1,type:'equipment',slot:'bow',icon:'🏹',desc:'Two-handed. Range 1-3. Spend 3 AP for 1 die ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',apply:p=>{p.equipment.bow={name:'Bow',icon:'🏹',dice:1,bonus:0};}},
  {name:'Small Chest',copies:1,type:'consumable',icon:'□',desc:'Chest: may be trapped, may contain an item. Open it to roll the die.',use:'smallChest'},
  {name:'Large Chest',copies:1,type:'consumable',icon:'▣',desc:'Chest: may be trapped, may contain items. Open it to roll the die.',use:'largeChest'},
@@ -2064,18 +2064,18 @@ const ITEM_MASTER=[
  {name:"Witch's Claw",copies:1,type:'spell',icon:' claw',desc:'1 use: weaken the current monster.',use:'claw'},
  {name:'Elven Bow',copies:1,type:'equipment',slot:'bow',icon:'➶',desc:'Two-handed. Range 1-3. Spend 3 AP for 1 die +2 ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',apply:p=>{p.equipment.bow={name:'Elven Bow',icon:'➶',dice:1,bonus:2};}},
  {name:'Fireball',copies:1,type:'spell',icon:'☄',desc:'1 use, 2 AP: 3 dice damage to monster.',use:'fireball'},
- {name:'Steel Shield',copies:1,type:'equipment',slot:'shield',icon:'◫',desc:'-1 damage from attacks.',apply:p=>equipBest('shield',1,'Steel Shield','◫')},
- {name:'Magic Shield',copies:1,type:'equipment',slot:'shield',icon:'⬟',desc:'-2 damage from attacks.',apply:p=>equipBest('shield',2,'Magic Shield','⬟')},
+ {name:'Steel Shield',copies:1,type:'equipment',slot:'shield',icon:'◫',desc:'-1 damage from attacks.'},
+ {name:'Magic Shield',copies:1,type:'equipment',slot:'shield',icon:'⬟',desc:'-2 damage from attacks.'},
  {name:'Strength Potion',copies:1,type:'consumable',icon:'▲',desc:'1 use: +1 combat die for one fight.',use:'strengthPotion'},
  {name:'Health Potion',copies:2,type:'consumable',icon:'♥',desc:'1 use: regain 2 dice of health.',use:'healthPotion'},
  {name:'Ice Staff',copies:1,type:'equipment',slot:'staff',icon:'❄',desc:'Permanent. Range 1-2. Spend 4 AP for 2 dice ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',use:'iceStaff',apply:p=>{p.equipment.staff={name:'Ice Staff',icon:'❄',dice:2,cost:4};}},
- {name:'Small Axe',copies:1,type:'equipment',slot:'weapon',icon:'⛏',desc:'+1 combat roll.',apply:p=>equipBest('weapon',1,'Small Axe','⛏')},
- {name:'Iron Axe',copies:1,type:'equipment',slot:'weapon',icon:'⚒',desc:'+2 combat roll.',apply:p=>equipBest('weapon',2,'Iron Axe','⚒')},
- {name:'Large Steel Axe',copies:1,type:'equipment',slot:'weapon',icon:'🪓',desc:'Two-handed. +3 combat roll.',apply:p=>equipBest('weapon',3,'Large Steel Axe','🪓')},
+ {name:'Small Axe',copies:1,type:'equipment',slot:'weapon',icon:'⛏',desc:'+1 combat roll.'},
+ {name:'Iron Axe',copies:1,type:'equipment',slot:'weapon',icon:'⚒',desc:'+2 combat roll.'},
+ {name:'Large Steel Axe',copies:1,type:'equipment',slot:'weapon',icon:'🪓',desc:'Two-handed. +3 combat roll.'},
  {name:'Invisibility Cloak',copies:1,type:'equipment',slot:'cloak',icon:'◌',desc:'Walk past normal monsters without fighting. Does not work on Dragon.',apply:p=>{p.equipment.cloak={name:'Invisibility Cloak',icon:'◌'};}},
  {name:'Bomb',copies:2,type:'spell',icon:'●',desc:'1 use, 1 AP: 2 dice damage to current monster.',use:'bomb'},
  {name:'Tornado',copies:1,type:'spell',icon:'↻',desc:'1 use, 1 AP: move away from current monster without losing HP.',use:'tornado'},
- {name:'Morning Star',copies:1,type:'equipment',slot:'weapon',icon:'✹',desc:'+2 combat roll.',apply:p=>equipBest('weapon',2,'Morning Star','✹')},
+ {name:'Morning Star',copies:1,type:'equipment',slot:'weapon',icon:'✹',desc:'+2 combat roll.'},
  {name:'Dragonlance',copies:1,type:'equipment',slot:'dragonlance',icon:'♜',desc:'One-handed. Against Dragon only: +3 dice damage.',apply:p=>{p.equipment.dragonlance={name:'Dragonlance',icon:'♜'};}},
  {name:'Loyal Bear',copies:1,type:'equipment',slot:'bear',icon:'🐻',desc:'+1 combat die until defeated. Takes no inventory space.',apply:p=>{p.equipment.bear={name:'Loyal Bear',icon:'🐻'};}},
  {name:'Magic Vine',copies:1,type:'spell',icon:'♧',desc:'1 use, 1 AP: 1 dice damage and monster skips its next attack.',use:'vine'}
@@ -3644,6 +3644,15 @@ function offerChestOnTile(tileKey,item){
  );
 }
 
+function offerDroppedItems(){
+ const tileKey=key(state.player.x,state.player.y);
+ const t=state.tiles[tileKey];
+ if(!t||!t.droppedItems||!t.droppedItems.length)return;
+ if(boardInteractionLocked())return;
+ const modal=document.getElementById('modal');
+ if(modal&&modal.classList.contains('open'))return;
+ showTileItems(tileKey);
+}
 function showTileItems(tileKey,event){
  if(event){event.preventDefault();event.stopPropagation();}
  if(boardInteractionLocked())return;
