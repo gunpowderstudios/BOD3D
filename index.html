@@ -1633,6 +1633,7 @@ Changes:
 <!-- v10.98 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
 <!-- v10.99 dice grounding update: Each die now computes its own settled root height from the actual GLB bounding box after the final face rotation, so black and red dice share the same physical board surface. Dice are also cleared immediately when normal hero movement begins. User-tested dice animation values are now the built-in defaults. -->
 <!-- v11.00 dice pivot grounding fix: Dice clone geometry is now centred on the clone root before face rotation. The final resting Y is then calculated from the rotated world-space bounding box, preventing model-origin/pivot differences from making black dice sit lower than red dice. -->
+<!-- v11.01: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.01. -->
 </head>
 <body class="lightingOn">
 
@@ -1815,7 +1816,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.00';
+const VERSION='v11.01';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2683,7 +2684,7 @@ function collectRingIfSafe(tileKey){
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
 
-function move(dir){clearDice3D();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
+function move(dir){window.BOD3D?.clearDice3D?.();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
  if(t.kind==='spike'){promptOldSpikey(t);render();centreOnHero(false);return;}
  if(t.kind==='pool'&&!t.poolUsed){promptHealingPool(t);}
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
@@ -7671,6 +7672,7 @@ resize();
 
 window.BOD3D={
  render:renderBoard,
+ clearDice3D,
  setEnabled(value){enabled=!!value;controls.enabled=enabled;resize();},
  resetCamera,
  centreOnHero:centreCameraOnHero,
@@ -8082,7 +8084,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v11.00';
+  v.textContent='v11.01';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -8152,7 +8154,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v11.00';
+   v.textContent='v11.01';
    mark.insertAdjacentElement('afterend',v);
   }
  }
