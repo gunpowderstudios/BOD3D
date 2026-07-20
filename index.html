@@ -1631,6 +1631,8 @@ Changes:
 <!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
 <!-- v10.95 dice mapping/clearance update: Corrected the default 2/5 face mapping, reset legacy dice calibration storage, and moved combat dice farther outward from hero/monster miniatures with stronger outward settling so resting dice do not intersect the character models on desktop or mobile. -->
 <!-- v10.98 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
+<!-- v10.99 dice grounding update: Each die now computes its own settled root height from the actual GLB bounding box after the final face rotation, so black and red dice share the same physical board surface. Dice are also cleared immediately when normal hero movement begins. User-tested dice animation values are now the built-in defaults. -->
+<!-- v11.00 dice pivot grounding fix: Dice clone geometry is now centred on the clone root before face rotation. The final resting Y is then calculated from the rotated world-space bounding box, preventing model-origin/pivot differences from making black dice sit lower than red dice. -->
 </head>
 <body class="lightingOn">
 
@@ -1813,7 +1815,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v10.94';
+const VERSION='v11.00';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2681,7 +2683,7 @@ function collectRingIfSafe(tileKey){
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
 
-function move(dir){const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
+function move(dir){clearDice3D();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
  if(t.kind==='spike'){promptOldSpikey(t);render();centreOnHero(false);return;}
  if(t.kind==='pool'&&!t.poolUsed){promptHealingPool(t);}
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
@@ -4888,16 +4890,16 @@ function loadDiceCalibration(){
 }
 const DICE_FACE_QUATERNIONS=loadDiceCalibration();
 const DICE_TUNING={
- duration:1900,
- dropHeight:1.35,
- bounce1:.48,
- bounce2:.20,
- bounce3:.07,
- spread:.18,
+ duration:1050,
+ dropHeight:2.5,
+ bounce1:1,
+ bounce2:.02,
+ bounce3:.06,
+ spread:.55,
  outward:1.02,
- gap:.58,
+ gap:.9,
  size:.62,
- floorOffset:.03
+ floorOffset:.2
 };
 let diceCalibrationDie=null;
 let diceCalibrationRole='hero';
@@ -4931,13 +4933,35 @@ function prepareDieClone(source){
  const size=box.getSize(new THREE.Vector3());
  const maxDim=Math.max(size.x,size.y,size.z)||1;
  raw.scale.multiplyScalar(DICE_TUNING.size/maxDim);
+ raw.updateMatrixWorld(true);
  const scaled=new THREE.Box3().setFromObject(raw);
  const c=scaled.getCenter(new THREE.Vector3());
  const root=new THREE.Group();
- // Put the geometric bottom of the die exactly at root Y=0 so root Y can equal tile-top Y.
- raw.position.set(-c.x,-scaled.min.y,-c.z);
+ // Centre the actual die geometry on the root pivot in ALL axes. Rotating a root whose
+ // pivot sits on the model's bottom makes the cube orbit around that bottom point and can
+ // produce different apparent resting heights for different GLB exports/faces.
+ raw.position.set(-c.x,-c.y,-c.z);
  root.add(raw);
+ root.updateMatrixWorld(true);
  return root;
+}
+function settledDieRootY(die,targetQuat){
+ // The GLBs can have different origins. Geometry is centred on the root first, then we measure
+ // the final rotated die and place its true geometric bottom on the shared board surface.
+ const oldPos=die.position.clone();
+ const oldQuat=die.quaternion.clone();
+ const oldScale=die.scale.clone();
+ die.position.set(0,0,0);
+ die.quaternion.copy(targetQuat);
+ die.scale.set(1,1,1);
+ die.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(die);
+ const rootY=diceRestY()-box.min.y;
+ die.position.copy(oldPos);
+ die.quaternion.copy(oldQuat);
+ die.scale.copy(oldScale);
+ die.updateMatrixWorld(true);
+ return rootY;
 }
 function diceLayout(role,count){
  const mobile=window.innerWidth<=800;
@@ -4993,7 +5017,8 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
   const settleDir=new THREE.Vector3(roleSign*.85,0,lateralSign*.72).normalize();
   const settleOffset=settleDir.multiplyScalar(DICE_TUNING.spread*(.65+Math.random()*.7));
   const finalPos=target.clone().add(settleOffset);
-  finalPos.y=diceRestY();
+  const targetQuat=DICE_FACE_QUATERNIONS[role][value].clone();
+  finalPos.y=settledDieRootY(die,targetQuat);
   const startPos=target.clone();
   startPos.y=finalPos.y+DICE_TUNING.dropHeight;
   startPos.x+=roleSign*(.16+Math.random()*.12);
@@ -5005,7 +5030,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
    duration:DICE_TUNING.duration+Math.random()*140,
    startPos,
    targetPos:finalPos,
-   targetQuat:DICE_FACE_QUATERNIONS[role][value].clone(),
+   targetQuat,
    bounce1:DICE_TUNING.bounce1*(.9+Math.random()*.2),
    bounce2:DICE_TUNING.bounce2*(.9+Math.random()*.2),
    bounce3:DICE_TUNING.bounce3*(.85+Math.random()*.3),
@@ -5044,7 +5069,7 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken){
    // Snap precisely to final tile-plane position and correct face; remain until next roll.
    dice.forEach(die=>{
     die.position.copy(die.userData.targetPos);
-    die.position.y=diceRestY();
+    die.position.y=die.userData.targetPos.y;
     die.quaternion.copy(die.userData.targetQuat);
     die.scale.setScalar(1);
    });
@@ -5116,7 +5141,7 @@ window.BODDice3D={
 // work regardless of when the Developer Console itself was wired.
 (function installExplicitDiceDeveloperController(){
  const STORAGE='bod3dDiceTuningV1096';
- const DEFAULTS={duration:1900,dropHeight:1.35,bounce1:.48,bounce2:.20,bounce3:.06,spread:.18,gap:.58,floorOffset:.03};
+ const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.2};
  const status=(msg)=>{const el=document.getElementById('devDiceStatus');if(el)el.textContent=msg;};
  const stop=(e)=>{if(e){e.preventDefault?.();e.stopPropagation?.();}return false;};
  const r6=()=>1+Math.floor(Math.random()*6);
@@ -5145,7 +5170,7 @@ window.BODDice3D={
 // v10.96 — persistent developer dice settings + reliable late button wiring.
 (function installDiceDeveloperReliability(){
  const STORAGE='bod3dDiceTuningV1096';
- const DEFAULTS={duration:1900,dropHeight:1.35,bounce1:.48,bounce2:.20,bounce3:.06,spread:.18,gap:.58,floorOffset:.03};
+ const DEFAULTS={duration:1050,dropHeight:2.5,bounce1:1,bounce2:.02,bounce3:.06,spread:.55,gap:.9,floorOffset:.2};
  try{
   const saved=JSON.parse(localStorage.getItem(STORAGE)||'null');
   if(saved&&typeof saved==='object')window.BODDice3D.setTuning(saved);
@@ -7754,13 +7779,13 @@ if(currentState)renderBoard(currentState);
 
       <section class="devConsolePanel" data-dev-panel="dice">
         <div class="devDiceControls">
-          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1900 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1050"></div>
-          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">1.35</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="2.5"></div>
-          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">0.48</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="1"></div>
-          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.20</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.02"></div>
-          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.18</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.55"></div>
-          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.58</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.9"></div>
-          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.03</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.03"></div>
+          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1050 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1050"></div>
+          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">2.50</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="2.5"></div>
+          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">1.00</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="1"></div>
+          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.02</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.02"></div>
+          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.55</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.55"></div>
+          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.90</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.9"></div>
+          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.200</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.2"></div>
         </div>
         <div class="devConsoleNote"><b>Face calibration:</b> choose the black or red die and the result you want to calibrate. Show it, rotate it in 90° steps until that number is on top, then Save Face. Calibration is stored in this browser.</div>
         <div class="devConsoleRow">
@@ -8057,7 +8082,7 @@ if(currentState)renderBoard(currentState);
   if(known)return;
   const v=document.createElement('div');
   v.id='topLogoVersion';
-  v.textContent='v10.98';
+  v.textContent='v11.00';
   v.style.cssText='font-size:10px;line-height:1;text-align:center;letter-spacing:.08em;opacity:.65;color:#e6d6a8;margin-top:2px;';
   logo.insertAdjacentElement('afterend',v);
  }
@@ -8127,7 +8152,7 @@ if(currentState)renderBoard(currentState);
   if(mark){
    var v=document.createElement('div');
    v.id='bodVersionUnderLogo';
-   v.textContent='v10.98';
+   v.textContent='v11.00';
    mark.insertAdjacentElement('afterend',v);
   }
  }
@@ -8175,10 +8200,7 @@ if(currentState)renderBoard(currentState);
   }
   // Run after likely roll durations; repeated briefly to catch staggered multi-die settles.
   window.addEventListener('load',()=>{
-    setInterval(()=>{
-      if(document.hidden) return;
-      normaliseSettledDice();
-    },350);
+    /* v10.99: disabled legacy interval normaliser; grounding is now exact per die at settle time. */
   });
 })();
 </script>
