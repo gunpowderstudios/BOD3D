@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.03</title>
+<title>Bag of Dungeon 3D v11.04</title>
 
 <!--
 8BITBOD
@@ -579,7 +579,7 @@ body.threeMode.lightingOn #viewport::after{
 
 
 
-/* ===== Tester warning scroll v11.03 ===== */
+/* ===== Tester warning scroll v11.04 ===== */
 .testerWarningScroll{
   margin:0 auto;
   padding:24px 28px;
@@ -1585,7 +1585,7 @@ Changes:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Alegreya+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- v10.53: Confirmed and retained the latest cinematic character-selection branch while finalising the Goblin and Flying Daggers fixes. Living monster GLB materials are cloned and normalised to full opacity so the Goblin cannot inherit transparent Alpha Blend settings. Flying Daggers remain a one-use ranged spell with range 1-3, 2 AP cost, 2 dice damage, connected-corridor targeting, Dragon immunity, cinematic framing and a surviving-monster charge with no escape. All v10.52 loading-screen, backdrop, dynamic logo, rotating hero selector, mobile UI and combat-impact features are preserved. -->
-<!-- v11.03: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
+<!-- v11.04: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
 <!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
 <!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
 <!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
@@ -1727,7 +1727,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.03</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.04</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1836,7 +1836,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.03';
+const VERSION='v11.04';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2563,7 +2563,7 @@ function createTileDeck(){
 function showTesterWarning(){
  showModal('A WARNING FROM THE DUNGEON','',[{text:'Enter at your own risk',cls:'green',fn:closeModal}]);
  const body=document.getElementById('modalBody');
- if(body)body.innerHTML=`<div class="testerWarningScroll"><strong>THIS IS A TESTER ADVENTURE</strong>You have <b>ONE LIFE</b>. If your hero falls, the dungeon claims you and the game ends.<br><br>Find the Ring of Creation and seek the Exit — but beware: the <b>Red Dragon guards the way out</b>.</div>`;
+ if(body)body.innerHTML=`<div class="testerWarningScroll"><strong>WELCOME TO THE DUNGEON</strong>You have <b>ONE LIFE</b>. If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><b>BEWARE! The Red Dragon waits patiently for you at the Exit.</b><br><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
 function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
 
