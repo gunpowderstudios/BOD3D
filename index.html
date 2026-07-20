@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.19</title>
+<title>Bag of Dungeon 3D v11.20</title>
 
 <!--
 8BITBOD
@@ -52,6 +52,9 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #main{position:relative;overflow:hidden;background:#000;touch-action:none;}
 #topbar{position:absolute;left:10px;right:10px;top:10px;z-index:20;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
 #topbar .cluster{display:flex;gap:8px;pointer-events:auto;flex-wrap:wrap}.badge{background:var(--cream);border:3px solid var(--ink);padding:8px 10px;box-shadow:2px 2px 0 var(--shadow);font-weight:bold}
+#fullscreenBtn{position:absolute;top:10px;right:10px;z-index:65;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);border-radius:5px;background:var(--cream);color:var(--ink);box-shadow:2px 2px 0 #000;font:700 22px/1 Arial,sans-serif;pointer-events:auto}
+#fullscreenBtn:hover{background:#fff1c9}
+#topbar{right:52px}
 #viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;perspective:1200px}#viewport.dragging{cursor:grabbing}
 #camera3d{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 50%;pointer-events:none}
 #camera3d.view3d{transform:rotateX(var(--viewTilt,55deg)) rotateZ(var(--viewSpin,-3deg));}
@@ -1836,13 +1839,43 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.18</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.20</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
     <div class="box" id="killTally"></div><div class="box"><div class="sectionTitle">Quest Log</div><div id="log"></div></div>
   </aside>
   <main id="main">
+    <button id="fullscreenBtn" type="button" title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
+    <script>
+    // v11.20: Small top-right fullscreen control. The browser's native Esc key exits.
+    (function(){
+      const button=document.getElementById('fullscreenBtn');
+      if(!button)return;
+      const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement;
+      button.addEventListener('click',async()=>{
+        try{
+          if(fullscreenElement()){
+            if(document.exitFullscreen)await document.exitFullscreen();
+            else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+          }else{
+            const root=document.documentElement;
+            if(root.requestFullscreen)await root.requestFullscreen();
+            else if(root.webkitRequestFullscreen)root.webkitRequestFullscreen();
+            else toast('Full screen is not supported by this browser.');
+          }
+        }catch(error){console.warn('Full screen request failed:',error);}
+      });
+      const syncFullscreenButton=()=>{
+        const active=!!fullscreenElement();
+        button.textContent=active?'×':'⛶';
+        button.title=active?'Exit full screen (or press Esc)':'Full screen — press Esc to exit';
+        button.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');
+      };
+      document.addEventListener('fullscreenchange',syncFullscreenButton);
+      document.addEventListener('webkitfullscreenchange',syncFullscreenButton);
+    })();
+    </script>
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
       <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="menuBtn">☰ Menu</button></div>
@@ -1945,7 +1978,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.19';
+const VERSION='v11.20';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
