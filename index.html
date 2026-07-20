@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.15</title>
+<title>Bag of Dungeon 3D v11.16</title>
 
 <!--
 8BITBOD
@@ -579,7 +579,7 @@ body.threeMode.lightingOn #viewport::after{
 
 
 
-/* ===== Tester warning scroll v11.15 ===== */
+/* ===== Tester warning scroll v11.16 ===== */
 .testerWarningScroll{
   width:min(760px,94vw);
   max-width:760px;
@@ -1654,7 +1654,7 @@ Changes:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Alegreya+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- v10.53: Confirmed and retained the latest cinematic character-selection branch while finalising the Goblin and Flying Daggers fixes. Living monster GLB materials are cloned and normalised to full opacity so the Goblin cannot inherit transparent Alpha Blend settings. Flying Daggers remain a one-use ranged spell with range 1-3, 2 AP cost, 2 dice damage, connected-corridor targeting, Dragon immunity, cinematic framing and a surviving-monster charge with no escape. All v10.52 loading-screen, backdrop, dynamic logo, rotating hero selector, mobile UI and combat-impact features are preserved. -->
-<!-- v11.15: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
+<!-- v11.16: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
 <!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
 <!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
 <!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
@@ -1796,7 +1796,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.15</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.16</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1905,7 +1905,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.15';
+const VERSION='v11.16';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -2937,6 +2937,111 @@ function straightCorridorDistance(fromKey,toKey,maxRange){
  }
  return steps;
 }
+
+function connectedPath(fromKey,toKey,maxRange=99){
+ if(fromKey===toKey)return [fromKey];
+ const q=[fromKey],seen=new Set([fromKey]),prev={};
+ while(q.length){
+  const kk=q.shift();
+  const pathDepth=(()=>{
+   let d=0,c=kk;
+   while(prev[c]){d++;c=prev[c];}
+   return d;
+  })();
+  if(pathDepth>=maxRange)continue;
+  const [x,y]=kk.split(',').map(Number),t=state.tiles[kk];
+  if(!t)continue;
+  for(const dir of dirOrder){
+   if(!t.opens[dir])continue;
+   const dd=DIRS[dir],nk=key(x+dd.dx,y+dd.dy),nt=state.tiles[nk];
+   if(!nt||!nt.opens[dd.opp]||seen.has(nk))continue;
+   seen.add(nk);
+   prev[nk]=kk;
+   if(nk===toKey){
+    const path=[nk];
+    let cur=nk;
+    while(cur!==fromKey){cur=prev[cur];path.push(cur);}
+    return path.reverse();
+   }
+   q.push(nk);
+  }
+ }
+ return [];
+}
+function straightCorridorPath(fromKey,toKey,maxRange=99){
+ const distance=straightCorridorDistance(fromKey,toKey,maxRange);
+ if(!Number.isFinite(distance))return [];
+ const [fx,fy]=fromKey.split(',').map(Number),[tx,ty]=toKey.split(',').map(Number);
+ const dx=Math.sign(tx-fx),dy=Math.sign(ty-fy);
+ const path=[];
+ for(let i=0;i<=distance;i++)path.push(key(fx+dx*i,fy+dy*i));
+ return path;
+}
+function rangedChargePath(heroTileKey,monsterTileKey,attackType){
+ return attackType==='daggers'
+  ?connectedPath(heroTileKey,monsterTileKey,99)
+  :straightCorridorPath(heroTileKey,monsterTileKey,99);
+}
+function chargingMonsterTrapTile(heroTileKey,monsterTileKey,attackType){
+ const path=rangedChargePath(heroTileKey,monsterTileKey,attackType);
+ if(path.length<3)return null;
+ // Charge runs from monster back toward hero. Exclude both endpoints.
+ const intermediate=path.slice(1,-1).reverse();
+ const trapKey=intermediate.find(k=>state.tiles[k]?.kind==='spike');
+ return trapKey||null;
+}
+function dropMonsterRewardsOnTile(monster,tile,tileKey){
+ if(!monster||monster.isDragon||!tile)return;
+ const startingHealth=monster.maxHealth;
+ const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);
+ if(rewardCount===0){
+  log(monster.name+' had '+startingHealth+' starting Health: no item reward.','system');
+  return;
+ }
+ tile.droppedItems=tile.droppedItems||[];
+ for(let i=0;i<rewardCount;i++){
+  const reward=drawItem();
+  if(reward)tile.droppedItems.push(reward);
+ }
+ log(monster.name+' drops '+rewardCount+' item'+(rewardCount===1?'':'s')+' on Old Spikey.','loot');
+}
+async function resolveChargingMonsterTrap(originalTile,originalTileKey,monster,heroTileKey,attackType){
+ const trapKey=chargingMonsterTrapTile(heroTileKey,originalTileKey,attackType);
+ if(!trapKey)return false;
+ const trapTile=state.tiles[trapKey];
+ if(!trapTile)return false;
+
+ log(monster.name+' charges through Old Spikey — the trap strikes automatically!','combat');
+ const dmgRoll=roll(1);
+ playSound('dice');
+ const dicePromise=window.BODDice3D?.roll?.(dmgRoll.rolls,'monster');
+ if(dicePromise&&typeof dicePromise.then==='function')await dicePromise;
+
+ const dmg=dmgRoll.total;
+ monster.health-=dmg;
+ playSound('trap');
+ playSound('hit');
+ playTileEffect(trapKey,'trap',900);
+ log('Old Spikey deals '+dmg+' damage to '+monster.name+'.','combat');
+
+ if(monster.health>0){
+  render();
+  return false;
+ }
+
+ playSound('monsterDie');
+ playTileEffect(trapKey,'monsterDeath',1000);
+ log('Old Spikey kills '+monster.name+' before it reaches you!','combat');
+ state.player.killed.push(monster.name);
+ state.monsterDiscard.push(monster);
+ originalTile.monster=null;
+ originalTile.monsterPending=false;
+ recordMonsterCorpse(trapTile,trapKey,monster);
+ dropMonsterRewardsOnTile(monster,trapTile,trapKey);
+ render();
+ return true;
+}
+
 function rangedTargets(range,allowCorners=false){
  const from=key(state.player.x,state.player.y),out=[];
  for(const [kk,t] of Object.entries(state.tiles)){
@@ -3118,9 +3223,26 @@ async function fireRangedAt(tileKey,event){
   render();
 
   // Leave the projectile and impact visible before resolving death or charge.
-  setTimeout(()=>{
+  setTimeout(async()=>{
    if(monster.health<=0){
     rangedKill(tile,tileKey,monster,weaponName,damage);
+    window.BOD3D?.finishRangedAttack?.();
+    return;
+   }
+
+   const heroTileKey=key(p.x,p.y);
+   const heroTile=state.tiles[heroTileKey];
+
+   // Board-game rule: a monster charging through Old Spikey triggers it
+   // automatically and takes 1d6 damage before reaching the hero.
+   const killedByTrap=await resolveChargingMonsterTrap(
+    tile,
+    tileKey,
+    monster,
+    heroTileKey,
+    attack.type
+   );
+   if(killedByTrap){
     window.BOD3D?.finishRangedAttack?.();
     return;
    }
@@ -3129,9 +3251,6 @@ async function fireRangedAt(tileKey,event){
     monster.name+' survives and charges onto your tile! There is no escape.',
     'combat'
    );
-
-   const heroTileKey=key(p.x,p.y);
-   const heroTile=state.tiles[heroTileKey];
 
    if(heroTile&&heroTile!==tile){
     tile.monster=null;
