@@ -1103,6 +1103,12 @@ body.cinematicCombat #compass{
   background:#fff6d8;
   font-size:13px;
 }
+
+.devDiceControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:8px 0 12px}
+.devDiceControl{border:2px solid #000;background:#fff6d8;padding:8px}
+.devDiceControl label{display:flex;justify-content:space-between;gap:8px;font-weight:700;margin-bottom:5px}
+.devDiceControl input[type="range"]{width:100%}
+.devDiceValue{font-variant-numeric:tabular-nums}
 @media(max-width:800px){
   #developerConsole{padding:6px}
   .devConsoleCard{max-height:96dvh}
@@ -1621,6 +1627,7 @@ Changes:
 <!-- v10.90: Fixed chest reward placement. Chest UI closes before reward items are awarded, so item placement remains visible. Large Chest rewards resolve one at a time through the pending item queue. -->
 <!-- v10.92: Mobile Centre now recentres the Three.js camera correctly; respawns hard-reset the hero model and camera onto Start; character-selector arrows are forced transparent with no cream button box; Witch's Claw text is solo-only; Chest copy now explains trap/loot possibilities and chest opening visibly rolls a die; added reusable 3D dice.glb roller for combat, chests and Ring-location rolls with existing dice.mp3/fallback clack audio. -->
 <!-- v10.92 dice update: Hero combat dice now load assets/models/diceblack.glb and monster combat dice load assets/models/dicered.glb. Rolls are slower, lower and bouncier; combat dice are separated beside their respective miniatures and use tighter mobile spacing to stay within the cinematic frame. -->
+<!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
 </head>
 <body class="lightingOn">
 
@@ -4536,6 +4543,32 @@ function wireDeveloperConsole(){
 
  closeButton.onclick=closeDeveloperConsole;
 
+ // v10.93 live dice-animation tuning controls.
+ const diceInputs={
+  duration:['diceDuration','diceDurationValue','duration',v=>`${Math.round(v)} ms`],
+  drop:['diceDrop','diceDropValue','dropHeight',v=>Number(v).toFixed(2)],
+  bounce1:['diceBounce1','diceBounce1Value','bounce1',v=>Number(v).toFixed(2)],
+  bounce2:['diceBounce2','diceBounce2Value','bounce2',v=>Number(v).toFixed(2)],
+  spread:['diceSpread','diceSpreadValue','spread',v=>Number(v).toFixed(2)],
+  gap:['diceGap','diceGapValue','gap',v=>Number(v).toFixed(2)]
+ };
+ Object.values(diceInputs).forEach(([inputId,valueId,key,format])=>{
+  const input=document.getElementById(inputId),value=document.getElementById(valueId);
+  if(!input)return;
+  if(window.BODDice3D?.tuning?.[key]!==undefined)input.value=window.BODDice3D.tuning[key];
+  const sync=()=>{
+   const n=Number(input.value);
+   window.BODDice3D?.setTuning?.({[key]:n});
+   if(value)value.textContent=format(n);
+  };
+  input.addEventListener('input',sync);
+  sync();
+ });
+ document.getElementById('devTestHeroDice')?.addEventListener('click',()=>window.BODDice3D?.roll?.([r6(),r6()],'hero'));
+ document.getElementById('devTestMonsterDice')?.addEventListener('click',()=>window.BODDice3D?.roll?.([r6(),r6()],'monster'));
+ document.getElementById('devTestCombatDice')?.addEventListener('click',()=>window.BODDice3D?.rollCombat?.([r6(),r6()],[r6(),r6()]));
+ document.getElementById('devClearDice')?.addEventListener('click',()=>window.BODDice3D?.clear?.());
+
  consoleEl.addEventListener('click',event=>{
   if(event.target===consoleEl){
    closeDeveloperConsole();
@@ -4801,9 +4834,9 @@ scene.add(boardGroup);
 const textureLoader=new THREE.TextureLoader();
 const gltfLoader=new GLTFLoader();
 
-// v10.92 — Two-colour reusable 3D dice roller.
+// v10.93 — Two-colour reusable 3D dice roller with tunable board-game bounce physics.
 // Hero dice use diceblack.glb; monster dice use dicered.glb.
-// The default exported pose is calibrated as 6 on top, with 3 and 4 on opposite side faces.
+// Dice remain on the board until the next roll, then the previous dice are cleared.
 const diceGroup=new THREE.Group();
 scene.add(diceGroup);
 const diceSourcePromises={hero:null,monster:null};
@@ -4815,6 +4848,17 @@ const DICE_TOP_QUATERNIONS={
  4:new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0, Math.PI/2)),
  2:new THREE.Quaternion().setFromEuler(new THREE.Euler( Math.PI/2,0,0)),
  5:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0))
+};
+const DICE_TUNING={
+ duration:1900,       // milliseconds
+ dropHeight:1.35,     // first drop height above the tile
+ bounce1:.48,         // first rebound height
+ bounce2:.20,         // second rebound height
+ bounce3:.07,         // tiny final hop
+ spread:.18,          // gentle sideways settling movement
+ outward:.72,         // distance outside hero/monster
+ gap:.58,             // spacing between multiple dice
+ size:.62             // die size in world units
 };
 function clearDice3D(){
  while(diceGroup.children.length){
@@ -4843,36 +4887,55 @@ function prepareDieClone(source){
  const box=new THREE.Box3().setFromObject(raw);
  const size=box.getSize(new THREE.Vector3());
  const maxDim=Math.max(size.x,size.y,size.z)||1;
- raw.scale.multiplyScalar(.62/maxDim);
+ raw.scale.multiplyScalar(DICE_TUNING.size/maxDim);
  const scaled=new THREE.Box3().setFromObject(raw);
  const c=scaled.getCenter(new THREE.Vector3());
  const root=new THREE.Group();
+ // Put the geometric bottom of the die exactly at root Y=0 so root Y can equal tile-top Y.
  raw.position.set(-c.x,-scaled.min.y,-c.z);
  root.add(raw);
  return root;
 }
 function diceLayout(role,count){
- // During cinematic combat, keep hero dice just outside the hero and monster dice
- // just outside the monster. The smaller mobile offset keeps both groups within frame.
  const mobile=window.innerWidth<=800;
+ const tileTop=TILE_THICKNESS+.004;
  if(combatScene?.heroCombatPosition&&combatScene?.monsterCombatPosition){
   const hero=combatScene.heroCombatPosition.clone();
   const monster=combatScene.monsterCombatPosition.clone();
   const axis=monster.clone().sub(hero);axis.y=0;
   if(axis.lengthSq()<.001)axis.set(1,0,0);else axis.normalize();
-  const outward=mobile?.48:.72;
+  const outward=mobile?Math.min(DICE_TUNING.outward,.52):DICE_TUNING.outward;
   const centre=(role==='monster'?monster.clone().addScaledVector(axis,outward):hero.clone().addScaledVector(axis,-outward));
-  centre.y=TILE_THICKNESS+.03;
+  centre.y=tileTop;
   const across=new THREE.Vector3(-axis.z,0,axis.x);
-  const gap=mobile?.48:.58;
+  const gap=mobile?Math.min(DICE_TUNING.gap,.48):DICE_TUNING.gap;
   return Array.from({length:count},(_,i)=>centre.clone().addScaledVector(across,(i-(count-1)/2)*gap));
  }
  const px=(latestState?.player?.x||0)*TILE;
  const pz=(latestState?.player?.y||0)*TILE;
- const gap=.58;
- return Array.from({length:count},(_,i)=>new THREE.Vector3(px+(i-(count-1)/2)*gap,TILE_THICKNESS+.03,pz+1.05));
+ return Array.from({length:count},(_,i)=>new THREE.Vector3(px+(i-(count-1)/2)*DICE_TUNING.gap,tileTop,pz+1.05));
 }
-async function rollDiceSet(values,role='hero',token=++diceRollToken,keepMs=1700){
+function diceBounceHeight(t,d){
+ // Four grounded phases: drop -> rebound -> smaller rebound -> tiny settling hop.
+ if(t<.42){
+  const u=t/.42;
+  return d.dropHeight*(1-u*u);
+ }
+ if(t<.68){
+  const u=(t-.42)/.26;
+  return d.bounce1*4*u*(1-u);
+ }
+ if(t<.86){
+  const u=(t-.68)/.18;
+  return d.bounce2*4*u*(1-u);
+ }
+ if(t<1){
+  const u=(t-.86)/.14;
+  return d.bounce3*4*u*(1-u);
+ }
+ return 0;
+}
+async function rollDiceSet(values,role='hero',token=++diceRollToken){
  values=(Array.isArray(values)?values:[values]).map(Number).filter(v=>v>=1&&v<=6).slice(0,6);
  if(!values.length)return [];
  const source=await getDiceSource(role);
@@ -4882,16 +4945,31 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken,keepMs=1700)
  values.forEach((value,i)=>{
   const die=prepareDieClone(source);
   const target=targets[i];
-  const side=(role==='monster'?1:-1);
+  const roleSign=role==='monster'?1:-1;
+  const lateralSign=(i-(values.length-1)/2)||((i%2)*2-1);
+  const settleDir=new THREE.Vector3(roleSign*.35,0,lateralSign).normalize();
+  const settleOffset=settleDir.multiplyScalar(DICE_TUNING.spread*(.65+Math.random()*.7));
+  const finalPos=target.clone().add(settleOffset);
+  finalPos.y=TILE_THICKNESS+.004;
+  const startPos=target.clone();
+  startPos.y=finalPos.y+DICE_TUNING.dropHeight;
+  startPos.x+=roleSign*(.16+Math.random()*.12);
+  startPos.z+=(Math.random()-.5)*.18;
   die.scale.setScalar(.01);
-  die.userData={value,start:performance.now()+i*90,duration:1450+Math.random()*250,
-   startPos:target.clone(),targetPos:target.clone(),targetQuat:DICE_TOP_QUATERNIONS[value].clone(),
-   spin:new THREE.Vector3((3.5+Math.random()*2.5)*Math.PI,(4+Math.random()*3)*Math.PI,(3.5+Math.random()*2.5)*Math.PI)};
-  // A short inward toss rather than flying across the screen.
-  die.userData.startPos.y+=1.15+Math.random()*.25;
-  die.userData.startPos.x+=side*(.28+Math.random()*.16);
-  die.userData.startPos.z+=(Math.random()-.5)*.22;
-  die.position.copy(die.userData.startPos);
+  die.userData={
+   value,
+   start:performance.now()+i*80,
+   duration:DICE_TUNING.duration+Math.random()*140,
+   startPos,
+   targetPos:finalPos,
+   targetQuat:DICE_TOP_QUATERNIONS[value].clone(),
+   bounce1:DICE_TUNING.bounce1*(.9+Math.random()*.2),
+   bounce2:DICE_TUNING.bounce2*(.9+Math.random()*.2),
+   bounce3:DICE_TUNING.bounce3*(.85+Math.random()*.3),
+   dropHeight:DICE_TUNING.dropHeight,
+   spin:new THREE.Vector3((2.7+Math.random()*1.4)*Math.PI,(3.2+Math.random()*1.8)*Math.PI,(2.8+Math.random()*1.4)*Math.PI)
+  };
+  die.position.copy(startPos);
   diceGroup.add(die);dice.push(die);
  });
  const animateDice=now=>{
@@ -4901,19 +4979,33 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken,keepMs=1700)
    const d=die.userData;
    const t=Math.max(0,Math.min(1,(now-d.start)/d.duration));
    if(t<1)alive=true;
-   const ease=1-Math.pow(1-t,3);
-   die.position.lerpVectors(d.startPos,d.targetPos,ease);
-   // Low, diminishing bounces: one main hop and two little clacks.
-   const bounce1=Math.sin(Math.min(1,t/.68)*Math.PI)*.32*(1-Math.max(0,(t-.68)/.32));
-   const bounce2=t>.62?Math.abs(Math.sin((t-.62)*Math.PI*6))*.10*(1-t):0;
-   die.position.y+=Math.max(0,bounce1)+bounce2;
-   const qSpin=new THREE.Quaternion().setFromEuler(new THREE.Euler(d.spin.x*t,d.spin.y*t,d.spin.z*t));
-   const settle=Math.max(0,(t-.70)/.30);
-   die.quaternion.copy(qSpin).slerp(d.targetQuat,settle*settle*(3-2*settle));
-   die.scale.setScalar(Math.min(1,t/.12));
+   // Horizontal movement eases toward a slightly separated resting position.
+   const moveEase=1-Math.pow(1-t,2.4);
+   die.position.lerpVectors(d.startPos,d.targetPos,moveEase);
+   // Always calculate Y from the exact tile-top plane so the die cannot sink below it.
+   die.position.y=d.targetPos.y+diceBounceHeight(t,d);
+   // Fast tumbling during the drop, progressively calmer after the first impact.
+   const tumbleT=Math.min(1,t/.82);
+   const qSpin=new THREE.Quaternion().setFromEuler(new THREE.Euler(
+    d.spin.x*tumbleT,
+    d.spin.y*tumbleT,
+    d.spin.z*tumbleT
+   ));
+   const settle=Math.max(0,Math.min(1,(t-.70)/.30));
+   const smooth=settle*settle*(3-2*settle);
+   die.quaternion.copy(qSpin).slerp(d.targetQuat,smooth);
+   die.scale.setScalar(Math.min(1,t/.10));
   });
   if(alive)requestAnimationFrame(animateDice);
-  else setTimeout(()=>{if(token===diceRollToken)clearDice3D();},keepMs);
+  else{
+   // Snap precisely to final tile-plane position and correct face; remain until next roll.
+   dice.forEach(die=>{
+    die.position.copy(die.userData.targetPos);
+    die.position.y=TILE_THICKNESS+.004;
+    die.quaternion.copy(die.userData.targetQuat);
+    die.scale.setScalar(1);
+   });
+  }
  };
  requestAnimationFrame(animateDice);
  return dice;
@@ -4921,20 +5013,31 @@ async function rollDiceSet(values,role='hero',token=++diceRollToken,keepMs=1700)
 async function rollDice3D(values,role='hero'){
  const token=++diceRollToken;
  clearDice3D();
- await rollDiceSet(values,role,token,1500);
+ await rollDiceSet(values,role,token);
 }
 async function rollCombatDice3D(heroValues,monsterValues){
  const token=++diceRollToken;
  clearDice3D();
- // Load both models together, then animate both colour groups in the same roll.
  await Promise.all([getDiceSource('hero'),getDiceSource('monster')]);
  if(token!==diceRollToken)return;
  await Promise.all([
-  rollDiceSet(heroValues,'hero',token,1900),
-  rollDiceSet(monsterValues,'monster',token,1900)
+  rollDiceSet(heroValues,'hero',token),
+  rollDiceSet(monsterValues,'monster',token)
  ]);
 }
-window.BODDice3D={roll:rollDice3D,rollCombat:rollCombatDice3D,clear:clearDice3D};
+function setDiceTuning(partial={}){
+ Object.keys(DICE_TUNING).forEach(key=>{
+  if(partial[key]!==undefined&&Number.isFinite(Number(partial[key])))DICE_TUNING[key]=Number(partial[key]);
+ });
+ return {...DICE_TUNING};
+}
+window.BODDice3D={
+ roll:rollDice3D,
+ rollCombat:rollCombatDice3D,
+ clear:clearDice3D,
+ tuning:DICE_TUNING,
+ setTuning:setDiceTuning
+};
 
 
 const heroPreviewCanvas=document.getElementById('heroPreviewCanvas');
@@ -7462,6 +7565,7 @@ if(currentState)renderBoard(currentState);
         <button type="button" data-dev-tab="hero">Hero</button>
         <button type="button" data-dev-tab="dungeon">Dungeon</button>
         <button type="button" data-dev-tab="tools">Tools</button>
+        <button type="button" data-dev-tab="dice">Dice</button>
       </div>
 
       <section class="devConsolePanel active" data-dev-panel="quick">
@@ -7498,6 +7602,24 @@ if(currentState)renderBoard(currentState);
         <div class="devConsoleNote">
           Developer actions change the active test game immediately. They are intentionally hidden from players.
         </div>
+      </section>
+
+      <section class="devConsolePanel" data-dev-panel="dice">
+        <div class="devDiceControls">
+          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1900 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1900"></div>
+          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">1.35</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="1.35"></div>
+          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">0.48</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="0.48"></div>
+          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.20</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.20"></div>
+          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.18</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.18"></div>
+          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.58</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.58"></div>
+        </div>
+        <div class="devConsoleGrid">
+          <button type="button" id="devTestHeroDice">Test 2 Black Dice</button>
+          <button type="button" id="devTestMonsterDice">Test 2 Red Dice</button>
+          <button type="button" id="devTestCombatDice">Test Combat Dice</button>
+          <button type="button" id="devClearDice">Clear Dice</button>
+        </div>
+        <div class="devConsoleNote">Adjust the sliders, then press a Test button. Changes apply immediately and are for testing only; copy the values you like before replacing this HTML.</div>
       </section>
 
       <section class="devConsolePanel" data-dev-panel="tools">
