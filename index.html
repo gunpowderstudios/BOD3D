@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.21</title>
+<title>Bag of Dungeon 3D v11.22</title>
 
 <!--
 8BITBOD
@@ -1766,6 +1766,7 @@ Changes:
 <!-- v11.02: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.02. -->
 <!-- v11.02: Restored a clearly visible build number directly beneath the 3D logo in the sidebar. Updated permanent dice defaults to Floor Offset 0.03 while retaining Duration 1050, Drop Height 2.5, Bounce 1 1, Bounce 2 0.02, Bounce 3 0.06, Separation 0.55 and Spacing 0.9. Dice tuning storage namespace bumped so the new floor offset is not overridden by an older saved 0.20 value. -->
 <!-- v11.21: Moved Inventory and Backpack above Companions on the character panel. -->
+<!-- v11.22: Fixed full Map view by reading tile coordinates from the dungeon keys; combat framing now tilts 20 degrees farther overhead so dice faces are easier to read. -->
 </head>
 <body class="lightingOn">
 
@@ -1840,7 +1841,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.21</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.22</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1979,7 +1980,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.21';
+const VERSION='v11.22';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -4011,10 +4012,12 @@ function applyView3D(){
 }
 function fitFullMap(){
  if(!state||!state.tiles)return;
- const tiles=Object.values(state.tiles);
- if(!tiles.length)return;
+ const coords=Object.keys(state.tiles)
+  .map(key=>key.split(',').map(Number))
+  .filter(([x,y])=>Number.isFinite(x)&&Number.isFinite(y));
+ if(!coords.length)return;
  const rect=document.getElementById('viewport').getBoundingClientRect();
- const xs=tiles.map(t=>t.x),ys=tiles.map(t=>t.y);
+ const xs=coords.map(([x])=>x),ys=coords.map(([,y])=>y);
  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
  const mapW=(maxX-minX+1)*STEP,mapH=(maxY-minY+1)*STEP;
  const pad=window.matchMedia('(max-width: 800px)').matches?24:48;
@@ -7019,13 +7022,25 @@ function stageCombatScene(tileKey){
   encounterSize.y*(mobileCombat?2.45:2.05),
   sphereFitDistance*fitMargin
  );
- const cinematicPosition=encounterTarget.clone()
-  .addScaledVector(forward.clone().negate(),cameraDistance);
- cinematicPosition.y=Math.max(
+ const baseCameraHeight=Math.max(
   mobileCombat?5.5:4.2,
   encounterSize.y*(mobileCombat?1.5:1.25)+(mobileCombat?2.6:2.15),
   encounterSphere.radius*(mobileCombat?1.55:1.35)+2.0
  );
+ // Tilt combat 20 degrees farther overhead so the tabletop and dice faces
+ // remain readable, while retaining the same camera-to-encounter distance.
+ const heightAboveTarget=Math.max(.1,baseCameraHeight-encounterTarget.y);
+ const baseElevation=Math.atan2(heightAboveTarget,cameraDistance);
+ const combatElevation=Math.min(
+  THREE.MathUtils.degToRad(78),
+  baseElevation+THREE.MathUtils.degToRad(20)
+ );
+ const combatViewDistance=Math.hypot(cameraDistance,heightAboveTarget);
+ const combatHorizontalDistance=Math.cos(combatElevation)*combatViewDistance;
+ const combatVerticalDistance=Math.sin(combatElevation)*combatViewDistance;
+ const cinematicPosition=encounterTarget.clone()
+  .addScaledVector(forward.clone().negate(),combatHorizontalDistance);
+ cinematicPosition.y=encounterTarget.y+combatVerticalDistance;
 
  heroTurn=null;
  heroMove=null;
