@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Bag of Dungeon 3D v11.20</title>
+<title>Bag of Dungeon 3D v11.21</title>
 
 <!--
 8BITBOD
@@ -1765,6 +1765,7 @@ Changes:
 <!-- v11.00 dice pivot grounding fix: Dice clone geometry is now centred on the clone root before face rotation. The final resting Y is then calculated from the rotated world-space bounding box, preventing model-origin/pivot differences from making black dice sit lower than red dice. -->
 <!-- v11.02: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.02. -->
 <!-- v11.02: Restored a clearly visible build number directly beneath the 3D logo in the sidebar. Updated permanent dice defaults to Floor Offset 0.03 while retaining Duration 1050, Drop Height 2.5, Bounce 1 1, Bounce 2 0.02, Bounce 3 0.06, Separation 0.55 and Spacing 0.9. Dice tuning storage namespace bumped so the new floor offset is not overridden by an older saved 0.20 value. -->
+<!-- v11.21: Moved Inventory and Backpack above Companions on the character panel. -->
 </head>
 <body class="lightingOn">
 
@@ -1839,7 +1840,7 @@ Changes:
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
       <div class="brand3DTitle">3D</div>
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.20</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.21</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -1978,7 +1979,7 @@ Changes:
 
 <script src="assets/assets.js?v=10.52"></script>
 <script>
-const VERSION='v11.20';
+const VERSION='v11.21';
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -3750,13 +3751,13 @@ function renderInventory(){
  <div class="slotGrid">${slotHTML('Left Hand',left,'left')}${slotHTML('Right Hand',right,'right')}</div>
  <div class="sectionTitle">Attire</div>
  <div class="slotGrid">${slotHTML('Armour',p.slots.armour,'armour')}${slotHTML('Boots',p.slots.boots,'boots')}${slotHTML('Attire',p.slots.cloak,'cloak')}</div>
- <div class="sectionTitle">Companions</div>
- <div class="slotGrid"><div class="equipSlot wide"><span class="slotLabel">${slotSymbolHTML('companion')}<span class="slotLabelText">Companions</span></span>${p.companionBear?`<div class="slotItem" onclick="inspectBear()"><div class="slotArt">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</div><div class="slotName">Loyal Bear</div><div class="slotDesc">Does not use inventory space.</div></div>`:'<div class="slotEmpty">No companions</div>'}</div></div>
  <div class="sectionTitle">Inventory ${occupiedSpaceCount()}/8</div>
  <div class="small">Artifacts, crystals, bells, consumables and spare equipment all use inventory space.</div>
  <div class="sectionTitle">Backpack ${p.backpack.length}/4</div><div class="backpackGrid">`;
  for(let i=0;i<BACKPACK_LIMIT;i++){const it=p.backpack[i];html+=`<div class="backpackSlot">${it?`<div class="slotItem" onclick="inspectBackpack(${i})"><div class="slotArt">${iconHTML(it.name,it.icon||'?')}</div><div class="slotName">${it.name}</div><div class="slotDesc">${it.desc||'No effect description.'}</div></div>`:'<div class="slotEmpty">Empty</div>'}</div>`;}
- html+='</div>';
+ html+=`</div>
+ <div class="sectionTitle">Companions</div>
+ <div class="slotGrid"><div class="equipSlot wide"><span class="slotLabel">${slotSymbolHTML('companion')}<span class="slotLabelText">Companions</span></span>${p.companionBear?`<div class="slotItem" onclick="inspectBear()"><div class="slotArt">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</div><div class="slotName">Loyal Bear</div><div class="slotDesc">Does not use inventory space.</div></div>`:'<div class="slotEmpty">No companions</div>'}</div></div>`;
  const t=getTile(p.x,p.y);
  if(t&&t.droppedItems&&t.droppedItems.length)html+='<div class="sectionTitle">On this tile</div><div class="invgrid">'+t.droppedItems.map((x,i)=>`<button class="itemBtn" onclick="pickupDropped(${i})" title="Pick up ${x.name}">${iconHTML(x.name,x.icon||'?')}<span class="dropMark">+</span></button>`).join('')+'</div>';
  if(p.equipment.weapon&&p.equipment.weapon.name==='Magic Sword')html+=magicSwordPeekHTML();
