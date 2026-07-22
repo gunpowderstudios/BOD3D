@@ -42,7 +42,7 @@ window.ASSET_PATHS = {
     logo.style.display='';
     logo.style.visibility='visible';
     logo.style.opacity='1';
-    logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix',document.baseURI).href;
+    logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-4',document.baseURI).href;
     return true;
   }
   if(document.readyState==='loading'){
@@ -142,8 +142,7 @@ window.ASSET_PATHS = {
   else start();
 })();
 
-<<<<<<< HEAD
-// v11.23 TEST: improve contrast on the Enter the Dungeon hover/focus state.
+// Improve contrast on the Enter the Dungeon hover/focus state.
 (function installEnterDungeonHoverFix(){
   const style=document.createElement('style');
   style.id='enterDungeonHoverFix';
@@ -156,9 +155,8 @@ window.ASSET_PATHS = {
   `;
   document.head.appendChild(style);
 })();
-=======
-// Live fallback: replace the image node after all startup scripts run. This removes
-// the obsolete anonymous error handler in patches.js that can hide a valid logo.
+
+// Replace the logo node after startup to remove the obsolete error handler in patches.js.
 setTimeout(()=>{
   const oldLogo=document.getElementById('heroSelectLogo');
   if(!oldLogo||!oldLogo.parentNode)return;
@@ -167,7 +165,6 @@ setTimeout(()=>{
   logo.style.setProperty('display','block','important');
   logo.style.setProperty('visibility','visible','important');
   logo.style.setProperty('opacity','1','important');
-  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-3',document.baseURI).href;
+  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-4',document.baseURI).href;
   oldLogo.replaceWith(logo);
 },1500);
->>>>>>> 608302832ce0f2465715969ee622c86e6f7b3a56
