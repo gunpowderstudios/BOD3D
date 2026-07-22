@@ -142,12 +142,16 @@ window.ASSET_PATHS = {
   else start();
 })();
 
-// Live fallback: retry after other startup scripts in case an older resolver hid the image.
+// Live fallback: replace the image node after all startup scripts run. This removes
+// the obsolete anonymous error handler in patches.js that can hide a valid logo.
 setTimeout(()=>{
-  const logo=document.getElementById('heroSelectLogo');
-  if(!logo)return;
+  const oldLogo=document.getElementById('heroSelectLogo');
+  if(!oldLogo||!oldLogo.parentNode)return;
+  const logo=oldLogo.cloneNode(false);
+  logo.removeAttribute('style');
   logo.style.setProperty('display','block','important');
   logo.style.setProperty('visibility','visible','important');
   logo.style.setProperty('opacity','1','important');
-  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-2',document.baseURI).href;
-},1200);
+  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-3',document.baseURI).href;
+  oldLogo.replaceWith(logo);
+},1500);
