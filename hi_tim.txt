@@ -1,0 +1,4 @@
+Hi Tim!
+
+This is a GitHub write-access test from ChatGPT.
+If you can read this, direct repository writes are working.

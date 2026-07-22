@@ -1,0 +1,632 @@
+/* Bag of Dungeon 3D — combat screen styles (cinematic layout, impact splats, dice tray, combat camera) */
+
+@media(max-width:800px){
+  /* Required action screens must always sit above the bottom character drawer. */
+  #combat,
+  #placement,
+  #modal{
+    z-index:400!important;
+    padding:
+      max(8px,env(safe-area-inset-top))
+      8px
+      max(8px,env(safe-area-inset-bottom));
+  }
+
+  #combat .card,
+  #placement .card,
+  #modal .card{
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* The collapsed Player Stats handle must not cover combat buttons. */
+  body.combatActive #side{
+    display:none!important;
+    pointer-events:none!important;
+  }
+
+  body.combatActive #combat{
+    align-items:flex-start;
+    overflow:auto;
+  }
+
+  body.combatActive #combat .card{
+    margin:auto;
+  }
+
+  /* Keep combat action buttons visible and comfortably tappable. */
+  #combatBtns{
+    position:sticky;
+    bottom:0;
+    z-index:5;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    background:var(--panel);
+    border-top:2px solid var(--ink);
+  }
+
+  #combatBtns button{
+    min-height:46px;
+    font-size:15px;
+  }
+}
+/* ===== Cinematic tabletop combat v10.16 ===== */
+body.cinematicCombat #combat{
+  background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.06) 42%,rgba(0,0,0,.62) 100%);
+  align-items:flex-end;
+  justify-content:flex-end;
+  pointer-events:none;
+  padding:18px;
+}
+body.cinematicCombat #combat .card{
+  pointer-events:auto;
+  width:min(480px,calc(100vw - 36px));
+  max-height:58vh;
+  overflow:auto;
+  margin:0;
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity .22s ease,transform .22s ease;
+}
+body.cinematicCombat #combat.open .card{opacity:1;transform:translateY(0)}
+body.cinematicCombat #topbar,
+body.cinematicCombat #mobileDpad,
+body.cinematicCombat #controls,
+body.cinematicCombat #compass{
+  opacity:.16;
+  pointer-events:none;
+}
+@media(max-width:800px){
+  body.cinematicCombat #combat{
+    justify-content:center;
+    padding:0 6px max(6px,env(safe-area-inset-bottom));
+  }
+  body.cinematicCombat #combat{
+    align-items:flex-end;
+  }
+  body.cinematicCombat #combat .card{
+    width:100%;
+    max-width:none;
+    max-height:38dvh;
+    padding:7px;
+  }
+  body.cinematicCombat #combat .card h2{font-size:21px;margin:2px 0 6px}
+  body.cinematicCombat .combatGrid{grid-template-columns:1fr 1fr;gap:6px;margin:5px 0}
+  body.cinematicCombat .fighter{min-height:78px;padding:4px;font-size:11px}
+  body.cinematicCombat .bigGlyph{font-size:30px}
+  body.cinematicCombat .hearts{font-size:14px}
+  body.cinematicCombat .diceTray{min-height:34px;margin:4px 0;padding:3px}
+  body.cinematicCombat .combatLog{min-height:28px;margin:4px 0;font-size:12px;padding:3px}
+}
+
+
+@media(max-width:800px){
+  .tileItemStack{transform:none}
+}
+.tileItemStack{
+  inset:0;
+  left:auto;
+  bottom:auto;
+  display:block;
+  transform:none;
+  pointer-events:none;
+}
+.tileItemStack .tileItemMarker{
+  position:absolute;
+  width:36px;
+  height:36px;
+  pointer-events:auto;
+}
+.tileItemStack .tileItemMarker:nth-child(4n+1){left:5px;top:5px}
+.tileItemStack .tileItemMarker:nth-child(4n+2){right:5px;top:5px}
+.tileItemStack .tileItemMarker:nth-child(4n+3){left:5px;bottom:5px}
+.tileItemStack .tileItemMarker:nth-child(4n+4){right:5px;bottom:5px}
+.tileItemStack .tileItemMarker:nth-child(n+5){transform:translateY(-8px) scale(.88)}
+
+
+.tileItemStack .tileItemMarker{
+  background:#1b140f;
+  border-color:#fff6d8;
+  box-shadow:0 0 0 2px #000,2px 2px 0 #000;
+  z-index:30;
+}
+
+
+.ringMark{
+  animation:ringObjectiveBob 2.4s ease-in-out infinite;
+  filter:drop-shadow(0 0 7px #ffd24f) drop-shadow(0 0 14px #ffad24);
+}
+@keyframes ringObjectiveBob{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-8px) scale(1.06)}
+}
+
+
+.lightSavedGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin:9px 0;
+}
+.lightSavedGrid button{
+  background:#3a2a12!important;
+  color:#ffd45f!important;
+  border-color:#d8b45e!important;
+  box-shadow:none!important;
+}
+
+
+/* Hidden item testing screen — Ctrl/Control + Alt/Option + Shift + I */
+#itemTester{
+  position:fixed;
+  inset:0;
+  z-index:700;
+  display:none;
+  background:rgba(0,0,0,.82);
+  padding:18px;
+}
+#itemTester.open{display:flex;align-items:center;justify-content:center}
+.itemTesterCard{
+  width:min(980px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:var(--panel);
+  border:5px solid var(--ink);
+  box-shadow:7px 7px 0 #000;
+  padding:14px;
+}
+.itemTesterHead{
+  position:sticky;
+  top:-14px;
+  z-index:4;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:-14px -14px 12px;
+  padding:12px 14px;
+  background:var(--panel);
+  border-bottom:4px solid var(--ink);
+}
+.itemTesterHead h2{margin:0}
+.itemTesterTools{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+}
+#itemTesterSearch{
+  flex:1 1 230px;
+  min-width:180px;
+  padding:9px 10px;
+  border:3px solid #000;
+  background:#fff6d8;
+  font:16px "Alegreya",Georgia,serif;
+}
+.itemTesterGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+  gap:10px;
+}
+.itemTesterEntry{
+  display:grid;
+  grid-template-columns:54px 1fr;
+  gap:9px;
+  align-items:start;
+  border:3px solid #000;
+  background:#fff6d8;
+  padding:8px;
+}
+.itemTesterArt{
+  width:54px;
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.itemTesterArt .spriteWrap,
+.itemTesterArt .spriteIcon{
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:contain;
+}
+.itemTesterName{font-weight:bold;font-size:16px}
+.itemTesterDesc{font-size:12px;line-height:1.2;margin:3px 0 7px}
+.itemTesterButtons{
+  grid-column:1/-1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.itemTesterButtons button{
+  padding:6px 8px;
+  font-size:12px;
+  box-shadow:1px 1px 0 #000;
+}
+@media(max-width:800px){
+  #itemTester{padding:6px}
+  .itemTesterCard{max-height:96dvh;padding:9px}
+  .itemTesterHead{top:-9px;margin:-9px -9px 9px;padding:9px}
+  .itemTesterGrid{grid-template-columns:1fr}
+}
+
+
+/* Hidden Developer Console — Ctrl/Control + Alt/Option + Shift + D */
+#developerConsole{
+  position:fixed;
+  inset:0;
+  z-index:760;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.86);
+}
+#developerConsole.open{display:flex}
+.devConsoleCard{
+  width:min(920px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:var(--panel);
+  border:5px solid #000;
+  box-shadow:7px 7px 0 #000;
+}
+.devConsoleHead{
+  position:sticky;
+  top:0;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 14px;
+  background:var(--panel);
+  border-bottom:4px solid #000;
+}
+.devConsoleHead h2{margin:0}
+.devConsoleBody{padding:14px}
+.devConsoleTabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-bottom:12px;
+}
+.devConsoleTabs button.active{
+  background:#000;
+  color:#fff6d8;
+}
+.devConsolePanel{display:none}
+.devConsolePanel.active{display:block}
+.devConsoleGrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:9px;
+}
+.devConsoleGrid button{min-height:46px}
+.devConsoleRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:center;
+  margin:8px 0;
+}
+.devConsoleRow select{
+  min-width:0;
+  padding:9px;
+  border:3px solid #000;
+  background:#fff6d8;
+  font:15px "Alegreya",Georgia,serif;
+}
+.devConsoleNote{
+  margin:10px 0;
+  padding:8px;
+  border:2px dashed #000;
+  background:#fff6d8;
+  font-size:13px;
+}
+
+.devDiceControls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:8px 0 12px}
+.devDiceControl{border:2px solid #000;background:#fff6d8;padding:8px}
+.devDiceControl label{display:flex;justify-content:space-between;gap:8px;font-weight:700;margin-bottom:5px}
+.devDiceControl input[type="range"]{width:100%}
+.devDiceValue{font-variant-numeric:tabular-nums}
+@media(max-width:800px){
+  #developerConsole{padding:6px}
+  .devConsoleCard{max-height:96dvh}
+  .devConsoleBody{padding:9px}
+  .devConsoleGrid{grid-template-columns:1fr}
+}
+
+
+
+/* ===== Combat impact splats and damage numbers v10.52 ===== */
+#combat .fighter{position:relative;overflow:hidden}
+.combatImpactBurst{position:absolute;inset:0;z-index:8;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:combatBurstFade var(--impact-duration,1.6s) ease-out forwards}
+.combatImpactBurst::before{content:"";width:88px;height:88px;border-radius:48% 52% 44% 56%;background:radial-gradient(circle at 46% 44%,#d8251c 0 16%,#9e110d 17% 43%,#5c0705 44% 61%,transparent 63%);filter:drop-shadow(0 3px 1px rgba(0,0,0,.65));transform:rotate(var(--burst-rot,0deg)) scale(.3);animation:combatSplatPop .58s cubic-bezier(.16,.78,.34,1.2) forwards}
+.combatImpactText{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transform:scale(.2) rotate(-10deg);opacity:.95;animation:combatFlashPop .52s ease-out forwards;text-align:center}
+.combatDamageNumber{font:900 48px/1 "Alegreya",Georgia,serif;color:#fff0b0;-webkit-text-stroke:2px #680b06;text-shadow:0 0 8px #ffb000,0 4px 0 #5b0805,3px 3px 0 #000}
+.combatImpactLabel{font:900 17px/1 "Alegreya",Georgia,serif;color:#fff0b0;background:#b51610;border:2px solid #fff0b0;padding:4px 7px;box-shadow:2px 2px 0 #000;white-space:nowrap}
+.combatImpactBurst.heroHit::before{background:radial-gradient(circle at 46% 44%,#c81915 0 16%,#85100c 17% 45%,#430604 46% 62%,transparent 64%)}
+.combatImpactBurst.heroHit .combatDamageNumber{color:#ffddd3;-webkit-text-stroke-color:#5b0805}
+.combatImpactBurst.criticalHit::before{width:112px;height:112px}
+.combatImpactBurst.killHit .combatImpactLabel{font-size:21px;background:#111;border-color:#b51610}
+.combatImpactBurst.missHit::before{display:none}
+.combatImpactBurst.missHit .combatImpactText{transform:rotate(-5deg) scale(.25)}
+.combatImpactBurst.missHit .combatDamageNumber{display:none}
+.combatImpactBurst.missHit .combatImpactLabel{font-size:27px;color:#111;text-shadow:none;background:#fff0b0;border:3px solid #111;padding:6px 9px}
+.combatScreenFlash{position:fixed;inset:0;z-index:390;pointer-events:none;background:rgba(190,18,12,.18);animation:combatScreenFlash .28s ease-out forwards}
+.combatScreenFlash.criticalHit{background:rgba(210,30,10,.3);animation-duration:.4s}
+.combatScreenFlash.killHit{background:rgba(180,10,8,.42);animation-duration:.55s}
+@keyframes combatSplatPop{0%{transform:rotate(var(--burst-rot,0deg)) scale(.2);opacity:0}55%{transform:rotate(var(--burst-rot,0deg)) scale(1.18);opacity:1}100%{transform:rotate(var(--burst-rot,0deg)) scale(1);opacity:.9}}
+@keyframes combatFlashPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}65%{transform:scale(1.15) rotate(-4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.95}}
+@keyframes combatBurstFade{0%,78%{opacity:1}100%{opacity:0}}
+@keyframes combatScreenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+
+/* Screen-wide blood splats: varied slash, burst, drip and mist shapes.
+   Damage controls size/count in JS; each hit picks random styles and trajectories. */
+.screenBloodSplat{
+ position:fixed;z-index:395;pointer-events:none;
+ left:var(--splat-x,50%);top:var(--splat-y,50%);
+ width:var(--splat-size,90px);height:var(--splat-size,90px);
+ transform:translate(-50%,-50%) rotate(var(--splat-rot,0deg)) scale(.15);
+ transform-origin:50% 50%;opacity:0;
+ filter:drop-shadow(0 3px 2px rgba(0,0,0,.7));
+ animation:screenSplatPop var(--splat-duration,1100ms) cubic-bezier(.12,.75,.22,1) forwards;
+}
+.screenBloodSplat::before,.screenBloodSplat::after{content:"";position:absolute;inset:0;pointer-events:none}
+.screenBloodSplat.heavySlash{
+ border-radius:48% 52% 44% 56%;
+ background:
+  radial-gradient(ellipse at 42% 48%,#e52b1e 0 13%,#a6110d 14% 37%,#600705 38% 52%,transparent 54%),
+  conic-gradient(from 18deg at 45% 50%,transparent 0 7%,#8e0b08 8% 11%,transparent 12% 21%,#b91812 22% 25%,transparent 26% 100%);
+}
+.screenBloodSplat.heavySlash::before{
+ inset:35% -58% 38% -52%;
+ background:linear-gradient(90deg,transparent,#6f0806 10%,#c71a13 34%,#8b0b08 72%,transparent);
+ border-radius:60% 10% 55% 12%;
+ transform:rotate(-17deg);
+}
+.screenBloodSplat.heavySlash::after{
+ background:
+  radial-gradient(circle at 9% 25%,#a50e0b 0 2%,transparent 2.7%),
+  radial-gradient(circle at 18% 72%,#c51a13 0 1.8%,transparent 2.5%),
+  radial-gradient(circle at 82% 20%,#8d0a07 0 2.4%,transparent 3%),
+  radial-gradient(circle at 93% 67%,#bd1711 0 1.5%,transparent 2.2%);
+}
+.screenBloodSplat.diagonalSlash{
+ width:calc(var(--splat-size,90px)*1.7);height:calc(var(--splat-size,90px)*.52);
+ border-radius:70% 18% 72% 14%;
+ background:linear-gradient(90deg,transparent 0 3%,#6c0705 7%,#d02519 36%,#8e0b08 70%,transparent 97%);
+}
+.screenBloodSplat.diagonalSlash::before{
+ inset:-80% 5% -80% 12%;
+ background:repeating-linear-gradient(98deg,transparent 0 12%,#9d0d09 13% 15%,transparent 16% 27%);
+ opacity:.8;
+}
+.screenBloodSplat.scatterBurst{
+ border-radius:50%;
+ background:
+  radial-gradient(circle at 50% 50%,#df281c 0 10%,#9f100c 11% 25%,transparent 27%),
+  radial-gradient(circle at 20% 28%,#a8110d 0 5%,transparent 6%),
+  radial-gradient(circle at 79% 20%,#c41912 0 4%,transparent 5%),
+  radial-gradient(circle at 16% 76%,#7d0806 0 3.5%,transparent 4.5%),
+  radial-gradient(circle at 83% 74%,#b9140f 0 5%,transparent 6%);
+}
+.screenBloodSplat.scatterBurst::before{
+ inset:-28%;
+ background:repeating-conic-gradient(from 0deg,transparent 0 13deg,#8e0b08 14deg 17deg,transparent 18deg 35deg);
+ clip-path:polygon(48% 0,54% 36%,71% 5%,62% 41%,100% 23%,67% 47%,96% 58%,65% 55%,82% 100%,57% 63%,49% 100%,46% 62%,9% 94%,37% 55%,0 60%,34% 48%,5% 25%,39% 41%);
+}
+.screenBloodSplat.dripSpatter{
+ background:
+  radial-gradient(ellipse at 50% 27%,#d52218 0 15%,#950d09 16% 34%,transparent 36%),
+  linear-gradient(90deg,transparent 16%,#8b0a07 18% 22%,transparent 24% 41%,#ba1510 43% 49%,transparent 51% 68%,#760705 70% 74%,transparent 76%);
+}
+.screenBloodSplat.dripSpatter::before{
+ top:28%;height:110%;
+ background:linear-gradient(90deg,transparent 18%,#850906 19% 22%,transparent 23% 45%,#a30e0b 46% 50%,transparent 51% 70%,#6f0605 71% 73%,transparent 74%);
+ filter:blur(.3px);
+}
+.screenBloodSplat.mistSpeckle{
+ background:
+  radial-gradient(circle at 12% 22%,#a90f0b 0 2%,transparent 2.8%),
+  radial-gradient(circle at 31% 62%,#d21f17 0 1.5%,transparent 2.2%),
+  radial-gradient(circle at 48% 35%,#8d0a07 0 2.4%,transparent 3%),
+  radial-gradient(circle at 67% 72%,#bd1711 0 1.7%,transparent 2.4%),
+  radial-gradient(circle at 86% 29%,#780705 0 2%,transparent 2.7%),
+  radial-gradient(circle at 74% 48%,#d5261a 0 1.2%,transparent 2%);
+}
+.screenBloodSplat.heroSplat{filter:sepia(.08) saturate(1.2) drop-shadow(0 3px 2px rgba(0,0,0,.7))}
+@keyframes screenSplatPop{
+ 0%{transform:translate(-50%,-50%) translate(calc(var(--sweep-x)*-.35),calc(var(--sweep-y)*-.35)) rotate(var(--splat-rot,0deg)) scale(.08);opacity:0}
+ 14%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1.13);opacity:1}
+ 27%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1);opacity:.96}
+ 78%{opacity:.82}
+ 100%{transform:translate(-50%,-50%) translate(var(--sweep-x),var(--sweep-y)) rotate(var(--splat-rot,0deg)) scale(1.02);opacity:0}
+}
+
+@media(max-width:800px){.combatImpactBurst::before{width:68px;height:68px}.combatDamageNumber{font-size:38px;-webkit-text-stroke-width:1px}.combatImpactLabel{font-size:13px}.combatImpactBurst.killHit .combatImpactLabel,.combatImpactBurst.missHit .combatImpactLabel{font-size:17px}}
+
+
+:root{
+ --bod-serif:"Alegreya",Georgia,serif;
+ --bod-sans:"Alegreya Sans","Alegreya",Arial,sans-serif;
+}
+body{font-family:var(--bod-serif);font-weight:500;letter-spacing:.01em}
+button,input,select,textarea{font-family:var(--bod-sans)}
+.titlefont,h1,h2,h3,.panelTitle,.combatImpactLabel{font-family:var(--bod-serif);font-weight:800;letter-spacing:.015em}
+.small,.hudLabel,.statLabel{font-family:var(--bod-sans)}
+.combatDamageNumber{font-family:var(--bod-sans);font-weight:900}
+/* ===== Responsive horizontal combat tray v10.59 =====
+   On laptops and desktop screens, combat runs along the lower-right play area:
+   HERO | MONSTER | DICE / LOG / ACTIONS. This prevents the panel being cut off
+   vertically while keeping the board and both 3D figures visible. */
+.combatWideLayout{display:block}
+.combatResolution{min-width:0}
+
+@media(min-width:801px){
+  body.cinematicCombat #combat{
+    align-items:flex-end;
+    justify-content:flex-end;
+    padding:14px 18px 18px 328px;
+  }
+
+  body.cinematicCombat #combat .combatCard{
+    width:min(1040px,calc(100vw - 346px));
+    max-width:none;
+    max-height:min(390px,48vh);
+    overflow:auto;
+    padding:10px 12px 11px;
+  }
+
+  body.cinematicCombat #combat .combatCard > h2{
+    margin:0 0 7px;
+    font-size:22px;
+    line-height:1;
+  }
+
+  body.cinematicCombat .combatWideLayout{
+    display:grid;
+    grid-template-columns:minmax(390px,1.15fr) minmax(330px,.85fr);
+    gap:10px;
+    align-items:stretch;
+  }
+
+  body.cinematicCombat .combatGrid{
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+    margin:0;
+  }
+
+  body.cinematicCombat .fighter{
+    min-height:0;
+    padding:6px 7px;
+    font-size:14px;
+    line-height:1.12;
+  }
+
+  body.cinematicCombat .bigGlyph{
+    font-size:34px;
+    line-height:1;
+    margin-bottom:1px;
+  }
+
+  body.cinematicCombat .fighter .hearts{
+    font-size:16px;
+    line-height:1.08;
+  }
+
+  body.cinematicCombat .combatResolution{
+    display:grid;
+    grid-template-rows:auto minmax(54px,1fr) auto;
+    gap:7px;
+    min-height:0;
+  }
+
+  body.cinematicCombat .diceTray{
+    min-height:48px;
+    margin:0;
+    padding:5px;
+    gap:8px;
+  }
+
+  body.cinematicCombat .combatLog{
+    min-height:54px;
+    max-height:92px;
+    overflow:auto;
+    margin:0;
+    padding:5px 7px;
+    font-size:15px;
+    line-height:1.15;
+  }
+
+  body.cinematicCombat #combatBtns{
+    position:static;
+    margin:0;
+    padding:0;
+    border:0;
+    background:transparent;
+    gap:7px;
+  }
+
+  body.cinematicCombat #combatBtns button{
+    min-height:38px;
+    padding:7px 10px;
+    font-size:14px;
+  }
+}
+
+/* Extra compression for shallow laptop browser windows. */
+@media(min-width:801px) and (max-height:760px){
+  body.cinematicCombat #combat .combatCard{
+    max-height:330px;
+    padding:8px 10px;
+  }
+  body.cinematicCombat #combat .combatCard > h2{
+    font-size:19px;
+    margin-bottom:5px;
+  }
+  body.cinematicCombat .fighter{
+    font-size:12px;
+    padding:4px 5px;
+  }
+  body.cinematicCombat .bigGlyph{font-size:27px}
+  body.cinematicCombat .fighter .hearts{font-size:14px}
+  body.cinematicCombat .diceTray{min-height:42px}
+  body.cinematicCombat .combatLog{
+    min-height:46px;
+    max-height:68px;
+    font-size:13px;
+  }
+  body.cinematicCombat #combatBtns button{
+    min-height:34px;
+    padding:5px 8px;
+    font-size:13px;
+  }
+}
+
+/* At narrower tablet widths, retain the existing compact stacked layout. */
+@media(max-width:980px) and (min-width:801px){
+  body.cinematicCombat #combat{
+    padding-left:324px;
+  }
+  body.cinematicCombat #combat .combatCard{
+    width:calc(100vw - 340px);
+  }
+  body.cinematicCombat .combatWideLayout{
+    grid-template-columns:1fr;
+  }
+  body.cinematicCombat .combatResolution{
+    grid-template-columns:auto 1fr;
+    grid-template-rows:auto auto;
+  }
+  body.cinematicCombat .diceTray{grid-column:1;grid-row:1}
+  body.cinematicCombat .combatLog{grid-column:2;grid-row:1}
+  body.cinematicCombat #combatBtns{grid-column:1/3;grid-row:2}
+}
+
+
+/* ===== Combat camera interaction v10.64 =====
+   During combat the 3D board remains swipe/drag enabled so the player can orbit
+   around the staged hero and monster. Gameplay clicks remain blocked by
+   boardInteractionLocked(), so tapping a monster cannot open its stats popup
+   and tiles/items/movement cannot be activated until combat ends. */
+body.combatActive #viewport,
+body.combatActive #threeBoard{
+  pointer-events:auto!important;
+  cursor:grab!important;
+  touch-action:none!important;
+}
+body.combatActive #viewport.dragging{cursor:grabbing!important;}
+
+/* Combat panel centering (v10.90) */
+/* v10.90 — Centre combat panel within the black 3D play area */
+@media (min-width: 701px) {
+  #combatPanel {
+    left: calc(var(--sidebar-width, 230px) + (100vw - var(--sidebar-width, 230px)) / 2) !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+}
