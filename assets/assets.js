@@ -34,14 +34,15 @@ window.ASSET_PATHS = {
   "Dragon": "assets/monsters/dragon.png"
 };
 
-// TEST-only: keep the loading-screen logo repository-relative so it works on
-// /BOD3D-TEST/ as well as when the project is copied elsewhere.
-(function fixTestLoadingLogo(){
+// Keep the loading-screen logo repository-relative so it works on GitHub Pages.
+(function fixLoadingLogo(){
   function apply(){
     const logo=document.getElementById('heroSelectLogo');
     if(!logo)return false;
     logo.style.display='';
-    logo.src='./assets/ui/bod3d-logo.png';
+    logo.style.visibility='visible';
+    logo.style.opacity='1';
+    logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix',document.baseURI).href;
     return true;
   }
   if(document.readyState==='loading'){
@@ -56,8 +57,8 @@ window.ASSET_PATHS = {
   }
 })();
 
-// v11.23 TEST: show the current version consistently wherever the UI exposes it.
-(function syncTestVersion(){
+// v11.23: show the current version consistently wherever the UI exposes it.
+(function syncVersion(){
   const version='v11.23';
   function apply(){
     document.title='Bag of Dungeon 3D '+version;
@@ -71,12 +72,10 @@ window.ASSET_PATHS = {
   setTimeout(apply,1000);
 })();
 
-// v11.23 TEST: mute only dungeon-sounds.mp3. Other sounds are untouched.
+// v11.23: mute only dungeon-sounds.mp3. Other sounds are untouched.
 (function installDungeonAmbienceToggle(){
   let muted=false;
 
-  // The dungeon ambience is created with new Audio(), so it may never appear as
-  // an <audio> element in the DOM. Intercept play() only for this exact MP3.
   if(!HTMLMediaElement.prototype.__bodDungeonMutePatched){
     const originalPlay=HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play=function(){
@@ -142,3 +141,13 @@ window.ASSET_PATHS = {
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
+
+// Live fallback: retry after other startup scripts in case an older resolver hid the image.
+setTimeout(()=>{
+  const logo=document.getElementById('heroSelectLogo');
+  if(!logo)return;
+  logo.style.setProperty('display','block','important');
+  logo.style.setProperty('visibility','visible','important');
+  logo.style.setProperty('opacity','1','important');
+  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-2',document.baseURI).href;
+},1200);
