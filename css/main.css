@@ -1,0 +1,602 @@
+/* Bag of Dungeon 3D — base styles (variables, layout, tiles, panels, modals) */
+/* Split out of index.html for easier editing. Load order: main.css, combat.css, mobile.css */
+
+:root{
+  --cream:#eadbb6; --cream2:#f6e8bd; --ink:#000000; --dark:#000000; --red:#b5201a;
+  --gold:#000000; --green:#000000; --blue:#000000; --panel:#f2e4bf; --shadow:#000000;
+  --tile:128px; --gap:0px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+html,body{margin:0;height:100%;font-family:"Alegreya",Georgia,serif;background:#000;color:var(--ink);overflow:hidden;}
+button{font-family:"Alegreya Sans","Alegreya",Arial,sans-serif;font-weight:bold;border:3px solid var(--ink);background:var(--cream);color:var(--ink);padding:10px 12px;border-radius:6px;box-shadow:2px 2px 0 var(--shadow);cursor:pointer;}
+button:hover:not(:disabled){background:#fff1c9;}
+button:disabled{opacity:.45;cursor:not-allowed;}
+.small{font-size:12px;opacity:.85}.titlefont{font-family:"Alegreya",Georgia,serif;font-weight:bold;letter-spacing:.5px}
+#app{height:100%;display:grid;grid-template-columns:310px 1fr;grid-template-rows:1fr;background:#000}
+#side{background:var(--panel);border-right:5px solid var(--ink);padding:10px;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+#brandHeader{text-align:center;margin-bottom:2px}
+.brandLogo{display:block;width:92%;max-width:270px;max-height:150px;object-fit:contain;margin:2px auto 8px;image-rendering:auto}
+.logo{font-size:30px;text-align:center;border:4px solid var(--ink);background:var(--cream);padding:10px 8px;box-shadow:3px 3px 0 var(--shadow);line-height:1}
+.version{text-align:center;font-size:13px;line-height:1.25;margin-top:7px}
+.buildVersion{display:block;font-size:11px;opacity:.75;margin-top:2px}.box{background:var(--cream);border:3px solid var(--ink);padding:8px;box-shadow:2px 2px 0 var(--shadow)}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:3px 0}.hp{color:var(--red);font-weight:bold}.ap{color:var(--blue);font-weight:bold}
+.hearts{letter-spacing:1px;color:var(--red);font-size:20px;line-height:1.1}.combatHearts{font-size:18px;line-height:1.25;word-break:break-word}.ringStatus{display:inline-flex;align-items:center;gap:5px;vertical-align:middle}.ringStatus .spriteWrap,.ringStatus .spriteIcon{width:28px;height:28px;max-width:28px;max-height:28px;object-fit:contain;display:inline-flex}.statline{font-size:16px}.sectionTitle{font-weight:bold;border-bottom:2px solid var(--ink);margin:6px 0 5px}
+#inventory .invgrid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}.itemBtn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:25px;padding:0;background:#f7e9c1;position:relative}.itemBtn .count{position:absolute;right:2px;bottom:0;font-size:12px;background:var(--ink);color:#fff;padding:0 3px;border-radius:4px}.itemBtn.active{outline:3px solid var(--ink)}.itemBtn.equipped{outline:4px solid var(--red)}.itemBtn .equipMark{position:absolute;left:1px;top:0;font-size:13px;background:var(--red);color:#fff;padding:0 3px;border-radius:3px}.dropMark{position:absolute;left:2px;bottom:0;font-size:14px;background:#fff6d8;border:2px solid var(--ink);z-index:4;padding:0 3px}.tileItemMarker{position:absolute;left:5px;bottom:5px;width:42px;height:42px;z-index:14;display:flex;align-items:center;justify-content:center;background:#fff6d8;border:3px solid var(--ink);box-shadow:2px 2px 0 #000;cursor:pointer;pointer-events:auto;overflow:hidden}.tileItemMarker .spriteWrap,.tileItemMarker .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:flex}.tileItemCount{position:absolute;right:-3px;top:-5px;min-width:20px;height:20px;padding:0 4px;border:2px solid #000;border-radius:10px;background:var(--red);color:#fff;font:bold 12px/16px "Alegreya",Georgia,serif;text-align:center}.tileItemList{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}.tileItemCard{border:3px solid var(--ink);background:#fff6d8;padding:8px;text-align:center}.tileItemArt{height:72px;display:flex;align-items:center;justify-content:center;margin-bottom:5px}.tileItemArt .spriteWrap,.tileItemArt .spriteIcon{height:100%;width:100%;max-width:none;max-height:none;object-fit:contain}
+#log{min-height:120px;max-height:210px;overflow:auto;font-size:15px;line-height:1.25}
+#killTally{font-size:14px}.killGrid{display:grid;grid-template-columns:1fr auto;gap:3px 8px}.killTotal{font-weight:bold;margin-top:5px;border-top:2px solid var(--ink);padding-top:4px}.logline{border-bottom:1px dotted #000;padding:3px 0}.loot{color:#000}.combat{color:#922}.system{color:#000}.heal{color:#000}
+#main{position:relative;overflow:hidden;background:#000;touch-action:none;}
+#topbar{position:absolute;left:10px;right:10px;top:10px;z-index:20;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
+#topbar .cluster{display:flex;gap:8px;pointer-events:auto;flex-wrap:wrap}.badge{background:var(--cream);border:3px solid var(--ink);padding:8px 10px;box-shadow:2px 2px 0 var(--shadow);font-weight:bold}
+#fullscreenBtn{position:absolute;top:10px;right:10px;z-index:65;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);border-radius:5px;background:var(--cream);color:var(--ink);box-shadow:2px 2px 0 #000;font:700 22px/1 Arial,sans-serif;pointer-events:auto}
+#fullscreenBtn:hover{background:#fff1c9}
+#topbar{right:52px}
+#viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;perspective:1200px}#viewport.dragging{cursor:grabbing}
+#camera3d{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 50%;pointer-events:none}
+#camera3d.view3d{transform:rotateX(var(--viewTilt,55deg)) rotateZ(var(--viewSpin,-3deg));}
+#camera3d.cameraViewSmooth{transition:transform .22s ease-out;}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;transform-style:preserve-3d;pointer-events:auto;}#world.cameraSmooth{transition:transform .28s ease-out;}
+/* Upright board-game pieces. The floor remains flat while figures face the viewer. */
+#camera3d.view3d .hero{
+  transform-origin:50% 82%;
+  transform:translateY(-25%) rotateZ(calc(var(--viewSpin,-3deg) * -1)) rotateX(calc(var(--viewTilt,55deg) * -1)) translateZ(34px) scale(.82);
+  filter:drop-shadow(0 18px 8px rgba(0,0,0,.72));
+}
+#camera3d.view3d .monsterGlyph .spriteWrap,
+#camera3d.view3d .hiddenMonster .spriteWrap{
+  transform-origin:50% 82%;
+  transform:translateY(-20%) rotateZ(calc(var(--viewSpin,-3deg) * -1)) rotateX(calc(var(--viewTilt,55deg) * -1)) translateZ(30px) scale(.86);
+  filter:drop-shadow(0 16px 7px rgba(0,0,0,.68));
+}
+#camera3d.view3d .tile{box-shadow:0 10px 12px rgba(0,0,0,.42);}
+
+.tile{position:absolute;width:var(--tile);height:var(--tile);background:var(--cream);border:2px solid var(--ink);box-shadow:none;display:flex;align-items:center;justify-content:center;}
+.tile svg{position:absolute;inset:0;width:100%;height:100%}.tileAsset{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;transform-origin:50% 50%;display:block}.tile .mark{position:absolute;font-size:40px;text-shadow:1px 1px #fff;z-index:3}.tileOverlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.tileOverlay .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.tileOverlay .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.tile .tiny{position:absolute;right:4px;top:2px;font-size:20px;z-index:4}.tile.teleportTarget{cursor:pointer;outline:4px solid #fff2a8;outline-offset:-6px}.tile.teleportTarget:hover{filter:brightness(1.25)}.hero{position:absolute;width:128px;height:128px;border:none;background:transparent;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:36px;z-index:15;box-shadow:none;transition:left .18s,top .18s;pointer-events:none}.hero .spriteWrap,.hero .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block}
+.hiddenMonster{position:absolute;inset:0;font-size:44px;color:var(--red);font-weight:bold;text-shadow:2px 2px 0 #000;z-index:5;display:flex;align-items:center;justify-content:center;overflow:hidden}.hiddenMonster.rangedTarget,.monsterGlyph.rangedTarget{cursor:crosshair;pointer-events:auto;outline:6px solid #ffd84d;outline-offset:-7px;filter:drop-shadow(0 0 8px #ffd84d)}.hiddenMonster .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.hiddenMonster .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.itemLocationMarker{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.itemLocationMarker .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.itemLocationMarker .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}.monsterGlyph{position:absolute;inset:0;font-size:44px;z-index:8!important;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;pointer-events:auto}.monsterGlyph .spriteWrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.monsterGlyph .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated}
+.effectLayer{position:absolute;inset:0;z-index:40;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:visible}.effectLayer img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}.screenEffect{position:fixed;inset:0;z-index:180;pointer-events:none;display:flex;align-items:center;justify-content:center}.screenEffect img{width:min(70vw,600px);height:min(70vh,600px);object-fit:contain;image-rendering:pixelated}
+.ringMark{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none}.ringMark .spriteWrap,.ringMark .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;display:block;image-rendering:pixelated}.tile.ringReveal{z-index:12;animation:ringRevealPulse .7s ease-in-out 4;box-shadow:0 0 0 5px #fff2a8,0 0 26px 12px #ffd84d}.tile.ringReveal::after{content:'✦';position:absolute;inset:-18px;display:flex;align-items:center;justify-content:center;font-size:72px;color:#fff2a8;text-shadow:0 0 8px #ffd84d;z-index:20;pointer-events:none;animation:ringSparkle .7s ease-in-out 4}@keyframes ringRevealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}@keyframes ringSparkle{0%,100%{opacity:.25;transform:rotate(0deg) scale(.8)}50%{opacity:1;transform:rotate(25deg) scale(1.15)}}
+#controls{position:absolute;bottom:10px;left:10px;right:10px;display:flex;flex-wrap:wrap;gap:8px;z-index:30;justify-content:center;pointer-events:auto}.red{background:#f7d2c9}.green,.blue,.gold{background:var(--cream)}
+#placement,#modal,#combat{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}#placement.open,#modal.open,#combat.open{display:flex}
+.card{background:var(--panel);border:5px solid var(--ink);box-shadow:6px 6px 0 #000;max-width:520px;width:100%;padding:14px;text-align:center}.card h2{margin:4px 0 10px;font-size:24px}.preview{width:110px;height:110px;margin:8px auto;position:relative;background:var(--cream);border:4px solid var(--ink)}.preview svg,.preview .tileAsset{width:100%;height:100%}.btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}.desc{font-size:18px;line-height:1.2;white-space:pre-line}.combatGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.fighter{border:3px solid var(--ink);background:var(--cream);padding:8px;min-height:126px}.bigGlyph{font-size:42px}.combatLog{min-height:44px;border:2px dashed var(--shadow);padding:6px;background:#fff4cf;margin:8px 0;font-size:17px}
+.diceTray{min-height:58px;border:3px solid var(--ink);background:#fff6d8;margin:8px 0;padding:6px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}.diceGroup{display:flex;gap:4px;align-items:center}.diceLabel{font-weight:bold;margin-right:4px}.die{width:34px;height:34px;border:3px solid var(--ink);background:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:20px;box-shadow:2px 2px 0 #000}.rolling .die{animation:diceWobble .12s steps(2,end) infinite}@keyframes diceWobble{0%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(1px,-1px) rotate(4deg)}100%{transform:translate(-1px,1px) rotate(-4deg)}}
+#toast{position:fixed;left:50%;top:20%;transform:translateX(-50%);background:var(--cream);border:4px solid var(--ink);box-shadow:4px 4px 0 #000;padding:12px 18px;font-size:22px;font-weight:bold;z-index:200;display:none}
+#devPanel{position:fixed;right:12px;bottom:12px;width:280px;max-height:55vh;overflow:auto;background:#fff6d8;border:4px solid var(--ink);box-shadow:4px 4px 0 #000;z-index:250;padding:10px;font-size:14px;display:none;white-space:pre-line}
+#devPanel.open{display:block}
+
+#charSelect{
+ position:fixed;inset:0;z-index:500;color:#fff;display:block;overflow:hidden;
+ background:#080705 url('../assets/ui/loading-screen.jpg') center center/cover no-repeat;
+ border:0;
+}
+#charSelect.hidden{display:none}
+
+.heroSelectLogo{
+ position:absolute;
+ z-index:3;
+ top:clamp(10px,2.2vh,24px);
+ left:50%;
+ transform:translateX(-50%);
+ width:min(62vw,640px);
+ max-height:18vh;
+ object-fit:contain;
+ object-position:center;
+ pointer-events:none;
+ filter:drop-shadow(0 4px 5px rgba(0,0,0,.9));
+}
+
+.heroSelectShade{
+ position:absolute;inset:0;pointer-events:none;
+ background:
+  linear-gradient(to bottom,rgba(0,0,0,.12) 0%,rgba(0,0,0,.04) 38%,rgba(0,0,0,.58) 78%,rgba(0,0,0,.86) 100%),
+  radial-gradient(circle at 50% 48%,rgba(0,0,0,0) 0%,rgba(0,0,0,.05) 36%,rgba(0,0,0,.55) 100%);
+}
+.heroSelectContent{
+ position:relative;z-index:1;width:100%;height:100%;
+ display:grid;grid-template-rows:minmax(280px,1fr) auto;
+ align-items:center;justify-items:center;padding:12px clamp(12px,3vw,48px) 18px;
+}
+.heroStage{
+ position:relative;width:min(980px,94vw);height:100%;min-height:250px;
+ display:grid;grid-template-columns:clamp(54px,8vw,100px) 1fr clamp(54px,8vw,100px);
+ align-items:center;justify-items:center;
+}
+.heroPreviewWrap{position:relative;width:100%;height:100%;min-height:250px;max-height:62vh;overflow:visible}
+#heroPreviewCanvas{display:block;width:100%;height:100%;background:transparent;filter:drop-shadow(0 18px 13px rgba(0,0,0,.75))}
+.heroPreviewFallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:clamp(100px,18vw,240px);text-shadow:0 8px 12px #000}
+.heroPreviewLoading{
+ position:absolute;left:50%;bottom:8%;transform:translateX(-50%);
+ padding:7px 12px;border:1px solid rgba(255,220,145,.55);background:rgba(0,0,0,.66);
+ color:#f5d58a;font:700 clamp(13px,1.5vw,18px) "Alegreya Sans",Arial,sans-serif;
+ letter-spacing:.04em;white-space:nowrap;transition:opacity .2s;
+}
+.heroPreviewLoading.hidden{opacity:0;pointer-events:none}
+.heroArrow{
+ width:clamp(50px,6vw,78px);height:clamp(72px,10vw,118px);padding:0;border:0;
+ background:transparent;color:#e8bd58;box-shadow:none;border-radius:0;
+ font:700 clamp(72px,10vw,130px)/.7 Georgia,serif;
+ text-shadow:0 4px 3px #000,0 0 10px rgba(0,0,0,.9);
+ transition:transform .16s,color .16s;z-index:4;
+}
+.heroArrow:hover,.heroArrow:focus-visible{color:#ffe59d;transform:scale(1.1);outline:none}
+.heroArrow:active{transform:scale(.96)}
+#prevHeroBtn,#nextHeroBtn{
+ background:transparent!important;border:0!important;box-shadow:none!important;outline:none!important;
+ -webkit-appearance:none!important;appearance:none!important;
+}
+#prevHeroBtn::before,#prevHeroBtn::after,#nextHeroBtn::before,#nextHeroBtn::after{background:transparent!important;box-shadow:none!important;}
+.heroInfoPanel{
+ width:min(820px,94vw);margin-top:-12px;padding:10px clamp(16px,3vw,34px) 12px;
+ color:#fff;text-align:center;
+ background:linear-gradient(180deg,rgba(16,13,9,.86),rgba(3,3,3,.94));
+ border:1px solid #a77a28;box-shadow:0 0 0 1px rgba(0,0,0,.8),0 10px 32px rgba(0,0,0,.72);
+ clip-path:polygon(2% 0,98% 0,100% 10%,100% 90%,98% 100%,2% 100%,0 90%,0 10%);
+}
+.heroInfoPanel.changing{animation:heroInfoChange .34s ease}
+@keyframes heroInfoChange{0%{opacity:.25;transform:translateY(8px)}100%{opacity:1;transform:none}}
+.heroInfoPanel h1{
+ margin:0;color:#e5bd67;font-size:clamp(25px,3.2vw,43px);line-height:1.05;
+ text-shadow:0 2px 2px #000;text-transform:none;
+}
+.selectedHeroDesc{font-size:clamp(15px,1.6vw,20px);margin:2px 0 7px;color:#f4ead5}
+.heroStatRow{
+ display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+ border-top:1px solid rgba(210,164,75,.55);border-bottom:1px solid rgba(210,164,75,.55);
+ padding:7px 0;margin:0 auto 6px;
+}
+.heroStat{display:grid;grid-template-columns:auto;justify-content:center;column-gap:7px;align-items:center}
+.heroStatIcon{font-size:clamp(21px,2.6vw,34px);color:#bf332d;text-shadow:0 2px 2px #000}
+.heroStat strong{font-size:clamp(20px,2.5vw,31px);line-height:1}
+.heroStat small{grid-column:1;color:#e0b85d;text-transform:uppercase;font:700 11px "Alegreya Sans",Arial,sans-serif;letter-spacing:.08em}
+.heroSpecialBlock{display:flex;flex-direction:column;line-height:1.08;margin:1px 0 8px}
+.heroSpecialBlock small{color:#dcb459;text-transform:uppercase;font:700 11px "Alegreya Sans",Arial,sans-serif;letter-spacing:.12em}
+.heroSpecialBlock strong{font-size:clamp(20px,2.5vw,29px);font-weight:700}
+.heroSpecialBlock span{font-size:clamp(14px,1.45vw,18px);color:#f4ead5}
+.chooseHeroBtn{
+ margin-top:2px;padding:8px 22px;border:1px solid #c7973e;border-radius:2px;
+ background:linear-gradient(#272016,#0d0b08);color:#f6d989;box-shadow:0 3px 8px #000;
+ font-size:17px;letter-spacing:.03em;
+}
+.chooseHeroBtn:hover{background:linear-gradient(#44351f,#17120b);color:#fff0b3}
+.heroDots{display:flex;justify-content:center;gap:7px;margin-top:8px}
+.heroDot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.28);border:0;padding:0;box-shadow:none}
+.heroDot.active{background:#e7b954;transform:scale(1.2)}
+
+
+.assetRow{display:grid;grid-template-columns:54px 1fr auto auto;gap:8px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}
+.assetThumb{width:44px;height:44px;border:2px solid var(--ink);background:#fff6d8;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+.assetThumb img,.spriteIcon{max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated}
+.spriteIcon{width:1.25em;height:1.25em;vertical-align:-.18em;object-fit:contain;image-rendering:pixelated}.spriteWrap{display:inline-flex;align-items:center;justify-content:center}
+.assetList{max-height:60vh;overflow:auto;padding:4px;text-align:left}
+.assetTools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.hiddenFile{display:none}
+
+
+.slotGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.equipSlot,.backpackSlot{border:2px solid var(--ink);background:#fff6d8;padding:6px;text-align:center;position:relative;overflow:hidden}.equipSlot{min-height:142px;display:flex;flex-direction:column}.equipSlot.wide{grid-column:1/3}.slotLabel{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;border-bottom:1px solid #000;margin-bottom:5px;flex:0 0 auto}.slotItem{font-size:14px;line-height:1.08;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:0;text-align:center;word-break:normal;overflow-wrap:anywhere}.equipSlot .slotItem .spriteWrap{width:82px;height:82px;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;flex:0 0 auto}.slotItem .spriteIcon{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;image-rendering:pixelated}.slotEmpty{font-size:13px;opacity:.55;display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 8px}.backpackGrid{display:flex;flex-direction:column;gap:5px}.backpackSlot{min-width:0;min-height:54px;display:flex;align-items:stretch}.backpackSlot .slotItem{width:100%;min-height:72px;display:grid;grid-template-columns:minmax(0,1fr) 58px;grid-template-rows:auto auto;align-items:center;column-gap:10px;row-gap:2px;padding:8px 9px;text-align:left}.backpackSlot .slotName{grid-column:1;grid-row:1;width:100%;text-align:left;line-height:1.15;overflow-wrap:normal;font-weight:bold}.backpackSlot .slotDesc{grid-column:1;grid-row:2;width:100%;text-align:left;font-size:12px;line-height:1.18;font-weight:normal;opacity:.82}.backpackSlot .slotArt{grid-column:2;grid-row:1/3;width:58px;height:58px;display:flex;align-items:center;justify-content:center}.backpackSlot .slotArt .spriteWrap,.backpackSlot .slotArt .spriteIcon{width:100%;height:100%;max-width:none;max-height:none;object-fit:contain;object-position:center;margin:0}.twoHandedBadge{font-size:10px;background:#000;color:#fff;padding:1px 3px}.peekBtn{font-size:12px;padding:5px 7px;margin:2px}.inventoryWarning{font-weight:bold;color:var(--red);margin:4px 0}
+/* ===== Character-sheet slot symbols v10.62 =====
+   Optional transparent PNGs loaded from assets/ui/. Missing files hide cleanly. */
+.slotLabel{display:flex;align-items:center;justify-content:center;gap:6px;min-height:28px}
+.slotSymbols{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-height:24px}
+.slotSymbol{width:24px;height:24px;object-fit:contain;display:block;image-rendering:auto}
+.slotSymbolDivider{font-size:16px;line-height:1;opacity:.8}
+.slotLabelText{line-height:1}
+
+.soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.9;line-height:1.25}
+.soundStatus.github{color:#185c20;font-weight:bold}
+.soundStatus.browser{color:#704400;font-weight:bold}
+.soundStatus.missing{color:#9b1c16;font-weight:bold}
+.soundPath{display:block;font-size:10px;font-weight:normal;opacity:.72;overflow-wrap:anywhere;margin-top:2px}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
+
+/* ===== GLB monster layer v7.21 ===== */
+.glbMonsterWrap{
+  position:absolute;
+  inset:-22%;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  overflow:visible;
+}
+.glbMonsterWrap model-viewer{
+  width:145%;
+  height:145%;
+  background:transparent;
+  --poster-color:transparent;
+  pointer-events:none;
+}
+.glbMonsterWrap.modelReady + .monsterPngFallback{display:none}
+.monsterPngFallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#camera3d.view3d .glbMonsterWrap{
+  transform-origin:50% 82%;
+  transform:
+    translateY(-18%)
+    rotateZ(calc(var(--viewSpin,-3deg) * -1))
+    rotateX(calc(var(--viewTilt,55deg) * -1))
+    translateZ(34px);
+  filter:drop-shadow(0 17px 8px rgba(0,0,0,.7));
+}
+#camera3d:not(.view3d) .glbMonsterWrap{inset:-5%}
+
+.glbHeroWrap{
+  position:absolute;
+  inset:-24%;
+  z-index:16;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  overflow:visible;
+}
+.glbHeroWrap model-viewer{
+  width:150%;
+  height:150%;
+  background:transparent;
+  --poster-color:transparent;
+  pointer-events:none;
+}
+.glbHeroWrap.modelReady + .heroPngFallback{display:none}
+.heroPngFallback{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#camera3d.view3d .glbHeroWrap{
+  transform-origin:50% 82%;
+  transform:
+    translateY(-18%)
+    rotateZ(calc(var(--viewSpin,-3deg) * -1))
+    rotateX(calc(var(--viewTilt,55deg) * -1))
+    translateZ(38px);
+  filter:drop-shadow(0 18px 8px rgba(0,0,0,.72));
+}
+#camera3d:not(.view3d) .glbHeroWrap{inset:-7%}
+
+
+/* ===== True Three.js tabletop renderer v8.0 ===== */
+#threeBoard{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+#camera3d{z-index:2}
+body.threeMode #camera3d{display:none}
+body:not(.threeMode) #threeBoard{display:none}
+body.threeMode #viewport{cursor:grab}
+body.threeMode #viewport.dragging{cursor:grabbing}
+
+
+.brand3DTitle{
+  margin:0 auto 8px;
+  text-align:center;
+  font-size:30px;
+  line-height:1;
+  font-weight:bold;
+  letter-spacing:8px;
+  color:var(--ink);
+}
+#charSelect .brand3DTitle{
+  font-size:34px;
+  margin-top:-4px;
+  margin-bottom:4px;
+}
+
+
+body.threeMode.lightingOn #viewport::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  background:radial-gradient(
+    circle at 50% 52%,
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0) 58%,
+    rgba(0,0,0,.05) 82%,
+    rgba(0,0,0,.12) 100%
+  );
+}
+
+
+#lightingPanel{display:none!important;
+
+  position:absolute;
+  top:58px;
+  right:12px;
+  z-index:80;
+  width:min(360px,calc(100vw - 24px));
+  max-height:calc(100vh - 90px);
+  overflow:auto;
+  display:none;
+  padding:12px;
+  background:rgba(18,14,9,.96);
+  color:#f5e7bd;
+  border:3px solid #c7a45b;
+  border-radius:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.7);
+}
+#lightingPanel.open{display:none!important}
+#lightingPanel h3{margin:0 0 10px;text-align:center;color:#ffd45f}
+.lightRow{
+  display:grid;
+  grid-template-columns:132px 1fr 48px;
+  gap:8px;
+  align-items:center;
+  margin:8px 0;
+  font-size:14px;
+}
+.lightRow input[type="range"]{width:100%}
+.lightValue{text-align:right;font-variant-numeric:tabular-nums}
+.lightColourRow{display:grid;grid-template-columns:132px 1fr;gap:8px;align-items:center;margin:9px 0}
+.lightColourRow input{width:100%;height:34px;border:0;padding:0;background:none}
+.lightChecks{display:flex;justify-content:space-between;align-items:center;margin:9px 0}
+.lightPresetGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.lightPresetGrid button,#lightingPanel .lightAction{background:#241b10;color:#f5e7bd;border-color:#c7a45b;box-shadow:none}
+.lightPanelHead{display:flex;align-items:center;justify-content:space-between}
+.lightPanelHead button{padding:3px 8px;box-shadow:none}
+.lightHint{font-size:12px;opacity:.75;margin-top:8px;text-align:center}
+
+
+#compass{
+  position:absolute;
+  top:64px;
+  right:14px;
+  z-index:60;
+  width:92px;
+  height:92px;
+  pointer-events:none;
+}
+.compassRose{
+  position:relative;
+  width:100%;
+  height:100%;
+  border:3px solid #d2b36a;
+  border-radius:50%;
+  background:rgba(18,14,9,.88);
+  color:#f6e7ba;
+  box-shadow:0 5px 16px rgba(0,0,0,.55);
+  transform-origin:50% 50%;
+  transition:transform .08s linear;
+}
+.compassRose span{
+  position:absolute;
+  font:bold 15px "Alegreya",Georgia,serif;
+  text-shadow:0 1px 2px #000;
+}
+.compassN{top:4px;left:50%;transform:translateX(-50%);color:#ffcf64}
+.compassS{bottom:4px;left:50%;transform:translateX(-50%)}
+.compassE{right:7px;top:50%;transform:translateY(-50%)}
+.compassW{left:7px;top:50%;transform:translateY(-50%)}
+.compassNeedle{
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-58%);
+  font-size:28px!important;
+  color:#d84a3a;
+}
+
+
+/* ===== Persistent board compass v10.0 ===== */
+#compass{
+  position:absolute!important;
+  right:18px!important;
+  bottom:78px!important;
+  top:auto!important;
+  z-index:95!important;
+  width:106px!important;
+  height:106px!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  cursor:pointer;
+  user-select:none;
+}
+.compassDial{
+  position:relative;
+  width:100%;
+  height:100%;
+  border:4px solid #d7b665;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(72,52,25,.98),rgba(17,12,7,.98) 70%);
+  color:#f7e7b4;
+  box-shadow:0 8px 24px rgba(0,0,0,.8),inset 0 0 0 3px rgba(0,0,0,.8);
+}
+.compassDial span{
+  position:absolute;
+  z-index:3;
+  font:bold 17px "Alegreya",Georgia,serif;
+  line-height:1;
+  text-shadow:0 2px 3px #000;
+}
+.compassDial .compassN{top:7px;left:50%;transform:translateX(-50%);color:#ffd05c}
+.compassDial .compassS{bottom:7px;left:50%;transform:translateX(-50%)}
+.compassDial .compassE{right:9px;top:50%;transform:translateY(-50%)}
+.compassDial .compassW{left:9px;top:50%;transform:translateY(-50%)}
+.compassArrow{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:42px;
+  height:70px;
+  margin-left:-21px;
+  margin-top:-35px;
+  transform-origin:50% 50%;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:1px;
+  color:#e44b37;
+  font:bold 34px/1 "Alegreya",Georgia,serif;
+  text-shadow:0 2px 3px #000;
+  transition:transform .06s linear;
+}
+.compassCentre{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:13px;
+  height:13px;
+  transform:translate(-50%,-50%);
+  border:2px solid #111;
+  border-radius:50%;
+  background:#e3bd63;
+  z-index:4;
+}
+#compass:hover .compassDial{filter:brightness(1.15)}
+
+
+.lightingMasterSwitch{
+  margin:4px 0 12px;
+  padding:9px 10px;
+  border:2px solid #c7a45b;
+  border-radius:6px;
+  background:#241b10;
+}
+.lightingMasterSwitch label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-weight:bold;
+  color:#ffd45f;
+  cursor:pointer;
+}
+.lightingMasterSwitch input{
+  width:22px;
+  height:22px;
+  accent-color:#d6aa45;
+}
+#lightingAdvancedControls.disabled{
+  opacity:.38;
+  pointer-events:none;
+  filter:grayscale(.25);
+}
+
+
+.tileItemStack{
+  position:absolute;
+  left:50%;
+  bottom:8px;
+  z-index:14;
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:center;
+  gap:2px;
+  transform:translateX(-50%);
+  pointer-events:auto;
+}
+.tileItemStack .tileItemMarker{
+  position:relative;
+  left:auto;
+  bottom:auto;
+  width:42px;
+  height:42px;
+}
+
+
+
+/* ===== Tester warning scroll v11.18 ===== */
+.testerWarningScroll{
+  width:min(760px,94vw);
+  max-width:760px;
+  margin:0 auto;
+  background:transparent url('../assets/ui/scroll.png') center/100% 100% no-repeat;
+  color:#000;
+  border:0;
+  box-shadow:none;
+  padding:clamp(78px,9vw,110px) clamp(95px,12vw,125px) clamp(86px,10vw,120px);
+  font-family:"Alegreya",Georgia,serif;
+  font-size:18px;
+  line-height:1.35;
+  text-align:center;
+}
+
+
+#mobileSheetToggle,#mobileStatus{display:none}
+#mobileDpad{display:grid}
+
+
+
+
+
+
+
+
+.heroPreviewWrap{
+ transition:opacity .26s ease,transform .34s cubic-bezier(.22,.75,.25,1);
+ will-change:opacity,transform;
+}
+.heroPreviewWrap.heroLeavingLeft{opacity:0;transform:translateX(-42px) scale(.97)}
+.heroPreviewWrap.heroLeavingRight{opacity:0;transform:translateX(42px) scale(.97)}
+.heroPreviewWrap.heroEnteringLeft{animation:heroEnterLeft .42s cubic-bezier(.2,.78,.25,1)}
+.heroPreviewWrap.heroEnteringRight{animation:heroEnterRight .42s cubic-bezier(.2,.78,.25,1)}
+@keyframes heroEnterLeft{
+ from{opacity:0;transform:translateX(-42px) scale(.97)}
+ to{opacity:1;transform:translateX(0) scale(1)}
+}
+@keyframes heroEnterRight{
+ from{opacity:0;transform:translateX(42px) scale(.97)}
+ to{opacity:1;transform:translateX(0) scale(1)}
+}
+.heroArrow.selectorBusy{opacity:.42;pointer-events:none}
+
+
+
+
+#modal .card:has(.testerWarningScroll){
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+  max-width:none!important;
+}
+
+
+
+
+
+
+
+/* Version number under logo */
+/* v10.90 — Version number lives beneath the top-left 3D logo */
+#logoWrap,#gameLogoWrap,.logoWrap,.gameLogoWrap,.topLogo,.brandLogo{
+  position:relative;
+}
+#logoWrap::after,#gameLogoWrap::after,.logoWrap::after,.gameLogoWrap::after,.topLogo::after,.brandLogo::after{
+  content:"v10.92";
+  display:block;
+  text-align:center;
+  margin-top:2px;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:.08em;
+  opacity:.65;
+  color:#e6d6a8;
+}
+
+/* Mystery counters hidden */
+/* v10.90 — Keep remaining dungeon contents a mystery */
+#counts,#tileCount,#monsterCount,#itemCount,
+.tilesCount,.monstersCount,.itemsCount,
+.tileCount,.monsterCount,.itemCount,
+.topCounts,.dungeonCounts,.counterBar{display:none!important}
+
+/* Version under logo (v2) */
+#bodVersionUnderLogo{
+ display:block;
+ text-align:center;
+ margin-top:6px;
+ font-size:11px;
+ line-height:1;
+ font-family:Arial,sans-serif;
+ font-weight:normal;
+ letter-spacing:.04em;
+ opacity:.65;
+ color:#17130f;
+}

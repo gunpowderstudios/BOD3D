@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Bag of Dungeon 3D v11.23</title>
+
+<!--
+8BITBOD
+Version: v3.9
+Date: 2026-07-09
+
+Changelog:
+- v3.12: Healing Pool now asks Yes/No; choosing No leaves it unused for a later visit.
+- Rebuilt around board-game style decks: 40 dungeon tiles, 29 monsters, full item list.
+- Added parchment UI and mobile-friendly layout.
+- Added drag-to-pan map, zoom controls, and centre-on-hero.
+- Added tile draw / rotate / place flow with valid connections.
+- Added visible inventory grouped as Equipment, Spells, Consumables, and Other.
+- Added combat screen with hero and monster current health.
+- Fixed Run Away during combat: always available, costs 1 HP, returns to previous tile.
+- Added hidden monster marker until the hero enters the tile.
+- Added first pass of item usage: Bow, Elven Bow, Ice Staff, potions, armour, weapons, boots, Bear, Dragonlance, spells, cloak, chests and insurance.
+- Board game is the master: item effects are provisional where the solo digital version needs adaptation.
+- v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
+- v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
+-->
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/combat.css">
+<link rel="stylesheet" href="css/mobile.css">
+<!--
+8BITBOD
+Version: v3.10
+Changes:
+- v3.2: fixed tile spacing, removed floor asset defaults, red M markers for unrevealed monsters.
+- v3.3: kept item/combat behaviour from v3.1 and made Ice Staff, Bow, Bear, Dragonlance usable in combat.
+- v3.4: added discard piles and developer state panel.
+- v3.5: added save/load buttons and end-game statistics.
+- v3.9: 8 item inventory limit, player-chosen equip/use/drop, dropped items remain on tiles.
+- v3.10: fixed Bow timing, clarified monster HP display, and confirmed only players can score critical hits.
+- v4.3: Bow prompts on every entry to a monster tile. Elven Bow deals 1d6+2. A surviving monster charges, forcing one melee round before escape.
+- v3.11: rules accuracy pass: item rewards now use starting monster health (5 = 0, 6–9 = 1, 10+ = 2); surviving monsters heal to full when the turn ends; bow remains an opening ranged attack before melee.
+- User PNG uploads still override floor tiles and icons.
+-->
+<!-- v4.4: fixed the adventurer position so the hero is centred within every 128px floor tile. -->
+<!-- v5.0: Restored the board-game M2-M12 system. All eleven M tiles are always in the 38-tile dungeon stack; monsters are still randomly drawn from the monster bag. When the last dungeon tile is laid, the Exit and Dragon appear, two dice locate the Ring on M2-M12, and the Ring remains on that floor tile until collected. -->
+<!-- v5.1: External tile paths are built into the HTML; Item locations use item.png; M2-M12 remain random normal floor shapes with number overlays and do not require separate M PNG files. -->
+<!-- v5.2: Enlarged board monsters and fixed Start tile asset loading. -->
+<!-- v5.3: Removed the Start flag and visible M-number overlays; M2-M12 remain internal for Ring logic. Added a brief sparkle highlight when the Ring location is revealed. -->
+<!-- v5.2: Start now explicitly maps to assets/tiles/start.png. Revealed monsters on the board scale to fill their floor tile while combat and inventory icons remain small. -->
+<!-- v6.0: Hero artwork now displays at 80×80, centred correctly, with a transparent borderless container. General UI sprite icons restored to normal size. -->
+<!-- v6.5: Dropped items now appear on their tile using the first item's artwork, with a count badge for multiple items. Clicking opens a tile item list; pickup is available only while standing on that tile. -->
+<!-- v6.0: All map graphics now use a full 128×128 transparent tile canvas: heroes, monsters, traps, pools, exit, hidden monster and ring. UI/inventory/combat icons remain small. Removed the extra Start flag overlay. -->
+<!-- v6.9: Item audit: fixed Ice Staff, Tornado, Flying Daggers, Loyal Bear defeat, Teleport Crystal and Torch two-tiles-for-one-AP. Rebuilt M-tile assignment to guarantee exactly M2-M12 in every dungeon while keeping random monster draws. -->
+<!-- v7.0: True ranged combat. Bow/Elven Bow range 1-3; Ice Staff range 1-2. Hidden or revealed monsters may be targeted along connected dungeon paths. Survivors charge into melee. Red Dragon is immune. -->
+<!-- v6.1: Revealed monsters can be clicked or tapped to inspect their stats. -->
+<!-- v6.2: Fixed monster stats cards so sprite artwork renders instead of appearing as HTML text. -->
+<!-- v6.3: Fixed revealed monster click/tap handling so map dragging and the hero sprite do not intercept monster stats clicks. -->
+<!-- v6.1: Revealed monsters on the dungeon map can be clicked or tapped to view their current stats. -->
+<!-- v6.4: Inventory and equipment slots now automatically load item artwork from assets/items/*.png using simple lowercase filenames. Item sprites are enlarged within inventory slots. -->
+<!-- v6.6: Fixed dropped-item pickup so the placement modal opens reliably and items cannot silently disappear. -->
+<!-- v7.8: Combat panel now displays the selected adventurer artwork and name; hero PNGs auto-load from assets/heroes/. -->
+<!-- v7.7: Added large Gunpowder Studios logo from assets/ui/logo.png above the 8BITBOD title, with responsive sizing and fallback. -->
+<!-- v7.4: Added desktop keyboard controls: arrows/WASD/numpad move or lay; placement rotates with left/right and confirms with Enter. -->
+<!-- v7.2: Added assets/effects support for transparent PNG or animated APNG effects. -->
+<!-- v7.1: Fixed startup/load error by declaring rangedMode in the main runtime state. -->
+<!-- v6.7: Monster artwork now loads automatically from assets/monsters/*.png. Red Dragon explicitly uses assets/monsters/dragon.png. -->
+<!-- v6.8: Fixed monster layering on special tiles. The Red Dragon now renders above the Exit artwork instead of behind it. -->
+<!-- v7.3: The collected Ring now appears as artwork in the character panel. Combat now shows heart health for both hero and monster. -->
+<!-- v7.5: Enlarged and centred item artwork in equipment and backpack slots; increased slot height and improved long-name wrapping. -->
+<!-- v7.15: Backpack list now shows each item effect beneath its name, with artwork retained on the right. -->
+<!-- v7.16: Removed visible build labels from the title and character-selection screens; version remains in About. -->
+<!-- v7.18: Item locations keep their random floor tile and use item.png as a transparent overlay. -->
+<!-- v7.19: Asset Manager now exposes Item Marker (assets/ui/item.png), removes the old Item Tile entry, migrates old browser overrides, and cache-busts assets.js. -->
+<!-- v7.6: Backpack item artwork and labels use separate centred layout areas. -->
+<!-- v7.13: Backpack changed to a vertical list with artwork on the right. Character selection cards now use large full-height hero artwork on the right and text on the left. -->
+<!-- v7.9: Added the Gunpowder Studios logo to the character-selection screen and corrected visible version labels. -->
+<!-- v7.11: Removed player-facing Developer, Save and Load menu buttons. Added hidden tester save/load keyboard shortcuts. -->
+<!-- v7.12: Removed Asset and Sound Manager buttons from the player menu, added hidden tester shortcuts, and added an About/Credits panel with website link. -->
+<!-- v7.20: Early 2.5D conversion. Existing game rules and tile placement remain unchanged. Added a perspective camera layer, upright hero/monster sprites, View toggle, and Shift/right-drag camera rotation. -->
+<!-- v7.21: Added GLB monster support. Revealed Goblins load assets/models/monsters/goblin.glb, with the existing PNG automatically retained as a fallback. -->
+<!-- v8.0: New true Three.js tabletop renderer. PNG tiles are rendered as 3D floor planes and GLB miniatures sit in the same scene with lighting and shadows. Models use short filenames such as sirrus.glb and goblin.glb. The original DOM renderer remains available as the 2D fallback view. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+<!-- v8.4: The hero now smoothly slides from tile to tile while turning to face the direction travelled. Same-direction travel preserves orientation; left/right turns animate 90 degrees and reversals animate 180 degrees. -->
+<!-- v8.7: Revealed GLB monsters now face the hero while remaining locked to the exact centre of their tile. Rotation is applied to a centred pivot group so models no longer orbit away from the floor tile. -->
+<!-- v8.8: Added Bag of Dungeon 3D branding and automatic Rest at zero AP. Monsters remain centred while facing the hero. Existing renderer, tile paths, GLB paths and movement code are otherwise unchanged. -->
+<!-- v9.0: Added a strong hero-centred darkness system. Tiles are clear nearby, heavily shaded at three to four spaces, and fully black beyond four spaces. Monsters and markers are hidden outside the visible radius. Lighting and exposure are substantially darker, with a warm light following the hero. -->
+<!-- v9.1: Softened the v9.0 darkness. The hero area is brighter, tiles remain clear to about three spaces, fade gently through four and five spaces, and only become heavily obscured beyond that. Exposure, ambient light and the hero-following light were raised while dramatic shadows remain. -->
+<!-- v9.2: Rebalanced lighting around the adventurer. The hero and tiles within three spaces are now well lit, followed by a gradual atmospheric drop-off rather than near-black darkness. Exposure, ambient fill and the hero-following light were increased, distant tiles and monsters remain readable, and the heavy vignette was reduced. -->
+<!-- v9.3: Added live Lighting Controls. Adjust torch brightness, radius, falloff, ambient light, shadow strength, softness, exposure, colour and hero-following behaviour. Includes four presets and automatic browser saving. -->
+<!-- v9.4: Fixed Lighting Controls startup. v9.3 referenced the Three.js TILE constant before it was declared, preventing the 3D lighting module from initialising. Controls now initialise safely after the DOM is ready and show a live status readout. -->
+<!-- v9.5: Lighting controls now have a much stronger visible range. Torch brightness is amplified, radius and falloff control both the real hero light and tile darkness, ambient light has a wider range, and shadow strength is more pronounced. Fixed Centre so it places the character at the centre of the Three.js view while preserving the current camera angle and zoom. -->
+<!-- v9.6: Smoothed camera behaviour by removing automatic board re-fitting after every move; the camera now stays where the player leaves it, and Centre is the only command that deliberately recentres on the hero. Lighting is brighter and higher-contrast with a stronger hero light, brighter key light and gentler distance darkness. Added a rotating compass and a North Up button for orientation. -->
+<!-- v10.0: Hero-locked camera mode. The adventurer remains in the centre while the dungeon glides smoothly beneath during movement; rotation, tilt and zoom still orbit around the hero. Added a guaranteed visible, clickable bottom-right compass with fixed N/E/S/W labels and a rotating north arrow. Clicking it resets to North Up. -->
+<!-- v10.1: Corrected the compass heading. North Up now points the red arrow to N, and the arrow tracks camera rotation in the correct direction. Lighting remains enabled by default. -->
+<!-- v10.2: Added a master Lighting Effects switch. Lighting now starts OFF by default, giving a bright neutral tabletop view for mechanics testing. Turning it ON restores the hero torch, adjustable radius/falloff, atmospheric darkness and shadows. The setting is saved in the browser. -->
+<!-- v10.3: Fixed GLB characters disappearing when Lighting Effects were switched off or on. Lighting changes redraw the Three.js board; cached model geometry and materials are now preserved instead of being disposed during that redraw. -->
+<!-- v10.4: Fixed Lighting Off mode. It now removes fog, vignette, hero torch, darkness masks, tone mapping and dynamic shadows, and switches to a bright neutral tabletop scene. Lighting is forced OFF on startup while mechanics are being developed. -->
+<!-- v10.5: Added an explicit hero-model filename map, including alendra.glb. Hero GLB requests are cache-busted by version, failed or empty GLBs fall back to hero PNG artwork, and the browser console now reports successful and failed model loads. -->
+<!-- v10.6: Fixed the hero disappearing after Run Away. Instant retreat movement now resets the Three.js hero and camera tracking before redraw, snaps the miniature to the previous tile, and updates its facing direction. Tornado retreat uses the same safe path. -->
+<!-- v10.7: Added physical punchboard depth to every Three.js floor tile. Tiles now use a shallow 3D body with #4C3D2A edges beneath the original PNG artwork. Heroes, monsters, markers and darkness overlays are raised to sit correctly on the new tile surface. -->
+<!-- v10.8: Multiple dropped items now display as a vertical floating stack above their tile instead of showing only the first item. Up to eight item sprites are shown in 3D with small alternating offsets for readability; the 2D fallback also shows a stacked group. Clicking any item still opens the full item list for that tile. -->
+<!-- v10.9: Fixed heroes disappearing when items are dropped. Board redraws now finish all asynchronous tiles, item sprites and monsters before adding the hero. The character is rendered last with explicit scene priority, checked after redraw, and automatically retried if absent. -->
+<!-- v10.10: Added real miniature height scaling based on the original sculpt dimensions. Sirrus at 41 mm remains the baseline; dwarfs render shorter, elves and monsters render proportionally taller, and the 71 mm Reacher now appears significantly larger. GLB export units are normalised, so inconsistent C4D/Blender scale settings no longer affect relative in-game size. -->
+<!-- v10.11: Mobile interface redesign. The dungeon receives more screen space, deck counters move into a compact character summary, Lighting and North Up move into Menu, the 2D/3D toggle remains permanently accessible, and N/E/S/W now use a fixed cross-shaped controller that automatically changes between Lay and Move. The character sheet can collapse into a compact status strip. -->
+<!-- v10.12: Mobile layout refinement. The character sheet is now a bottom drawer collapsed by default, expandable by tap or upward swipe and collapsible by downward swipe. The dungeon occupies nearly the full screen, the compass sits high at the right, and the N/E/S/W controller is smaller and centred at the bottom with a compact Rest button beside it. -->
+<!-- v10.13: Fixed mobile combat controls being covered by the collapsed Player Stats drawer. Combat now sits above all mobile panels, automatically hides the bottom drawer, uses the full safe screen height, and keeps Fight/Run Away action buttons sticky and tappable at the bottom. -->
+<!-- v10.14: Fixed intermittent hero disappearance during ordinary movement. The hero GLB is now persistent and reused between board redraws instead of being removed and recreated on every step. Its exact model offset, height, facing and slide animation are retained; deliberate teleports and resets still rebuild it safely. -->
+<!-- v10.52: Hero life-loss polish. On losing a life (before game over), the hero should fall, pause, automatically respawn on the START tile, call the existing Centre Hero camera routine, then fade back into play with the remaining lives displayed. -->
+<!-- v10.15: Corrected the persistent hero movement fix. The hero now moves by the exact change in tile coordinates rather than reapplying the GLB model-origin offset, which could throw some characters far away from the dungeon. Added automatic drift detection and safe rebuilding if a hero ever leaves its intended tile. -->
+<!-- v10.16: Added cinematic tabletop encounters. On entering combat, the camera smoothly zooms toward the monster tile, the hero and monster step apart like physical miniatures and rotate to face each other, and the combat panel fades in while the dungeon remains visible. Closing combat restores the exploration camera and positions. -->
+<!-- v10.17: Improved cinematic encounters and added persistent battlefield history. Hero/monster spacing now uses each GLB's real bounding size so bases, weapons and large creatures do not collide. The camera automatically frames both complete miniatures. Defeated monsters remain on their tile as tipped-over, darkened corpses with procedural blood stains, including ranged kills, so zooming out shows the hero's progress through the dungeon. -->
+<!-- v10.18: Fixed defeated miniatures floating above the dungeon by grounding each corpse after its final tipped rotation. During cinematic combat the hero and monster are now continuously locked facing one another, preventing redraws or movement state from spinning the hero away. Pressing Fight adds a subtle advance-and-retreat lunge while preserving the tabletop-miniature feel. -->
+<!-- v10.19: Exploration now resumes with the hero exactly centred on the current tile after every fight, so the next normal move starts and ends at tile centre. Fallen monsters now use geometry-aware posing: the renderer measures each scaled GLB, chooses a suitable fall axis and angle, grounds the final outline, recentres it and keeps wide limbs/tentacles near the tile. Special overrides handle Reacher, Snake, Dragon and Mirror Monster. -->
+<!-- v10.20: Ranged attacks now follow the physical board-game charge more clearly. If a Bow or Ice Staff fails to kill a monster, the surviving monster is transferred onto the hero's tile and the Run Away button remains disabled until one melee round has been fought. Dropped items now occupy the four tile corners, with additional items stacking above those corners, keeping loot visible beside heroes, blood and fallen monsters. -->
+<!-- v10.21: Improved battlefield readability. Dropped items now float higher above the tile, render above blood/corpse layers and receive a subtle dark backing disc so icons remain visible. Blood pools are shifted away from tile corners and rebuilt as irregular overlapping pools with fourteen smaller splatter droplets for a more natural, less circular effect. -->
+<!-- v10.22: Fixed dropped item sprites still appearing behind transparent blood pools. Loot icons and their backing discs now bypass depth testing and render at a guaranteed higher priority, while every blood pool and droplet receives an explicitly lower render order. This keeps the entire Ice Staff and other dropped-item artwork visible regardless of camera angle. -->
+<!-- v10.23: Added a dedicated final overlay pass for dropped loot. Item sprites and their backing discs now use AlwaysDepth, extremely high render priority and a depth-buffer clear immediately before drawing. This prevents transparent blood meshes from sorting over any part of an item at steep camera angles. -->
+<!-- v10.24: Fixed heroes such as Tarak drifting far away from the dungeon. Hero placement and movement now use the visible GLB geometry centre rather than the model's exported root origin. A final centring pass runs on initial load, every ordinary move and after combat, making the fix apply consistently to all hero models. -->
+<!-- v10.25: Blood now uses opaque tile-surface decal geometry instead of transparent overlays. Hero bases, living monsters and corpses correctly hide it, so blood no longer appears through miniatures. -->
+<!-- v10.26: Applied the first formal testing-log fixes. Rusty Armour now lasts for exactly one melee fight and then breaks. The Ring is no longer awarded remotely when its location is revealed or when a distant monster dies; the hero must physically reach the tile after its guardian is gone. In 3D the Ring now hovers, gently bobs and emits a pulsing golden halo/light. Ordinary dropped items also receive a subtle asynchronous bob so loot feels alive without distracting from the tabletop presentation. -->
+<!-- v10.27: Hero Loader Refactor. Every hero GLB is now scaled and centred exactly once inside a clean THREE.Group. The parent group—not the asymmetric visible geometry—is positioned at the exact tile centre and used for all movement, turning, combat staging and recentring. Removed repeated bounding-box corrections during movement, preventing Rill, Duric, Tarak and other asymmetric heroes from jumping away as they rotate. -->
+<!-- v10.28: Added persistent custom lighting presets. Lighting adjustments already continue to save automatically during play; the new Save My Lighting button stores the current complete setup as a durable browser default, and Load My Lighting restores it after experimenting with factory presets. On a fresh session with no current lighting state, the saved custom default loads automatically. -->
+<!-- v10.29: Removed tipped-over dead monster miniatures from the dungeon while retaining their persistent blood splats and dropped loot. Corpse data is still stored in the game state, so the blood history remains compatible with existing saves. -->
+<!-- v10.30: The chosen lighting is now the permanent art-directed default: Lighting On, brightness 25, radius 2.5 tiles, falloff 0.5, ambient 0%, shadow strength 17%, softness 0, exposure 0.45, warm torch colour and hero-following enabled. Removed the Lighting button, panel access, presets and browser overrides from the player experience. -->
+<!-- v10.31: Added a hidden Item Tester screen for balancing weapons and equipment. Press Control/Ctrl + Alt/Option + Shift + I during an active game to search the full item list, equip weapons directly to either hand, wear armour/boots, add the Loyal Bear, place consumables/spells in the backpack, restore Health/AP and clear the current loadout. The screen is absent from all player-facing menus. -->
+<!-- v10.32: Fixed the blank startup screen introduced by the secret Item Tester. Its controls were being wired before the tester HTML existed, causing a null-reference error during page load. The tester now initialises safely after DOMContentLoaded, with element checks, while retaining Control/Ctrl + Alt/Option + Shift + I. -->
+<!-- v10.33: Added a first-pass Three.js spell-effects engine for testing. Fireball now launches a glowing projectile, bursts around the monster and leaves fading smoke; Magic Vine grows along the floor and wraps the target with leaves; Ice Staff fires a frozen bolt followed by shards and frost mist; Tornado surrounds the hero with a spiralling dust column. Effects last approximately 2–3 seconds and clean themselves up automatically. -->
+<!-- v10.34: Fixed the secret Item Tester selection buttons. The panel now uses stable item indexes and one delegated click handler, so Ice Staff and all other items equip reliably; the tester closes after selection to show the updated loadout. Invisibility Cloak encounters now explicitly reveal and permanently display the monster as soon as the hero enters/passes its tile, whether the sneak roll succeeds or fails. -->
+<!-- v10.35: Fixed secret Item Tester duplication. Re-equipping Ice Staff or any other tester item no longer drops the previous loadout onto the dungeon tile. Tester replacements are now non-physical, duplicate copies of the selected item are removed from laid tiles, repeated selection is ignored, and Clear Equipment no longer spills tester items onto the board. -->
+<!-- v10.36: Added a hidden consolidated Developer Console. Press Control/Ctrl + Alt/Option + Shift + D to access Item Tester, Save/Load, Asset Manager, Sound Manager, hero restoration, Ring controls, camera centring, monster spawning/revealing/removal and current-tile loot cleanup. Existing individual secret shortcuts remain available. -->
+<!-- v10.37: Rebuilt Sound Manager source detection. Each sound now reports Browser override, GitHub sound loaded, or GitHub sound missing/unreadable and displays the actual/expected file path. GitHub audio is actively tested rather than inferred only from SOUND_PATHS, conventional assets/sounds/<key>.mp3/.ogg/.wav files are discovered automatically, playback uses the active source, and cache-busting ensures newly uploaded sounds replace stale browser copies. -->
+<!-- v10.38: Expanded the hidden Developer Console with two complete-dungeon generators. One instantly lays the full shuffled dungeon, connects every tile, adds the Exit and reveals random monsters on the proper monster-marker tiles. The second creates the same complete random connected layout with floor tiles only—no monsters or item markers—for camera, lighting and layout testing. Both reset the hero safely to Start and centre the 3D camera after generation. -->
+<!-- v10.39: Fixed and polished ranged combat presentation. Fireball now appears as a usable range 1–3 item when equipped/carried, costs 2 AP, rolls 3 dice and is consumed only after choosing a target. Bow, Ice Staff and Fireball now first frame the hero, target monster and connecting corridor, then play their projectile/effect before resolving a kill or monster charge. Mobile cinematic combat now uses a smaller 38% height bottom panel and a wider, higher camera frame so both full miniatures remain visible above the controls. -->
+<!-- v10.40: Reorganised the character sheet into Hands, Attire, Companions and Inventory. Invisibility Cloak now uses a dedicated Attire slot and is active only while worn, not while held or stored. Companions is plural and Loyal Bear remains space-free. Artifacts, crystals, bells, consumables and spare equipment continue to use normal inventory capacity. Existing saves gain the new Attire slot automatically. -->
+<!-- v10.42: Follow-up code audit. Monster PNG fallbacks now remain fully opaque and are darkened by colour tint instead of alpha, so the Goblin cannot appear ghost-like even when its GLB falls back to PNG. Asset cache version updated; Flying Daggers ranged consumption and charge flow rechecked. -->
+<!-- v10.43: Restored combat-screen impact splats. Physical hits, criticals, killing blows, hero damage and misses now animate directly over the appropriate fighter card with a brief screen flash. The effect is procedural and works even when optional assets/effects PNG files are absent. Killing animations remain visible briefly before combat closes. -->
+<!-- v10.44: Combat splats now display the actual damage value rather than a placeholder star. Critical and killing blows show both the damage number and their label; hero damage appears over the hero card and misses remain clearly labelled. -->
+<!-- v10.41: Code-check fixes. Living GLB monster materials are cloned and normalised so exported alpha settings cannot make the Goblin appear transparent; dungeon darkness now dims monster colour rather than lowering miniature opacity. Flying Daggers are now a true one-use ranged spell: range 1-3, 2 AP, 2 dice damage, using the same target selection, cinematic corridor framing, Dragon immunity and surviving-monster charge/no-escape rules as the other ranged attacks. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Alegreya+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- v10.53: Confirmed and retained the latest cinematic character-selection branch while finalising the Goblin and Flying Daggers fixes. Living monster GLB materials are cloned and normalised to full opacity so the Goblin cannot inherit transparent Alpha Blend settings. Flying Daggers remain a one-use ranged spell with range 1-3, 2 AP cost, 2 dice damage, connected-corridor targeting, Dragon immunity, cinematic framing and a surviving-monster charge with no escape. All v10.52 loading-screen, backdrop, dynamic logo, rotating hero selector, mobile UI and combat-impact features are preserved. -->
+<!-- v11.18: Restored the opening tester warning scroll, limited tester games to one life (insurance cannot grant an extra tester life), updated the Dragon warning, and made both Centre controls mobile touch-safe. -->
+<!-- v10.54: Restored all hero and monster miniatures on the game board to their original established scale by removing the accidental 60% reduction. The loading screen, rotating character preview and all loading-screen model presentation remain unchanged. Goblin opacity and Flying Daggers ranged-spell fixes are retained. -->
+<!-- v10.55: Loading screen now uses the blank external backdrop at assets/ui/loading-screen.jpg and displays assets/ui/bod3d-logo.png as a separate responsive logo. The logo scales independently on desktop, mobile and landscape screens instead of being enlarged and cropped with the background. Loading-screen character sizing and every hero/monster scale on the game board remain unchanged. -->
+<!-- v10.56: Corrected the loading-screen logo reference to the exact GitHub-relative path ./assets/ui/bod3d-logo.png and added a version query/preload to bypass cached broken-image or prior 404 responses. No model sizing or loading-screen layout changes. -->
+<!-- v10.57: Added a resilient loading-logo path resolver. It first requests the exact required path assets/ui/bod3d-logo.png, then automatically checks common GitHub case/folder variants if that request returns 404. The browser console now reports the path that successfully loaded or a clear missing-file error. No model, board or selector sizing changes. -->
+<!-- v10.58: Corrected the loading-screen logo filename casing to the exact GitHub asset name bod3d-logo.png. The project URL remains /BOD3D/ and the logo now loads from ./assets/ui/bod3d-logo.png. No loading-screen, hero-preview, board-model or gameplay sizing changes. -->
+<!-- v10.59: Reworked desktop/laptop combat into a wide lower-screen tray. Hero and monster cards sit side by side, with dice, combat log and action buttons in a separate right-hand column. Added shallow-screen compression so combat controls remain visible on laptop browser windows. Mobile combat behaviour is unchanged. -->
+<!-- v10.60: Added a complete combat interaction lock. While combat is active, the board, 3D models, tiles, dropped items, movement and camera controls ignore taps and clicks. Monster and item inspection functions now have defensive combat guards, including Three.js canvas actions. Any existing modal is closed when combat begins. Normal interaction is restored automatically when combat ends. -->
+<!-- v10.62: Added optional character-sheet slot symbols from assets/ui/. Left and Right Hand display hand-symbol.png plus spell-symbol.png; Armour uses armour.png; Boots uses boots.png; Attire uses attire.png; Companions can use companions.png. Missing PNGs hide automatically, so the UI remains usable before artwork is uploaded. -->
+<!-- v10.63: Fixed startup/loading-screen regression introduced by monster landing sound effects. monsterLandSoundKey is now defined before SOUND_DEFS is constructed, preventing a startup ReferenceError while preserving the new per-monster landing sounds and reveal effects. -->
+<!-- v10.64: Fixed newly revealed monsters freezing in mid-air when combat staging started before their drop animation had landed. Combat staging now waits for the monster drop to complete. Restored 3D swipe/orbit camera interaction during combat while retaining the gameplay interaction lock, so monster taps no longer open stat popups and tiles/items/movement remain disabled until the fight ends. -->
+<!-- v10.65: Improved monster encounter staging. When entering a newly revealed monster tile, the hero now moves to the screen-left combat position first while the monster waits above the screen-right position. After the hero movement finishes, the monster drops into its combat position and lands before the cinematic fight staging completes. -->
+<!-- v10.67: Refined monster reveal timing. Fresh melee encounters now zoom the 3D camera toward the encounter first, hold the monster suspended for about two seconds while its reveal sound plays, then drop it into the screen-right fighting position. The hero is already separated to the left before the drop. -->
+<!-- v10.68: Reduced the fresh monster reveal pause from two seconds to one second. Combat framing now measures the combined hero/monster bounds and dynamically fits the full encounter into the usable viewport with extra safety margin for oversized miniatures such as the Reacher. -->
+<!-- v10.69: Removed the temporary pre-combat camera push-in. Fresh monster encounters now keep the current exploration view until the final dynamically calculated combat framing is ready, then move directly to that framing in one smooth camera transition with no zoom-in/zoom-out bounce. -->
+<!-- v10.70: Fresh melee encounters now move directly into the final dynamically fitted combat frame before the reveal. The camera completes its 620 ms framing move, holds for a further 2 seconds while the monster reveal sound plays, then the monster enters from above the top of frame and drops into its right-side combat position. The monster remains hidden during the hold so it no longer appears suspended in mid-air. -->
+<!-- v10.90: Fixed monster reveal drops being frozen in mid-air by the combat pose loop. While a monster is actively dropping, combat staging now preserves its animated Y position and only locks its X/Z fighting position. Once the drop completes, the normal combat pose takes over at ground level. -->
+
+
+<!-- v10.90: Reworked combat blood into random sword-and-sorcery screen splats with heavy slash, diagonal slash, scatter, drip and mist variants. Damage now scales splat size and density, so bigger hits create larger, more dramatic sprays. Flying Daggers uniquely follow connected dungeon paths around corners; Bow, Ice Staff and Fireball now require a clear straight connected corridor. -->
+<!-- v10.90: Simplified core combat audio mapping. Successful hand-weapon melee attacks use assets/sounds/sword.mp3, bows use bow.mp3, and spell casts including Fireball, Ice Staff and Flying Daggers use spell.mp3. Existing specialist sounds remain available for later expansion. -->
+<!-- v10.90: Monster reveal/drop now defaults to assets/sounds/monster.mp3 through the existing monsterReveal sound key, ready for individual monster-specific overrides later. -->
+<!-- v10.90: Monster reveal timing tightened: once the combat camera reaches its final fitted frame, the monster immediately begins its drop. The monster.mp3 reveal sound remains tied to the encounter. -->
+<!-- v10.90: Fixed monster landing sound timing. A monster is now marked as having completed its reveal only when its drop actually lands, so per-monster landing sounds such as assets/sounds/landgoblin.mp3 fire from the physical landing event instead of being pre-empted when the model is first created. -->
+<!-- v10.90: Monster reveal audio now checks for a monster-specific landing sound first. If landgoblin.mp3 exists, Goblin encounters suppress the generic monster.mp3 and play only landgoblin.mp3 on physical landing. Dungeon ambience remains a separate persistent loop and automatically resumes after tab/browser suspension. -->
+<!-- v10.90: Chests are now dungeon objects, not inventory items. Finding a Small or Large Chest leaves it visibly on the current tile and offers Open Chest or Leave It. Leaving keeps it on the tile for a later visit; opening resolves the existing chest trap/reward and removes the chest. Chest tiles cannot be picked up into the backpack. -->
+
+
+<!-- v10.90: Ranged attacks against hidden monsters now wait for the reveal/drop animation to complete before firing. Ice Staff, Fireball, Bow and Flying Daggers reveal the monster, let it land, pause briefly, then launch the projectile/effect. Already revealed monsters are attacked immediately. -->
+<!-- v10.90: Removed the vertical monster drop animation. Monsters now reveal already grounded with a quick 180ms scale-in impact, camera shake and landing sound. Hidden-monster ranged attacks reveal the grounded monster first, pause briefly, then fire, eliminating projectiles shooting upward during reveal. -->
+<!-- v10.90: Fixed chest reward placement. Chest UI closes before reward items are awarded, so item placement remains visible. Large Chest rewards resolve one at a time through the pending item queue. -->
+<!-- v10.92: Mobile Centre now recentres the Three.js camera correctly; respawns hard-reset the hero model and camera onto Start; character-selector arrows are forced transparent with no cream button box; Witch's Claw text is solo-only; Chest copy now explains trap/loot possibilities and chest opening visibly rolls a die; added reusable 3D dice.glb roller for combat, chests and Ring-location rolls with existing dice.mp3/fallback clack audio. -->
+<!-- v10.92 dice update: Hero combat dice now load assets/models/diceblack.glb and monster combat dice load assets/models/dicered.glb. Rolls are slower, lower and bouncier; combat dice are separated beside their respective miniatures and use tighter mobile spacing to stay within the cinematic frame. -->
+<!-- v10.93 dice physics update: Dice now remain visible until the next roll, rest exactly on the dungeon tile plane, use a more natural drop-impact-rebound-secondary-bounce animation with gentle lateral separation, and expose live animation tuning controls plus test rolls in the hidden Developer Console. -->
+<!-- v10.94 dice calibration update: Dice now rest using their measured GLB bounding-box bottom plus an adjustable floor offset, and the Developer Console includes persistent per-colour face calibration controls for results 1-6. -->
+<!-- v10.95 dice mapping/clearance update: Corrected the default 2/5 face mapping, reset legacy dice calibration storage, and moved combat dice farther outward from hero/monster miniatures with stronger outward settling so resting dice do not intersect the character models on desktop or mobile. -->
+<!-- v10.98 developer-dice button fix: Explicit global button handlers now back the Dice Developer controls, with visible status feedback and robust copy fallback. v10.96 chest/dev-dice reliability update: Chest rewards now resume only after the visible dice animation and explicitly restart the pending-item placement queue, preventing loot dialogs from being skipped. Developer Dice controls are wired with a late delegated fallback, tuning persists in localStorage, and Copy Dice Settings / Reset Defaults controls were added. -->
+<!-- v10.99 dice grounding update: Each die now computes its own settled root height from the actual GLB bounding box after the final face rotation, so black and red dice share the same physical board surface. Dice are also cleared immediately when normal hero movement begins. User-tested dice animation values are now the built-in defaults. -->
+<!-- v11.00 dice pivot grounding fix: Dice clone geometry is now centred on the clone root before face rotation. The final resting Y is then calculated from the rotated world-space bounding box, preventing model-origin/pivot differences from making black dice sit lower than red dice. -->
+<!-- v11.02: Fixed movement regression caused by the non-module movement code calling clearDice3D() outside its module scope. Dice clearing is now exposed safely through window.BOD3D and movement calls it defensively. Version labels updated to v11.02. -->
+<!-- v11.02: Restored a clearly visible build number directly beneath the 3D logo in the sidebar. Updated permanent dice defaults to Floor Offset 0.03 while retaining Duration 1050, Drop Height 2.5, Bounce 1 1, Bounce 2 0.02, Bounce 3 0.06, Separation 0.55 and Spacing 0.9. Dice tuning storage namespace bumped so the new floor offset is not overridden by an older saved 0.20 value. -->
+<!-- v11.21: Moved Inventory and Backpack above Companions on the character panel. -->
+<!-- v11.23: Fixed full Map view by reading tile coordinates from the dungeon keys; combat framing now tilts 20 degrees farther overhead so dice faces are easier to read. -->
+</head>
+<body class="lightingOn">
+
+<div id="charSelect">
+  <img id="heroSelectLogo" class="heroSelectLogo" src="assets/ui/bod3d-logo.png?v=10.58" alt="Bag of Dungeon" decoding="async">
+  
+
+  <div class="heroSelectShade"></div>
+  <div class="heroSelectContent">
+    <div class="heroStage">
+      <button id="prevHeroBtn" class="heroArrow heroArrowLeft" type="button" aria-label="Previous adventurer">‹</button>
+      <div id="heroPreviewWrap" class="heroPreviewWrap">
+        <canvas id="heroPreviewCanvas" aria-label="Rotating 3D adventurer preview"></canvas>
+        <div id="heroPreviewFallback" class="heroPreviewFallback"></div>
+        <div id="heroPreviewLoading" class="heroPreviewLoading">Summoning adventurer…</div>
+      </div>
+      <button id="nextHeroBtn" class="heroArrow heroArrowRight" type="button" aria-label="Next adventurer">›</button>
+    </div>
+
+    <section id="heroInfoPanel" class="heroInfoPanel" aria-live="polite">
+      <h1 id="selectedHeroName">Adventurer</h1>
+      <div id="selectedHeroDesc" class="selectedHeroDesc"></div>
+      <div class="heroStatRow">
+        <div class="heroStat"><strong id="selectedHeroHealth">0</strong><small>Health</small></div>
+        <div class="heroStat"><strong id="selectedHeroAP">0</strong><small>AP</small></div>
+        <div class="heroStat"><strong id="selectedHeroCombat">0</strong><small>Combat</small></div>
+      </div>
+      <div class="heroSpecialBlock">
+        <small>Special ability</small>
+        <strong id="selectedHeroSpecial"></strong>
+        <span id="selectedHeroSpecialDesc"></span>
+      </div>
+      <button id="chooseHeroBtn" class="chooseHeroBtn" type="button">Enter the Dungeon</button>
+      <div id="heroDots" class="heroDots" aria-label="Character position"></div>
+    </section>
+  </div>
+</div>
+
+<div id="app">
+  <aside id="side">
+    <button id="mobileSheetToggle" type="button" aria-expanded="true">Character &amp; Inventory ▾</button>
+    <div id="mobileStatus"></div>
+    <div id="brandHeader">
+      <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
+      <div class="brand3DTitle">3D</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v11.23</div>
+    </div>
+    <div class="box" id="stats"></div>
+    <div class="box" id="inventory"></div>
+    <div class="box" id="killTally"></div><div class="box"><div class="sectionTitle">Quest Log</div><div id="log"></div></div>
+  </aside>
+  <main id="main">
+    <button id="fullscreenBtn" type="button" title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
+    <div id="topbar">
+      <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
+      <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="menuBtn">☰ Menu</button></div>
+    </div>
+    <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
+    <div id="mobileDpad" aria-label="Movement controls">
+      <button class="dpadBtn dpadN" data-dir="N" aria-label="North">N</button>
+      <button class="dpadBtn dpadW" data-dir="W" aria-label="West">W</button>
+      <button class="dpadCentre" aria-label="Centre camera">◎</button>
+      <button class="dpadBtn dpadE" data-dir="E" aria-label="East">E</button>
+      <button class="dpadBtn dpadS" data-dir="S" aria-label="South">S</button>
+      <button id="mobileRestBtn" class="dpadRest" aria-label="Rest">Rest</button>
+    </div>
+    <div id="controls"></div>
+
+
+<div id="compass" title="Click for North Up" role="button" tabindex="0" aria-label="Compass — click for North Up">
+  <div class="compassDial">
+    <span class="compassN">N</span>
+    <span class="compassE">E</span>
+    <span class="compassS">S</span>
+    <span class="compassW">W</span>
+    <div id="compassArrow" class="compassArrow">▲</div>
+    <div class="compassCentre"></div>
+  </div>
+</div>
+
+<div id="lightingPanel" aria-hidden="true">
+  <div class="lightPanelHead">
+    <h3>Lighting Controls</h3>
+    <button id="lightingClose" aria-label="Close lighting controls">×</button>
+  </div>
+
+  <div class="lightingMasterSwitch">
+    <label for="lightingEnabled">
+      <span>Lighting effects</span>
+      <input id="lightingEnabled" type="checkbox">
+    </label>
+    <div class="lightHint">Off gives a bright, clean tabletop view while testing mechanics.</div>
+  </div>
+
+  <div id="lightingAdvancedControls">
+  <div class="lightRow"><label for="lightBrightness">Torch brightness</label><input id="lightBrightness" type="range" min="0" max="100" step="1"><span id="lightBrightnessValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightRadius">Bright radius</label><input id="lightRadius" type="range" min="1" max="7" step=".25"><span id="lightRadiusValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightFalloff">Falloff width</label><input id="lightFalloff" type="range" min=".5" max="6" step=".25"><span id="lightFalloffValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightAmbient">Ambient light</label><input id="lightAmbient" type="range" min="0" max="100" step="1"><span id="lightAmbientValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightShadow">Shadow strength</label><input id="lightShadow" type="range" min="0" max="100" step="1"><span id="lightShadowValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightSoftness">Shadow softness</label><input id="lightSoftness" type="range" min="0" max="10" step=".5"><span id="lightSoftnessValue" class="lightValue"></span></div>
+  <div class="lightRow"><label for="lightExposure">Exposure</label><input id="lightExposure" type="range" min=".45" max="1.8" step=".05"><span id="lightExposureValue" class="lightValue"></span></div>
+
+  <div class="lightColourRow"><label for="lightColour">Torch colour</label><input id="lightColour" type="color"></div>
+  <div class="lightChecks"><label for="lightFollow">Torch follows hero</label><input id="lightFollow" type="checkbox"></div>
+
+  <div class="lightSavedGrid">
+    <button id="lightSaveDefault" class="lightAction">Save My Lighting</button>
+    <button id="lightLoadDefault" class="lightAction">Load My Lighting</button>
+  </div>
+  <button id="lightReset" class="lightAction">Reset Lighting</button>
+  <div class="lightPresetGrid">
+    <button data-light-preset="bright">Bright Tabletop</button>
+    <button data-light-preset="dungeon">Dungeon</button>
+    <button data-light-preset="torch">Torchlight</button>
+    <button data-light-preset="dark">Very Dark</button>
+  </div>
+  </div>
+  <div id="lightingStatus" class="lightHint">Lighting effects are off.</div>
+</div>
+
+  </main>
+</div>
+
+<div id="placement"><div class="card"><h2>Place Dungeon Tile</h2><div id="placeInfo" class="desc"></div><div class="preview" id="tilePreview"></div><div class="btnrow"><button id="rotBtn">Rotate 90°</button><button id="placeBtn" class="green">Place</button><button id="cancelPlace" class="red">Cancel</button></div><div class="small">Tile must connect back to your current tile.</div></div></div>
+<div id="modal"><div class="card"><h2 id="modalTitle">Item</h2><div id="modalBody" class="desc"></div><div id="modalButtons" class="btnrow"></div></div></div>
+<div id="combat">
+  <div class="card combatCard">
+    <h2 id="combatTitle">Combat</h2>
+    <div class="combatWideLayout">
+      <div class="combatGrid">
+        <div class="fighter">
+          <div class="bigGlyph" id="heroGlyph">🧑</div>
+          <b id="heroCombatName">Hero</b>
+          <div id="heroCombatStats"></div>
+        </div>
+        <div class="fighter">
+          <div class="bigGlyph" id="monsterGlyph">👹</div>
+          <b id="monsterName">Monster</b>
+          <div id="monsterCombatStats"></div>
+        </div>
+      </div>
+      <div class="combatResolution">
+        <div class="diceTray" id="diceTray">Dice will appear here.</div>
+        <div class="combatLog" id="combatLog">A monster blocks your path.</div>
+        <div id="combatBtns" class="btnrow"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="devPanel"></div>
+
+<script src="assets/assets.js?v=10.52"></script>
+<script src="js/game.js"></script>
+<script src="js/combat.js"></script>
+
+<script type="module" src="js/scene3d.js"></script>
+
+
+<div id="itemTester" aria-hidden="true">
+  <div class="itemTesterCard">
+    <div class="itemTesterHead">
+      <h2>Secret Item Tester</h2>
+      <button id="itemTesterClose" aria-label="Close item tester">×</button>
+    </div>
+    <div class="itemTesterTools">
+      <input id="itemTesterSearch" type="search" placeholder="Search items…">
+      <button id="testerHeal">Restore Health &amp; AP</button>
+      <button id="testerClear">Clear Equipment</button>
+    </div>
+    <div id="itemTesterGrid" class="itemTesterGrid"></div>
+  </div>
+</div>
+
+
+<div id="developerConsole" aria-hidden="true">
+  <div class="devConsoleCard">
+    <div class="devConsoleHead">
+      <h2>Developer Console</h2>
+      <button id="developerConsoleClose" type="button" aria-label="Close developer console">×</button>
+    </div>
+    <div class="devConsoleBody">
+      <div class="devConsoleTabs">
+        <button type="button" data-dev-tab="quick" class="active">Quick</button>
+        <button type="button" data-dev-tab="hero">Hero</button>
+        <button type="button" data-dev-tab="dungeon">Dungeon</button>
+        <button type="button" data-dev-tab="tools">Tools</button>
+        <button type="button" data-dev-tab="dice">Dice</button>
+      </div>
+
+      <section class="devConsolePanel active" data-dev-panel="quick">
+        <div class="devConsoleGrid">
+          <button type="button" data-dev-action="items">Item Tester</button>
+          <button type="button" data-dev-action="save">Save Game</button>
+          <button type="button" data-dev-action="load">Load Game</button>
+          <button type="button" data-dev-action="restore">Restore Health &amp; AP</button>
+        </div>
+      </section>
+
+      <section class="devConsolePanel" data-dev-panel="hero">
+        <div class="devConsoleGrid">
+          <button type="button" data-dev-action="restore">Restore Health &amp; AP</button>
+          <button type="button" data-dev-action="ring">Give Ring</button>
+          <button type="button" data-dev-action="clear-equipment">Clear Test Equipment</button>
+          <button type="button" data-dev-action="centre">Centre Camera</button>
+        </div>
+      </section>
+
+      <section class="devConsolePanel" data-dev-panel="dungeon">
+        <div class="devConsoleRow">
+          <select id="developerMonsterSelect" aria-label="Monster to spawn"></select>
+          <button type="button" data-dev-action="spawn-monster">Spawn on Current Tile</button>
+        </div>
+        <div class="devConsoleGrid">
+          <button type="button" data-dev-action="spawn-dungeon-monsters">Spawn Complete Dungeon + Monsters</button>
+          <button type="button" data-dev-action="spawn-dungeon-tiles">Spawn Complete Dungeon — Tiles Only</button>
+          <button type="button" data-dev-action="reveal-monsters">Reveal All Laid Monsters</button>
+          <button type="button" data-dev-action="kill-monster">Kill Current-Tile Monster</button>
+          <button type="button" data-dev-action="ring-tile">Place Ring on Current Tile</button>
+          <button type="button" data-dev-action="clear-drops">Clear Current Tile Loot</button>
+        </div>
+        <div class="devConsoleNote">
+          Developer actions change the active test game immediately. They are intentionally hidden from players.
+        </div>
+      </section>
+
+      <section class="devConsolePanel" data-dev-panel="dice">
+        <div class="devDiceControls">
+          <div class="devDiceControl"><label>Roll duration <span id="diceDurationValue" class="devDiceValue">1050 ms</span></label><input id="diceDuration" type="range" min="900" max="3200" step="50" value="1050"></div>
+          <div class="devDiceControl"><label>Drop height <span id="diceDropValue" class="devDiceValue">2.50</span></label><input id="diceDrop" type="range" min="0.50" max="2.50" step="0.05" value="2.5"></div>
+          <div class="devDiceControl"><label>First bounce <span id="diceBounce1Value" class="devDiceValue">1.00</span></label><input id="diceBounce1" type="range" min="0.10" max="1.00" step="0.02" value="1"></div>
+          <div class="devDiceControl"><label>Second bounce <span id="diceBounce2Value" class="devDiceValue">0.02</span></label><input id="diceBounce2" type="range" min="0.02" max="0.50" step="0.01" value="0.02"></div>
+          <div class="devDiceControl"><label>Dice separation <span id="diceSpreadValue" class="devDiceValue">0.55</span></label><input id="diceSpread" type="range" min="0" max="0.55" step="0.01" value="0.55"></div>
+          <div class="devDiceControl"><label>Dice spacing <span id="diceGapValue" class="devDiceValue">0.90</span></label><input id="diceGap" type="range" min="0.35" max="0.90" step="0.01" value="0.9"></div>
+          <div class="devDiceControl"><label>Floor offset <span id="diceFloorOffsetValue" class="devDiceValue">0.030</span></label><input id="diceFloorOffset" type="range" min="0" max="0.20" step="0.005" value="0.03"></div>
+        </div>
+        <div class="devConsoleNote"><b>Face calibration:</b> choose the black or red die and the result you want to calibrate. Show it, rotate it in 90° steps until that number is on top, then Save Face. Calibration is stored in this browser.</div>
+        <div class="devConsoleRow">
+          <select id="diceCalRole" aria-label="Dice colour"><option value="hero">Black hero die</option><option value="monster">Red monster die</option></select>
+          <select id="diceCalFace" aria-label="Face number"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option></select>
+          <button type="button" id="diceCalShow" onclick="return window.BODDiceDev?.showFace?.(event)">Show Face</button>
+          <button type="button" id="diceCalSave" onclick="return window.BODDiceDev?.saveFace?.(event)">Save Face</button>
+        </div>
+        <div class="devConsoleGrid">
+          <button type="button" data-dice-cal-axis="x" data-dice-cal-angle="-90" onclick="return window.BODDiceDev?.rotate?.(event,'x',-90)">Rotate X −90°</button>
+          <button type="button" data-dice-cal-axis="x" data-dice-cal-angle="90" onclick="return window.BODDiceDev?.rotate?.(event,'x',90)">Rotate X +90°</button>
+          <button type="button" data-dice-cal-axis="y" data-dice-cal-angle="-90" onclick="return window.BODDiceDev?.rotate?.(event,'y',-90)">Rotate Y −90°</button>
+          <button type="button" data-dice-cal-axis="y" data-dice-cal-angle="90" onclick="return window.BODDiceDev?.rotate?.(event,'y',90)">Rotate Y +90°</button>
+          <button type="button" data-dice-cal-axis="z" data-dice-cal-angle="-90" onclick="return window.BODDiceDev?.rotate?.(event,'z',-90)">Rotate Z −90°</button>
+          <button type="button" data-dice-cal-axis="z" data-dice-cal-angle="90" onclick="return window.BODDiceDev?.rotate?.(event,'z',90)">Rotate Z +90°</button>
+        </div>
+        <div class="devConsoleGrid">
+          <button type="button" id="devTestHeroDice" onclick="return window.BODDiceDev?.testHero?.(event)">Test 2 Black Dice</button>
+          <button type="button" id="devTestMonsterDice" onclick="return window.BODDiceDev?.testMonster?.(event)">Test 2 Red Dice</button>
+          <button type="button" id="devTestCombatDice" onclick="return window.BODDiceDev?.testCombat?.(event)">Test Combat Dice</button>
+          <button type="button" id="devClearDice" onclick="return window.BODDiceDev?.clear?.(event)">Clear Dice</button>
+          <button type="button" id="devCopyDiceSettings" onclick="return window.BODDiceDev?.copy?.(event)">Copy Dice Settings</button>
+          <button type="button" id="devResetDiceSettings" onclick="return window.BODDiceDev?.reset?.(event)">Reset Dice Defaults</button>
+        </div>
+        <div id="devDiceStatus" class="devConsoleNote" style="font-weight:bold">Dice controls ready.</div>
+        <div class="devConsoleNote">Adjust the sliders and test the rolls. Settings are saved in this browser. Use Copy Dice Settings and paste the values back into chat when you want them made permanent.</div>
+      </section>
+
+      <section class="devConsolePanel" data-dev-panel="tools">
+        <div class="devConsoleGrid">
+          <button type="button" data-dev-action="items">Item Tester</button>
+          <button type="button" data-dev-action="assets">Asset Manager</button>
+          <button type="button" data-dev-action="sounds">Sound Manager</button>
+          <button type="button" data-dev-action="save">Save Game</button>
+          <button type="button" data-dev-action="load">Load Game</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/patches.js"></script>
+</body>
+</html>
+
