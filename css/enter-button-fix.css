@@ -1,0 +1,16 @@
+/* BOD3D-TEST v11.54 — warning-scroll Enter button always uses black text */
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button.green,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:hover,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus-visible,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:active,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:visited,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button *,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:hover *,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus *,
+#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:active *{
+  color:#000000!important;
+  -webkit-text-fill-color:#000000!important;
+  text-shadow:none!important;
+}
