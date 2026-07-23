@@ -4,6 +4,7 @@ window.ASSET_PATHS={
  "Goblin":"assets/monsters/goblin.png","Zombie":"assets/monsters/zombie.png","Mummy":"assets/monsters/mummy.png","Monk":"assets/monsters/monk.png","Mud Monster":"assets/monsters/mudmonster.png","Werewolf":"assets/monsters/werewolf.png","Troll":"assets/monsters/troll.png","Minotaur":"assets/monsters/minotaur.png","Skeleton":"assets/monsters/skeleton.png","Giant Snake":"assets/monsters/giantsnake.png","Reacher":"assets/monsters/reacher.png","Mirror Monster":"assets/monsters/mirrormonster.png","Dragon":"assets/monsters/dragon.png"
 };
 
+<<<<<<< HEAD
 (function(){
  const VERSION='v11.37';
  function apply(){
@@ -13,6 +14,29 @@ window.ASSET_PATHS={
   const brand=document.getElementById('brandHeader');if(brand)brand.querySelectorAll('.version,.buildVersion,#bodVersionUnderLogo,#topLogoVersion').forEach(el=>{if(el!==visible)el.style.display='none';});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();setTimeout(apply,700);
+=======
+// Keep the loading-screen logo repository-relative so it works on GitHub Pages.
+(function fixLoadingLogo(){
+  function apply(){
+    const logo=document.getElementById('heroSelectLogo');
+    if(!logo)return false;
+    logo.style.display='';
+    logo.style.visibility='visible';
+    logo.style.opacity='1';
+    logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-4',document.baseURI).href;
+    return true;
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      if(apply())return;
+      let tries=0;
+      const timer=setInterval(()=>{if(apply()||++tries>=50)clearInterval(timer);},100);
+    },{once:true});
+  }else if(!apply()){
+    let tries=0;
+    const timer=setInterval(()=>{if(apply()||++tries>=50)clearInterval(timer);},100);
+  }
+>>>>>>> 920d67c270a072ebb559a70d20a92459e5587fdc
 })();
 
 (function(){
@@ -33,6 +57,7 @@ window.ASSET_PATHS={
  document.addEventListener('visibilitychange',()=>document.hidden?pause():restart());window.addEventListener('pagehide',pause);window.addEventListener('beforeunload',pause);window.addEventListener('pageshow',restart);
 })();
 
+<<<<<<< HEAD
 (function(){
  function install(){
   if(window.__bodTestGameplayRulesInstalled)return true;
@@ -100,3 +125,31 @@ window.ASSET_PATHS={
  function start(){if(install())return;let n=0,t=setInterval(()=>{if(install()||++n>120)clearInterval(t);},50);new MutationObserver(()=>install()).observe(document.body,{subtree:true,childList:true});}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+=======
+// Improve contrast on the Enter the Dungeon hover/focus state.
+(function installEnterDungeonHoverFix(){
+  const style=document.createElement('style');
+  style.id='enterDungeonHoverFix';
+  style.textContent=`
+    .chooseHeroBtn:hover,
+    .chooseHeroBtn:focus-visible{
+      background:linear-gradient(#fff2c8,#efd68b)!important;
+      color:#000!important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// Replace the logo node after startup to remove the obsolete error handler in patches.js.
+setTimeout(()=>{
+  const oldLogo=document.getElementById('heroSelectLogo');
+  if(!oldLogo||!oldLogo.parentNode)return;
+  const logo=oldLogo.cloneNode(false);
+  logo.removeAttribute('style');
+  logo.style.setProperty('display','block','important');
+  logo.style.setProperty('visibility','visible','important');
+  logo.style.setProperty('opacity','1','important');
+  logo.src=new URL('assets/ui/bod3d-logo.png?v=11.23-logo-fix-4',document.baseURI).href;
+  oldLogo.replaceWith(logo);
+},1500);
+>>>>>>> 920d67c270a072ebb559a70d20a92459e5587fdc
