@@ -1,0 +1,150 @@
+/* BOD3D-TEST v11.46 — full black / white / red in-game HUD */
+:root{
+  --hud-black:#050505;
+  --hud-panel:#090909;
+  --hud-line:#8f8f8f;
+  --hud-line-soft:#5f5f5f;
+  --hud-white:#f4f4f4;
+  --hud-muted:#c9c9c9;
+  --hud-red:#ef2f3e;
+}
+
+/* Entire in-game character/status rail */
+#side{
+  background:var(--hud-black)!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+}
+#side,
+#side *{box-sizing:border-box}
+#side .box,
+#side #stats,
+#side #character,
+#side #inventory,
+#side #killTally,
+#side #log,
+#side [class*="panel"],
+#side [class*="Panel"]{
+  background:var(--hud-panel)!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side .box{
+  border-width:2px!important;
+  border-style:solid!important;
+}
+#side .sectionTitle,
+#side h1,#side h2,#side h3,#side h4,
+#side strong,#side b,
+#side .titlefont{
+  color:var(--hud-white)!important;
+}
+#side .sectionTitle,
+#side h2,#side h3,#side h4{
+  border-color:var(--hud-line)!important;
+}
+#side p,#side span,#side div,#side small,#side .small{
+  color:inherit;
+}
+#side .small,#side small,#side .desc{
+  color:var(--hud-muted)!important;
+}
+#side .hp,#side .hearts,#side .combatHearts,
+#side [class*="heart"],#side [class*="Heart"]{
+  color:var(--hud-red)!important;
+}
+#side .ap{color:var(--hud-white)!important}
+#side .ringStatus{color:#e8cf86!important}
+
+/* Logo block expects the new white PNG with the same filename. */
+#brandHeader{
+  background:var(--hud-black)!important;
+  color:var(--hud-white)!important;
+  border:2px solid var(--hud-line)!important;
+  padding:10px 8px!important;
+}
+#brandHeader .brandLogo,
+#brandHeader img{
+  filter:none!important;
+  width:100%!important;
+  max-width:250px!important;
+  margin-inline:auto!important;
+}
+#visibleBuildVersion,#bodVersionUnderLogo,#topLogoVersion,.version,.buildVersion{
+  color:var(--hud-muted)!important;
+}
+
+/* Equipment, hand, attire and inventory cards */
+#side .slot,
+#side .equipSlot,
+#side .handSlot,
+#side .attireSlot,
+#side .inventorySlot,
+#side .itemBtn,
+#side .tileItemCard,
+#side [class*="slot"],
+#side [class*="Slot"]{
+  background:#070707!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side .itemBtn{
+  border:1px solid var(--hud-line)!important;
+}
+#side .itemBtn:hover:not(:disabled),
+#side .itemBtn.active{
+  background:#151515!important;
+  outline-color:var(--hud-white)!important;
+}
+#side .itemBtn.equipped{
+  outline-color:var(--hud-red)!important;
+}
+#side .itemBtn .count,
+#side .itemBtn .equipMark{
+  background:var(--hud-red)!important;
+  color:#fff!important;
+}
+#side .spriteWrap,
+#side .spriteIcon,
+#side img{
+  background:transparent!important;
+}
+#side button{
+  background:#080808!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side button:hover:not(:disabled){background:#171717!important}
+
+/* Scroll bars remain subtle but usable. */
+#side{scrollbar-color:#777 #090909;scrollbar-width:thin}
+#side::-webkit-scrollbar{width:10px}
+#side::-webkit-scrollbar-track{background:#090909}
+#side::-webkit-scrollbar-thumb{background:#777;border:2px solid #090909;border-radius:8px}
+
+/* Mobile character drawer uses the same theme. */
+@media(max-width:800px){
+  #side{
+    background:var(--hud-black)!important;
+    border-top-color:var(--hud-line)!important;
+    box-shadow:0 -8px 22px rgba(0,0,0,.8)!important;
+  }
+  #mobileSheetToggle,
+  #mobileStatus{
+    background:#080808!important;
+    color:var(--hud-white)!important;
+    border-color:var(--hud-line)!important;
+    box-shadow:none!important;
+  }
+  #mobileSheetToggle::before{background:var(--hud-line)!important}
+  #mobileStatus *{color:var(--hud-white)!important}
+}
+
+/* Keep narrative and warning cards parchment-coloured. */
+#modal .card:not(:has(.testerWarningScroll)),
+#placement .card{
+  color:var(--ink)!important;
+}

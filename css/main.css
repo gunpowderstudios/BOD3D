@@ -155,11 +155,8 @@ button:disabled{opacity:.45;cursor:not-allowed;}
  background:linear-gradient(#272016,#0d0b08);color:#f6d989;box-shadow:0 3px 8px #000;
  font-size:17px;letter-spacing:.03em;
 }
-.chooseHeroBtn:hover,
-.chooseHeroBtn:focus-visible{
-    background:linear-gradient(#fff2c8,#efd68b);
-    color:#000;
-}.heroDots{display:flex;justify-content:center;gap:7px;margin-top:8px}
+.chooseHeroBtn:hover{background:linear-gradient(#44351f,#17120b);color:#fff0b3}
+.heroDots{display:flex;justify-content:center;gap:7px;margin-top:8px}
 .heroDot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.28);border:0;padding:0;box-shadow:none}
 .heroDot.active{background:#e7b954;transform:scale(1.2)}
 

@@ -1,0 +1,75 @@
+/* BOD3D-TEST v11.43 — desktop health column and complete controls */
+@media (min-width:901px){
+  /* Ten compact hearts sit fully above the compass. */
+  #livesHud{
+    position:absolute!important;
+    left:auto!important;
+    right:39px!important;
+    top:auto!important;
+    bottom:238px!important;
+    transform:none!important;
+    z-index:67!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:0!important;
+    width:22px!important;
+    max-width:none!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    pointer-events:none!important;
+  }
+  #livesHud .lifeHeart{
+    display:block!important;
+    width:18px!important;
+    height:15px!important;
+    font-size:15px!important;
+    line-height:15px!important;
+    text-align:center!important;
+    color:#ef333b!important;
+    text-shadow:0 1px 4px #000!important;
+  }
+  #livesHud .emptyHeart{color:#4a2022!important;opacity:.7!important}
+
+  /* Restore every desktop camera, sound and fullscreen control. */
+  #zoomOut,#zoomIn,#centreBtn,#viewBtn,#northUpBtn,#menuBtn,
+  #dungeonSoundToggle,#fullscreenBtn{
+    display:flex!important;
+  }
+  #topbar{
+    left:18px!important;
+    right:112px!important;
+    top:18px!important;
+    width:auto!important;
+    gap:14px!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+  }
+  #topbar .cluster,
+  #topbar .cluster:first-child,
+  #topbar .cluster:last-child{
+    display:flex!important;
+    width:auto!important;
+    gap:15px!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+  }
+  #topbar button{
+    display:flex!important;
+    min-width:42px!important;
+    min-height:40px!important;
+    padding:7px 7px!important;
+  }
+  #fullscreenBtn,#dungeonSoundToggle{display:flex!important}
+}
+
+@media (min-width:901px) and (max-height:760px){
+  #livesHud{right:35px!important;bottom:198px!important}
+  #livesHud .lifeHeart{width:16px!important;height:13px!important;font-size:13px!important;line-height:13px!important}
+  #topbar{top:12px!important;gap:9px!important}
+  #topbar .cluster{gap:10px!important}
+  #topbar button{font-size:15px!important;padding:6px 5px!important}
+}
