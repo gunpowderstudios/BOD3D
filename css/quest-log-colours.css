@@ -1,0 +1,5 @@
+/* v11.82 — restore combat feedback colours in the Quest Log. */
+#side #log .logline.combat {
+  color: #ef2f3e !important;
+  font-weight: 700;
+}
