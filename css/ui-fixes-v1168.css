@@ -1,0 +1,184 @@
+/* BOD3D-TEST v11.70 — streamlined camera controls and mobile top-bar spacing */
+
+/* Remove only the thick outer divider identified on the right of the sidebar. */
+#side{
+  border-right:0!important;
+}
+
+/* Zoom remains available by gesture/wheel; remove the unused button pair. */
+#zoomOut,
+#zoomIn{
+  display:none!important;
+}
+
+/* Keep the sound control present independently of older responsive rules. */
+#dungeonSoundToggle{
+  position:fixed!important;
+  top:18px!important;
+  right:66px!important;
+  z-index:5000!important;
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:46px!important;
+  height:46px!important;
+  min-width:46px!important;
+  min-height:46px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  text-shadow:0 1px 4px #000!important;
+  font:700 22px/1 "Alegreya Sans",Arial,sans-serif!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+
+@media(max-width:900px){
+  /* Mobile health sits vertically on the left, clear of controls and drawer. */
+  #livesHud{
+    position:fixed!important;
+    left:max(8px,env(safe-area-inset-left))!important;
+    right:auto!important;
+    top:50%!important;
+    bottom:auto!important;
+    transform:translateY(-50%)!important;
+    z-index:67!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:0!important;
+    width:22px!important;
+    max-width:none!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    pointer-events:none!important;
+  }
+  #livesHud .lifeHeart{
+    display:block!important;
+    width:18px!important;
+    height:15px!important;
+    font-size:15px!important;
+    line-height:15px!important;
+    text-align:center!important;
+    color:#ef333b!important;
+    text-shadow:0 1px 4px #000!important;
+  }
+  #livesHud .emptyHeart{color:#4a2022!important;opacity:.7!important}
+
+  /* Compact two-row mobile combat dock:
+     Fight | Run Away
+     Items | Lethal Blow */
+  body.combatActive #combatBtns{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-rows:auto auto auto!important;
+    gap:8px!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    align-items:center!important;
+  }
+  body.combatActive #combatBtns>button:nth-of-type(1){
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+  body.combatActive #combatBtns>button:nth-of-type(2){
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+  body.combatActive #combatBtns>.combatItemsToggle{
+    grid-column:1!important;
+    grid-row:2!important;
+    order:initial!important;
+  }
+  body.combatActive #combatBtns>.lethalIconBtn{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:center!important;
+    align-self:center!important;
+  }
+  body.combatActive #combatBtns>button:not(.lethalIconBtn){
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    min-height:52px!important;
+    height:52px!important;
+    padding:8px 10px!important;
+    margin:0!important;
+    font-size:clamp(14px,4vw,18px)!important;
+    line-height:1.05!important;
+  }
+  body.combatActive #combatBtns>.lethalIconBtn{
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+    min-height:52px!important;
+    height:52px!important;
+    padding:0!important;
+    margin:0!important;
+    font-size:25px!important;
+  }
+  body.combatActive #combatBtns>.lethalBlowStatus{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:12px!important;
+    line-height:1.15!important;
+    text-align:center!important;
+    order:initial!important;
+  }
+  body.combatActive #combatBtns:not(:has(.combatItemsToggle))>.lethalIconBtn{
+    grid-column:1/-1!important;
+  }
+
+  /* Hide the compass during mobile combat while leaving the 3D canvas
+     available for drag, rotate and pinch-zoom inspection. */
+  body.combatActive #compass{
+    display:none!important;
+  }
+  body.combatActive #viewport,
+  body.combatActive #threeBoard{
+    pointer-events:auto!important;
+    touch-action:none!important;
+  }
+
+  /* Let table gestures pass through the transparent combat UI and stats.
+     Only actual controls retain pointer input. */
+  body.combatActive #combat .combatCard,
+  body.combatActive #combat .combatWideLayout,
+  body.combatActive #combat .combatGrid,
+  body.combatActive #combat .fighter,
+  body.combatActive #combat .combatResolution,
+  body.combatActive #combatBtns{
+    pointer-events:none!important;
+  }
+  body.combatActive #combatBtns>button,
+  body.combatActive #combatItemsDrawer,
+  body.combatActive #combatItemsDrawer *{
+    pointer-events:auto!important;
+  }
+
+  /* Reserve a clear lane for Mute and Full Screen; the Map/View control moves left. */
+  #topbar{
+    right:142px!important;
+  }
+  #dungeonSoundToggle{
+    top:7px!important;
+    right:47px!important;
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+    font-size:21px!important;
+  }
+}
