@@ -1,0 +1,60 @@
+/* BOD3D-TEST v11.85 — compact red mobile ranged action beside the NSEW pad */
+
+@media (max-width:800px){
+  /* Bow, Ice Staff and cancel-ranged actions sit low-left beside the D-pad. */
+  #controls{
+    position:absolute!important;
+    left:14px!important;
+    right:auto!important;
+    bottom:53px!important;
+    width:clamp(118px,31vw,152px)!important;
+    max-width:calc(50% - 76px)!important;
+    z-index:190!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:5px!important;
+    justify-content:flex-end!important;
+    pointer-events:none!important;
+  }
+
+  #controls button{
+    position:relative!important;
+    z-index:191!important;
+    pointer-events:auto!important;
+    width:100%!important;
+    min-height:52px!important;
+    margin:0!important;
+    padding:7px 8px!important;
+    border:2px solid #ef6670!important;
+    border-radius:6px!important;
+    background:linear-gradient(180deg,#d20d28,#a9081c)!important;
+    color:#fff!important;
+    box-shadow:0 4px 0 #260004,0 7px 14px rgba(0,0,0,.55)!important;
+    font-size:12px!important;
+    font-weight:900!important;
+    line-height:1.12!important;
+    text-align:center!important;
+    white-space:normal!important;
+  }
+
+  #controls button:disabled{
+    opacity:.42!important;
+  }
+
+  #mobileDpad{
+    z-index:72!important;
+  }
+}
+
+@media (max-width:360px){
+  #controls{
+    left:8px!important;
+    width:112px!important;
+    max-width:112px!important;
+  }
+  #controls button{
+    min-height:48px!important;
+    padding:5px 6px!important;
+    font-size:11px!important;
+  }
+}
