@@ -1,0 +1,64 @@
+/* BOD3D-TEST v11.80 — bold warning copy with increased top spacing */
+.testerWarningScroll.hasStory{
+  justify-content:flex-start!important;
+}
+.testerWarningScroll>.testerStoryHeading{
+  font-size:clamp(27px,3vw,42px)!important;
+  font-weight:700!important;
+  line-height:1.02!important;
+  margin:1.1em 0 .55em!important;
+}
+.testerWarningScroll>.testerStoryParagraph{
+  margin:.48em 0!important;
+}
+
+@media(max-width:900px){
+  #modal .card:has(.testerWarningScroll){
+    height:min(68dvh,600px)!important;
+  }
+  .testerWarningScroll{
+    font-size:18px!important;
+    font-weight:700!important;
+    line-height:1.24!important;
+    padding-top:24px!important;
+  }
+  .testerWarningScroll>div:first-child{
+    font-size:22px!important;
+    line-height:1.02!important;
+  }
+  .testerWarningScroll>.testerStoryHeading{
+    font-size:22px!important;
+    margin:1em 0 .55em!important;
+  }
+  .testerWarningScroll>.testerStoryParagraph{
+    font-size:18px!important;
+    line-height:1.24!important;
+  }
+  /* The warning copy contains two BRs after the red Dragon warning.
+     Hide the second so Good luck follows with one clear line space. */
+  .testerWarningScroll>span+br+br{
+    display:none!important;
+  }
+}
+
+@media(max-width:420px) and (max-height:720px){
+  #modal .card:has(.testerWarningScroll){
+    height:min(68dvh,520px)!important;
+  }
+  .testerWarningScroll{
+    font-size:18px!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    padding-top:18px!important;
+  }
+  .testerWarningScroll>div:first-child{
+    font-size:22px!important;
+  }
+  .testerWarningScroll>.testerStoryHeading{
+    font-size:22px!important;
+  }
+  .testerWarningScroll>.testerStoryParagraph{
+    font-size:18px!important;
+    line-height:1.2!important;
+  }
+}
