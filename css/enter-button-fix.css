@@ -1,15 +1,14 @@
-/* BOD3D-TEST v11.54 — warning-scroll Enter button always uses black text */
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button.green,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:hover,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus-visible,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:active,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:visited,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button *,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:hover *,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:focus *,
-#modal.open .card:has(.testerWarningScroll) > #modalButtons.btnrow > button:active *{
+/* BOD3D-TEST v11.59 — warning-scroll Enter button always uses black text */
+#modal:has(.testerWarningScroll) #modalButtons button,
+#modal:has(.testerWarningScroll) #modalButtons button.green,
+#modal:has(.testerWarningScroll) #modalButtons button:hover,
+#modal:has(.testerWarningScroll) #modalButtons button:focus,
+#modal:has(.testerWarningScroll) #modalButtons button:focus-visible,
+#modal:has(.testerWarningScroll) #modalButtons button:active,
+#modal:has(.testerWarningScroll) #modalButtons button *,
+#modal:has(.testerWarningScroll) #modalButtons button:hover *,
+#modal:has(.testerWarningScroll) #modalButtons button:focus *,
+#modal:has(.testerWarningScroll) #modalButtons button:active *{
   color:#000000!important;
   -webkit-text-fill-color:#000000!important;
   text-shadow:none!important;
