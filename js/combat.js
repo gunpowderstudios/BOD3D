@@ -3,10 +3,11 @@
 // Split out of index.html for easier editing. Depends on state/helpers from game.js, so
 // this must load AFTER game.js.
 
-function pCombatMod(){const e=state.player.equipment;return state.player.baseMod+applyEquipmentStats(e.weapon)}
+function pCombatMod(){const p=state.player,e=p.equipment;return p.baseMod+applyEquipmentStats(e.weapon)+(e.torch?1:0)+(p.companionFirkin?3:0)}
 function pDamageReduction(){const e=state.player.equipment;return applyEquipmentStats(e.armour)+applyEquipmentStats(e.shield)}
-function pDice(){return state.player.baseDice+(state.player.equipment.bear?1:0)+(state.player.temp.strength?1:0)}
+function pDice(){const p=state.player;const dragonBonus=!!(combat?.tile?.monster?.isDragon&&p.equipment.dragonlance);return p.baseDice+(p.equipment.bear?1:0)+(p.temp.strength?1:0)+(dragonBonus?1:0)}
 function openCombat(tile,options={}){
+ if(!view3d.enabled){toast('Return to 3D to fight');return;}
  closeModal();
  const m=tile.monster;
  combat={
@@ -19,6 +20,7 @@ function openCombat(tile,options={}){
   mustFightRound:!!options.mustFightRound,
   noEscape:!!options.noEscape,
   rangedEngagement:!!options.rangedEngagement,
+  restoreApAfterRanged:!!options.restoreApAfterRanged,
   sourceKey:options.sourceKey||null,
   chargedFromKey:options.chargedFromKey||null
  };
@@ -188,12 +190,14 @@ function rangedTargets(range,allowCorners=false){
  const from=key(state.player.x,state.player.y),out=[];
  for(const [kk,t] of Object.entries(state.tiles)){
   if(!(t.monsterPending||(t.monster&&t.monster.health>0)))continue;
+  if(t.monster?.isDragon)continue;
   const distance=allowCorners?connectedDistance(from,kk,range):straightCorridorDistance(from,kk,range);
   if(distance>=1&&distance<=range)out.push({key:kk,distance});
  }
  return out;
 }
 function startRangedAttack(type,item=null,consume=null){
+ if(!view3d.enabled){toast('Return to 3D to fight');return;}
  const p=state.player;
  let weapon=null,range=0,cost=0,label='';
 
@@ -268,6 +272,7 @@ async function waitForMonsterLanding(tileKey,timeout=2200){
 
 function rangedKill(tile,tileKey,monster,weaponName,damage){playSound('monsterDie');playTileEffect(tileKey,'monsterDeath',1000);log(weaponName+' defeats '+monster.name+' at range with '+damage+' damage.','combat');state.player.killed.push(monster.name);state.monsterDiscard.push(monster);recordMonsterCorpse(tile,tileKey,monster);tile.monster=null;collectRingIfSafe(tileKey);const startingHealth=monster.maxHealth;if(!monster.isDragon){const rewardCount=startingHealth>=10?2:(startingHealth>=6?1:0);if(rewardCount===0)log(monster.name+' had '+startingHealth+' starting Health: no item reward.','system');else{log(monster.name+' had '+startingHealth+' starting Health: draw '+rewardCount+' item'+(rewardCount===1?'':'s')+'.','loot');for(let i=0;i<rewardCount;i++)awardItem();}}render();}
 async function fireRangedAt(tileKey,event){
+ if(!view3d.enabled){cancelRangedAttack();toast('Return to 3D to fight');return;}
  if(event){
   event.preventDefault();
   event.stopPropagation();
@@ -367,6 +372,7 @@ async function fireRangedAt(tileKey,event){
   // Leave the projectile and impact visible before resolving death or charge.
   setTimeout(async()=>{
    if(monster.health<=0){
+    p.ap=p.maxAp;
     rangedKill(tile,tileKey,monster,weaponName,damage);
     window.BOD3D?.finishRangedAttack?.();
     return;
@@ -385,6 +391,8 @@ async function fireRangedAt(tileKey,event){
     attack.type
    );
    if(killedByTrap){
+    p.ap=p.maxAp;
+    render();
     window.BOD3D?.finishRangedAttack?.();
     return;
    }
@@ -406,6 +414,7 @@ async function fireRangedAt(tileKey,event){
 
    openCombat(heroTile||tile,{
     rangedEngagement:true,
+    restoreApAfterRanged:true,
     noEscape:true,
     sourceKey:heroTileKey,
     chargedFromKey:tileKey
@@ -531,7 +540,7 @@ function resolveFightRound(){
  let damageToMonster=0,damageToHero=0;
  const deadeye=p.special==='Dead-eye'&&pr.rolls.includes(6);
  if(deadeye){damageToMonster=Math.max(0,m.health);m.health=0;text+='Dead-eye! Instant kill.';}
- else if(pt>mt){let dmg=pt-mt;if(m.isDragon&&p.equipment.dragonlance){const extra=roll(3).total;dmg+=extra;text+='Dragonlance adds '+extra+' damage. ';}damageToMonster=dmg;m.health-=dmg;text+='You hit for '+dmg+'.';}
+ else if(pt>mt){let dmg=pt-mt;damageToMonster=dmg;m.health-=dmg;text+='You hit for '+dmg+'.';}
  else if(mt>pt){if(combat.monsterSkip){combat.monsterSkip=false;text+=m.name+' is held and misses.';}else{let dmg=Math.max(0,mt-pt-pDamageReduction());damageToHero=dmg;p.health-=dmg;text+=m.name+' hits for '+dmg+'.';if(dmg>0&&p.equipment.bear){text+=' Loyal Bear is defeated protecting you.';if(p.companionBear)state.itemDiscard.push(p.companionBear);p.companionBear=null;syncEquipment();}}}
  else{text+='Both miss.';}
  combat.rolling=false;
@@ -605,9 +614,94 @@ function runAway(){
  centreOnHero(false);
 }
 
-function death(){const p=state.player;const carried=allCarriedItems();const acme=carried.find(it=>it.name==='Acme Insurance');if(!TESTER_SINGLE_LIFE&&(p.flags.insurance||acme)){if(acme){removeFromCurrentLocation(acme);state.itemDiscard.push(acme);}p.flags.insurance=false;p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';log('Acme Insurance saves you and lets you keep your items!','heal');closeCombat();render();centreOnHero();return;}const killedByDragon=!!(combat&&combat.tile&&combat.tile.monster&&combat.tile.monster.isDragon);const droppable=carried.filter(it=>!isBear(it));if(droppable.length){let targetTile;if(killedByDragon){targetTile=healingPoolTile();if(targetTile){log('The Dragon defeats you. Your items are transferred to the Healing Pool.','combat');}else{targetTile=getTile(p.x,p.y);log('The Dragon defeats you. No Healing Pool is available, so your items remain at the Exit.','combat');}}else{targetTile=getTile(p.x,p.y);log('Your items drop on the tile where you fell.','combat');}if(targetTile){targetTile.droppedItems=targetTile.droppedItems||[];targetTile.droppedItems.push(...droppable);}clearPlayerItems();}p.lives--;if(p.lives<=0){lose();return;}p.health=p.maxHealth;p.x=0;p.y=0;p.facing='S';p.hasRing=false;log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');closeCombat();window.BOD3D?.snapHeroToPlayer?.();render();centreOnHero(false);setTimeout(()=>{window.BOD3D?.snapHeroToPlayer?.();render();centreOnHero(true);window.BOD3D?.centreOnHero?.();},120);}
+function dropDeathItems(p,deathTile,deathKey,keepCompanions){
+ const bear=keepCompanions?p.companionBear:null;
+ const droppable=allCarriedItems().filter(
+  item=>!isBear(item)&&item.name!=='Acme Insurance'
+ );
+
+ if(droppable.length&&deathTile){
+  deathTile.droppedItems=deathTile.droppedItems||[];
+  deathTile.droppedItems.push(...droppable);
+  log('All your items drop on the tile where you fell.','combat');
+ }
+
+ if(p.hasRing&&deathTile){
+  deathTile.hasRing=true;
+  state.ringActivated=true;
+  state.ringKey=deathKey;
+  p.hasRing=false;
+  log('The Ring of Creation drops where you fell.','loot');
+ }
+
+ clearPlayerItems();
+ if(keepCompanions&&bear){
+  p.companionBear=bear;
+  syncEquipment();
+ }
+}
+
+function returnHeroToStart(p){
+ p.health=p.maxHealth;
+ p.ap=p.maxAp;
+ p.x=0;
+ p.y=0;
+ p.prevX=0;
+ p.prevY=0;
+ p.facing='S';
+ closeCombat();
+ window.BOD3D?.snapHeroToPlayer?.();
+ render();
+ centreOnHero(false);
+ setTimeout(()=>{
+  window.BOD3D?.snapHeroToPlayer?.();
+  render();
+  centreOnHero(true);
+  window.BOD3D?.centreOnHero?.();
+ },120);
+}
+
+function death(){
+ const p=state.player;
+ const deathKey=key(p.x,p.y);
+ const deathTile=getTile(p.x,p.y);
+ const carried=allCarriedItems();
+ const acme=carried.find(item=>item.name==='Acme Insurance');
+ const insured=Boolean(acme||p.flags.insurance);
+
+ if(insured){
+  if(acme){
+   removeFromCurrentLocation(acme);
+   state.itemDiscard.push(acme);
+  }
+  p.flags.insurance=false;
+  dropDeathItems(p,deathTile,deathKey,true);
+  log('ACME Insurance grants you another life and returns you to Start.','heal');
+  returnHeroToStart(p);
+  showModal(
+   'ACME INSURANCE PAYS OUT!',
+   'You gain another life. All your items remain on the tile where you fell, and you awaken at Start with full Health and AP.',
+   [{text:'Return to the Dungeon',cls:'green',fn:closeModal}]
+  );
+  return;
+ }
+
+ dropDeathItems(p,deathTile,deathKey,false);
+ p.lives--;
+ if(p.lives<=0){
+  lose();
+  return;
+ }
+
+ returnHeroToStart(p);
+ log('You fall and wake at Start. Lives left: '+p.lives+'.','combat');
+}
 function closeCombat(){
  const finishedCombat=combat;
+
+ if(finishedCombat?.restoreApAfterRanged&&state?.player){
+  state.player.ap=state.player.maxAp;
+ }
 
  document.getElementById('combat').classList.remove('open');
  document.body.classList.remove('combatActive','cinematicCombat');

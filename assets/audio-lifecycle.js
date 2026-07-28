@@ -1,4 +1,4 @@
-// BOD3D-TEST v11.68 — reliable Android audio lifecycle with permanent mute button
+// BOD3D-TEST v12.10 — reliable intro/dungeon ambience detection
 (function () {
   'use strict';
 
@@ -40,6 +40,7 @@
 
   function startScreenVisible() {
     const selectors = [
+      '#charSelect',
       '#heroSelectOverlay',
       '#loadingScreen',
       '#loading-screen',

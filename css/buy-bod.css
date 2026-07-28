@@ -1,0 +1,60 @@
+/* BOD3D-TEST v12.03 — mobile logo clearance below top tags */
+#buyBodButton{
+ position:fixed;
+ left:0;
+ right:auto;
+ top:0;
+ transform:none;
+ z-index:570;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:88px;
+ min-height:36px;
+ padding:6px 8px;
+ border:0;
+ border-right:2px solid #67adff;
+ border-bottom:2px solid #67adff;
+ border-radius:0 0 7px 0;
+ background:#0966cc;
+ color:#fff;
+ box-shadow:
+  inset -2px -2px 0 rgba(0,35,85,.45),
+  inset 1px 1px 0 rgba(255,255,255,.18),
+  3px 4px 0 #031a36,
+  5px 7px 13px rgba(0,0,0,.42);
+ font:900 12px/1.05 "Alegreya Sans",Arial,sans-serif;
+ letter-spacing:.045em;
+ text-align:center;
+ text-decoration:none;
+ text-shadow:0 1px 1px rgba(0,0,0,.55);
+ pointer-events:auto;
+ transition:filter .14s ease,transform .14s ease;
+}
+#buyBodButton:hover,
+#buyBodButton:focus-visible{
+ filter:brightness(1.14);
+ outline:2px solid #fff;
+ outline-offset:2px;
+}
+#buyBodButton:active{
+ transform:translateY(3px);
+ box-shadow:
+  inset -2px -2px 0 rgba(0,35,85,.45),
+  inset 1px 1px 0 rgba(255,255,255,.18),
+  2px 1px 0 #031a36,
+  3px 4px 9px rgba(0,0,0,.4);
+}
+@media(max-width:800px){
+ #buyBodButton{
+  width:74px;
+  min-height:34px;
+  padding:5px 7px;
+  font-size:11px;
+ }
+ /* The Centre circle is the first visible mobile top-bar control.
+    Move it just beyond the tag while preserving the rest of the row. */
+ #centreBtn{margin-left:78px!important}
+ /* Keep the opening-screen logo below the BUY BOD and mute controls. */
+ .heroSelectLogo{top:56px!important}
+}

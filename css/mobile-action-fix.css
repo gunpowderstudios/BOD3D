@@ -1,4 +1,4 @@
-/* BOD3D-TEST v11.85 — compact red mobile ranged action beside the NSEW pad */
+/* BOD3D-TEST v11.97 — ranged actions clear of the NSEW pad */
 
 @media (max-width:800px){
   /* Bow, Ice Staff and cancel-ranged actions sit low-left beside the D-pad. */
@@ -56,5 +56,28 @@
     min-height:48px!important;
     padding:5px 6px!important;
     font-size:11px!important;
+  }
+}
+
+
+@media (min-width:801px){
+  /* Keep desktop ranged actions low-left, clear of the centred D-pad. */
+  #controls{
+    left:18px!important;
+    right:auto!important;
+    bottom:18px!important;
+    width:min(340px,calc(50% - 120px))!important;
+    max-width:340px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-end!important;
+    gap:7px!important;
+  }
+  #controls button{
+    width:100%!important;
+    min-height:48px!important;
+    margin:0!important;
+    white-space:normal!important;
   }
 }

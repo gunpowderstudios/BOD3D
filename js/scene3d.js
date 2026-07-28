@@ -869,7 +869,7 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
 
  const makeBloodMaterial=(opacity=.72)=>new THREE.MeshBasicMaterial({
   // Solid tile-surface decal: miniatures correctly occlude the blood.
-  color:opacity>.66?0x65130f:0x7a2119,
+  color:opacity>.66?0x7d1714:0x98231c,
   transparent:false,
   opacity:1,
   depthTest:true,
@@ -1197,6 +1197,26 @@ async function addTile(key,t,token){
    ringLight.userData.ringLight=true;
    ringLight.userData.floatPhase=ringSprite.userData.floatPhase;
    boardGroup.add(ringLight);
+  }
+ }
+ if(t.hasFirkin){
+  const firkinSprite=await addSprite(
+   'assets/companions/firkin.png',
+   x,
+   y,
+   .72,
+   .48,
+   null,
+   key,
+   token
+  );
+  if(firkinSprite){
+   firkinSprite.renderOrder=650;
+   firkinSprite.userData.floatObject=true;
+   firkinSprite.userData.floatBaseY=firkinSprite.position.y;
+   firkinSprite.userData.floatAmplitude=.035;
+   firkinSprite.userData.floatSpeed=.72;
+   firkinSprite.userData.floatPhase=(x*1.29+y*1.83);
   }
  }
  if(t.droppedItems&&t.droppedItems.length){

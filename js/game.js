@@ -126,6 +126,7 @@ function showCharSelect(){
  if(window.stopDungeonAmbience)window.stopDungeonAmbience();
  if(window.startDistantMonstersAmbience)window.startDistantMonstersAmbience();
  document.getElementById('charSelect').classList.remove('hidden');
+ renderCarriedRingHud();
  renderCharSelect();
  if(window.BODHeroPreview)window.BODHeroPreview.resume();
 }
@@ -149,11 +150,11 @@ const ITEM_MASTER=[
  {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'One fight: -1 damage from attacks, then discard.'},
  {name:'Steel Armour',copies:1,type:'equipment',slot:'armour',icon:'▥',desc:'-1 damage from attacks.'},
  {name:'Magic Armour',copies:1,type:'equipment',slot:'armour',icon:'▦',desc:'-2 damage from attacks.'},
- {name:'Magic Boots',copies:2,type:'equipment',slot:'boots',icon:'👢',desc:'+1 AP each turn.',apply:p=>{if(!p.equipment.boots){p.maxAp+=1;p.ap+=1;}p.equipment.boots={name:'Magic Boots',icon:'👢',value:1};}},
+ {name:'Magic Boots',copies:2,type:'equipment',slot:'boots',icon:'👢',desc:'Old Spikey springs only on a roll of 1 while equipped (normally 1–2).'},
  {name:'Teleport Crystal',copies:1,type:'spell',icon:'◆',desc:'1 use: teleport to any revealed tile.',use:'teleport'},
- {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: keep items and revive once.',apply:p=>{p.flags.insurance=true;p.other.push({name:'Acme Insurance',icon:'☂',desc:'Auto revive / keep items.'});}},
+ {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: gain another life, drop all items where you fell, and return to Start.'},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
- {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'Lay 2 dungeon tiles for 1 AP.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
+ {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'+1 Combat while equipped.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
  {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Can fly around connected corners. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
  {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.'},
  {name:"Sorcerer's Skull",copies:1,type:'spell',icon:'☠',desc:'1 use: 1 dice damage to all on tile.',use:'skull'},
@@ -177,7 +178,7 @@ const ITEM_MASTER=[
  {name:'Bomb',copies:2,type:'spell',icon:'●',desc:'1 use, 1 AP: 2 dice damage to current monster.',use:'bomb'},
  {name:'Tornado',copies:1,type:'spell',icon:'↻',desc:'1 use, 1 AP: move away from current monster without losing HP.',use:'tornado'},
  {name:'Morning Star',copies:1,type:'equipment',slot:'weapon',icon:'✹',desc:'+2 combat roll.'},
- {name:'Dragonlance',copies:1,type:'equipment',slot:'dragonlance',icon:'♜',desc:'One-handed. Against Dragon only: +3 dice damage.',apply:p=>{p.equipment.dragonlance={name:'Dragonlance',icon:'♜'};}},
+ {name:'Dragonlance',copies:1,type:'equipment',slot:'dragonlance',icon:'♜',desc:'One-handed. +1 combat die against the Red Dragon only.',apply:p=>{p.equipment.dragonlance={name:'Dragonlance',icon:'♜'};}},
  {name:'Loyal Bear',copies:1,type:'equipment',slot:'bear',icon:'🐻',desc:'+1 combat die until defeated. Takes no inventory space.',apply:p=>{p.equipment.bear={name:'Loyal Bear',icon:'🐻'};}},
  {name:'Magic Vine',copies:1,type:'spell',icon:'♧',desc:'1 use, 1 AP: 1 dice damage and monster skips its next attack.',use:'vine'}
 ];
@@ -345,7 +346,7 @@ function assetNames(){
  CHARACTERS.forEach(x=>names.push(x.name));
  MONSTER_MASTER.forEach(x=>names.push(x.name));
  ITEM_MASTER.forEach(x=>names.push(x.name));
- ['Hero','Hidden Monster','Item Marker','Red Dragon','Start','Exit','Spike Trap','Healing Pool','Ring','Straight','Corner','T-Junction','Crossroad'].forEach(x=>names.push(x));
+ ['Hero','Hidden Monster','Item Marker','Red Dragon','Firkin','Start','Exit','Spike Trap','Healing Pool','Ring','Straight','Corner','T-Junction','Crossroad'].forEach(x=>names.push(x));
  return [...new Set(names)];
 }
 function openAssetManager(){
@@ -697,9 +698,15 @@ function resetAllSounds(){
 loadSounds();
 window.addEventListener('pointerdown',()=>{try{audio()}catch(e){}},{once:true});
 function createTileDeck(){
-  // Start is face up and Exit is set aside. These 38 ordinary floor tiles form the shuffled dungeon stack.
+  // Start is face up and Exit is set aside. Each dungeon secretly contains
+  // 40-50 ordinary tiles before the Dragon's Exit appears.
   const deck=[...Array(15)].map(()=>({kind:'straight'}))
-    .concat([...Array(14)].map(()=>({kind:'corner'})),[...Array(2)].map(()=>({kind:'t'})),[...Array(5)].map(()=>({kind:'cross'})),[{kind:'spike'},{kind:'pool'}]);
+    .concat([...Array(14)].map(()=>({kind:'corner'})),[...Array(2)].map(()=>({kind:'t'})),[...Array(5)].map(()=>({kind:'cross'})),[...Array(3)].map(()=>({kind:'spike'})),[{kind:'pool'}]);
+  const extraCount=Math.floor(Math.random()*11);
+  const extraKinds=['straight','straight','corner','corner','t','cross'];
+  for(let i=0;i<extraCount;i++){
+    deck.push({kind:extraKinds[Math.floor(Math.random()*extraKinds.length)]});
+  }
 
   const ordinaryFloors=()=>deck.filter(t=>!['spike','pool'].includes(t.kind));
 
@@ -737,9 +744,9 @@ function createTileDeck(){
 function showTesterWarning(){
  showModal('A WARNING FROM THE DUNGEON','',[{text:'Enter at your own risk',cls:'green',fn:closeModal}]);
  const body=document.getElementById('modalBody');
- if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE</b>. If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br><br>Good luck, brave adventurer. You’ll need it.</div>`;
+ if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">TIP: The Ring may be hidden on one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
-function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
+function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,companionFirkin:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
 
 const TESTER_SINGLE_LIFE=true;
 const INVENTORY_LIMIT=8;
@@ -766,15 +773,15 @@ function moveToBackpack(item){const p=state.player;if(p.backpack.includes(item))
 function equipToSlot(item,slot){const p=state.player;if(slot==='armour'&&!isArmour(item))return false;if(slot==='boots'&&!isBoots(item))return false;if(slot==='cloak'&&!isCloak(item))return false;if((slot==='left'||slot==='right')&&!isHandItem(item))return false;
  if(isTwoHanded(item)){const displaced=[p.slots.left,p.slots.right].filter(Boolean).filter(x=>x!==item);if(p.backpack.length+displaced.length>BACKPACK_LIMIT){toast('Not enough backpack room to free both hands');return false;}displaced.forEach(x=>{removeFromCurrentLocation(x);p.backpack.push(x)});removeFromCurrentLocation(item);p.slots.left=item;p.slots.right=item;}
  else {const old=p.slots[slot];if(old&&old!==item){if(p.backpack.length>=BACKPACK_LIMIT){toast('Backpack is full');return false;}removeFromCurrentLocation(old);p.backpack.push(old);}if((slot==='left'||slot==='right')){const other=slot==='left'?'right':'left';if(p.slots[other]===item)p.slots[other]=null;}removeFromCurrentLocation(item);p.slots[slot]=item;}
- if(slot==='boots'&&item.name==='Magic Boots'&&!p.flags.bootsBonus){p.flags.bootsBonus=true;p.maxAp+=1;p.ap+=1;}syncEquipment();playSound('equip');toast(item.name+' equipped');return true;}
-function unequipItem(item){const p=state.player;if(!item)return false;if(p.backpack.length>=BACKPACK_LIMIT){toast('Backpack is full');return false;}if(item.name==='Magic Boots'&&p.flags.bootsBonus){p.flags.bootsBonus=false;p.maxAp=Math.max(1,p.maxAp-1);p.ap=Math.min(p.ap,p.maxAp);}removeFromCurrentLocation(item);p.backpack.push(item);syncEquipment();return true;}
+ syncEquipment();playSound('equip');toast(item.name+' equipped');return true;}
+function unequipItem(item){const p=state.player;if(!item)return false;if(p.backpack.length>=BACKPACK_LIMIT){toast('Backpack is full');return false;}removeFromCurrentLocation(item);p.backpack.push(item);syncEquipment();return true;}
 function equippedSlotFor(item){const s=state.player.slots;if(s.left===item&&s.right===item)return 'both hands';if(s.left===item)return 'left hand';if(s.right===item)return 'right hand';if(s.armour===item)return 'armour';if(s.boots===item)return 'boots';if(s.cloak===item)return 'attire';if(state.player.companionBear===item)return 'companion';return null;}
 function carriedHas(item){return allCarriedItems().includes(item);}
 function addToInventory(item,tile=getTile(state.player.x,state.player.y)){if(!item)return false;if(isBear(item)){state.player.companionBear=item;syncEquipment();sndItem();log('Loyal Bear joins you and uses no inventory space.','loot');render();return true;}pendingItemQueue.push({item,tile});if(pendingItemQueue.length===1)processPendingItem();return true;}
 function processPendingItem(){if(!pendingItemQueue.length)return;const {item,tile}=pendingItemQueue[0];const p=state.player;const buttons=[];if(isArmour(item)&&!p.slots.armour)buttons.push({text:'Wear Armour',cls:'green',fn:()=>finishPlaceNew(item,()=>equipToSlot(item,'armour'))});if(isBoots(item)&&!p.slots.boots)buttons.push({text:'Wear Boots',cls:'green',fn:()=>finishPlaceNew(item,()=>equipToSlot(item,'boots'))});if(isCloak(item)&&!p.slots.cloak)buttons.push({text:'Wear Attire',cls:'green',fn:()=>finishPlaceNew(item,()=>equipToSlot(item,'cloak'))});if(isHandItem(item)){if(!p.slots.left)buttons.push({text:isTwoHanded(item)?'Equip Both Hands':'Equip Left Hand',cls:'green',fn:()=>finishPlaceNew(item,()=>equipToSlot(item,'left'))});if(!isTwoHanded(item)&&!p.slots.right)buttons.push({text:'Equip Right Hand',cls:'green',fn:()=>finishPlaceNew(item,()=>equipToSlot(item,'right'))});}
  if(p.backpack.length<BACKPACK_LIMIT)buttons.push({text:'Put in Backpack',fn:()=>finishPlaceNew(item,()=>{p.backpack.push(item);syncEquipment();return true;})});buttons.push({text:'Leave on Tile',cls:'red',fn:()=>finishPlaceNew(item,()=>{tile.droppedItems=tile.droppedItems||[];tile.droppedItems.push(item);return true;})});showModal('You found '+item.name,(item.desc||'Choose where to place this item.')+'\n\nInventory spaces used: '+occupiedSpaceCount()+'/8',buttons);}
 function finishPlaceNew(item,fn){const ok=fn();if(ok===false)return;closeModal();sndItem();log('Placed '+item.name+'.','loot');pendingItemQueue.shift();render();setTimeout(processPendingItem,30);}
-function dropItemObject(item){const p=state.player;if(item.name==='Magic Boots'&&p.flags.bootsBonus){p.flags.bootsBonus=false;p.maxAp=Math.max(1,p.maxAp-1);p.ap=Math.min(p.ap,p.maxAp);}if(p.companionBear===item)p.companionBear=null;removeFromCurrentLocation(item);const t=getTile(p.x,p.y);t.droppedItems=t.droppedItems||[];t.droppedItems.push(item);syncEquipment();playSound('drop');log('Dropped '+item.name+' on this tile.','system');closeModal();render();}
+function dropItemObject(item){const p=state.player;if(p.companionBear===item)p.companionBear=null;removeFromCurrentLocation(item);const t=getTile(p.x,p.y);t.droppedItems=t.droppedItems||[];t.droppedItems.push(item);syncEquipment();playSound('drop');log('Dropped '+item.name+' on this tile.','system');closeModal();render();}
 function dropItem(idx){const item=allCarriedItems()[idx];if(item)dropItemObject(item);}
 function pickupDropped(idx){const tileKey=key(state.player.x,state.player.y);beginDroppedPickup(tileKey,idx);}
 function key(x,y){return `${x},${y}`;}
@@ -809,14 +816,12 @@ function awardItem(item=drawItem()){
  return addToInventory(item,tile);
 }
 function maybePopulate(tile){ if(tile.monsterMarker) tile.monsterPending=true; if(tile.itemMarker) tile.itemPending=true; }
-function startPlace(dir){const p=state.player;const freeTorchLay=!!(p.equipment.torch&&p.flags.torchFreeLay);if(p.ap<1&&!freeTorchLay)return;const raw=state.tileDeck.pop();if(!raw){log('No dungeon tiles left.','system');return;}placement={dir,kind:raw.kind,rot:0,raw};showPlacement();}
+function startPlace(dir){if(!view3d.enabled){toast('Return to 3D to lay tiles');return;}const p=state.player;if(p.ap<1)return;const raw=state.tileDeck.pop();if(!raw){log('No dungeon tiles left.','system');return;}placement={dir,kind:raw.kind,rot:0,raw};showPlacement();}
 function showPlacement(){const need=DIRS[placement.dir].opp;document.getElementById('placeInfo').textContent='Drawn: '+TILE_LABEL[placement.kind]+' — placing to the '+placement.dir+'.';document.getElementById('tilePreview').innerHTML=tileSVG({kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot)});document.getElementById('placeBtn').disabled=!openings(placement.kind,placement.rot)[need];document.getElementById('placement').classList.add('open');}
 document.getElementById('rotBtn').onclick=()=>{placement.rot=(placement.rot+1)%4;showPlacement();};
 document.getElementById('cancelPlace').onclick=()=>{if(placement){state.tileDeck.push(placement.raw);shuffle(state.tileDeck);}placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
 document.getElementById('placeBtn').onclick=()=>{const p=state.player,d=DIRS[placement.dir],nx=p.x+d.dx,ny=p.y+d.dy;const tile={kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot),visited:false,monsterMarker:placement.raw.monsterMarker,mNumber:placement.raw.mNumber||null,itemMarker:placement.raw.itemMarker};maybePopulate(tile);state.tiles[key(nx,ny)]=tile;
- const usedFreeTorchLay=!!(p.equipment.torch&&p.flags.torchFreeLay);
- if(usedFreeTorchLay){p.flags.torchFreeLay=false;log('Torch: second dungeon tile placed for no extra AP.','system');}
- else {p.ap-=1;if(p.equipment.torch&&state.tileDeck.length>0){p.flags.torchFreeLay=true;log('Torch: your next tile placement costs 0 AP.','system');}}
+ p.ap-=1;
  sndTile();log('Placed '+TILE_LABEL[tile.kind]+(tile.itemMarker?' with item marker':'')+' to the '+placement.dir+'.','system');if(state.tileDeck.length===0&&!state.exitPlaced)placeExitAndRing(nx,ny,tile);placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
 function placeExitAndRing(x,y,fromTile){
  state.exitPlaced=true;
@@ -881,7 +886,7 @@ function collectRingIfSafe(tileKey){
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
 
-function move(dir){window.BOD3D?.clearDice3D?.();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
+function move(dir){if(!view3d.enabled){toast('Return to 3D to move');return;}window.BOD3D?.clearDice3D?.();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
  if(t.kind==='spike'){promptOldSpikey(t);render();centreOnHero(false);return;}
  if(t.kind==='pool'&&!t.poolUsed){promptHealingPool(t);}
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
@@ -899,7 +904,7 @@ function move(dir){window.BOD3D?.clearDice3D?.();const p=state.player;if(p.ap<1)
   }
   openCombat(t);
  }
- else {collectRingIfSafe(key(p.x,p.y));}
+ else {const currentKey=key(p.x,p.y);collectRingIfSafe(currentKey);if(typeof window.collectFirkinIfSafe==='function')window.collectFirkinIfSafe(currentKey);}
  if(t.kind==='exit'&&p.hasRing&&!t.monster){win();}
  render();centreOnHero(false);}
 function showCloakChoice(tile){
@@ -946,19 +951,18 @@ function promptOldSpikey(tile){
  const carried=allCarriedItems().filter(x=>!isBear(x));
  const buttons=[];
  if(carried.length)buttons.push({text:'Destroy an Item',cls:'red',fn:()=>chooseSpikeSacrifice(tile)});
- buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=2){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playSound('hit');playSound('heroHurt');showCombatImpact('hero',state.player.health<=0?'kill':'hit',dmg);playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
- showModal('Old Spikey','Destroy one carried item to jam the mechanism, or roll a die. On 1–2 the trap springs and deals one die of direct damage.',buttons);
+ buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;const triggerLimit=state.player.equipment.boots?.name==='Magic Boots'?1:2;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=triggerLimit){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playSound('hit');playSound('heroHurt');showCombatImpact('hero',state.player.health<=0?'kill':'hit',dmg);playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
+ showModal('Old Spikey','Destroy one carried item to jam the mechanism, or roll a die. '+(state.player.equipment.boots?.name==='Magic Boots'?'Your Magic Boots help you pass: only a 1 springs the trap.':'On 1–2 the trap springs and deals one die of direct damage.'),buttons);
 }
 function chooseSpikeSacrifice(tile){const items=allCarriedItems().filter(x=>!isBear(x));showModal('Jam Old Spikey','Choose an item to destroy.',items.map(it=>({text:it.name,cls:'red',fn:()=>{dropDestroyedItem(it);closeModal();log('Destroyed '+it.name+' to jam Old Spikey.','system');render();}})).concat([{text:'Back',fn:()=>promptOldSpikey(tile)}]));}
-function dropDestroyedItem(item){const p=state.player;if(item.name==='Magic Boots'&&p.flags.bootsBonus){p.flags.bootsBonus=false;p.maxAp=Math.max(1,p.maxAp-1);p.ap=Math.min(p.ap,p.maxAp);}removeFromCurrentLocation(item);state.itemDiscard.push(item);syncEquipment();}
+function dropDestroyedItem(item){const p=state.player;removeFromCurrentLocation(item);state.itemDiscard.push(item);syncEquipment();}
 function promptHealingPool(tile){
  showModal('Healing Pool','Use the Healing Pool and restore your Health to full? The pool can only be used once.'+(tile.droppedItems&&tile.droppedItems.length?'\n\nItems belonging to a fallen adventurer lie here and may be recovered.':''),[
   {text:'Yes — Heal',cls:'green',fn:()=>{closeModal();state.player.health=state.player.maxHealth;tile.poolUsed=true;sndItem();playCurrentTileEffect('heal',1000);log('You use the Healing Pool and restore your health to full.','heal');render();}},
   {text:'No — Leave It',fn:()=>{closeModal();log('You leave the Healing Pool unused.','system');render();}}
  ]);
 }
-function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,armour:null,boots:null,cloak:null};p.backpack=[];p.companionBear=null;p.flags.bootsBonus=false;p.maxAp=state.charDef.maxAp;p.ap=Math.min(p.ap,p.maxAp);syncEquipment();}
-function healingPoolTile(){return Object.values(state.tiles).find(t=>t.kind==='pool')||null;}
+function clearPlayerItems(){const p=state.player;p.slots={left:null,right:null,armour:null,boots:null,cloak:null};p.backpack=[];p.companionBear=null;p.flags.bootsBonus=false;syncEquipment();}
 function useInventoryItem(list,idx){ /* legacy alias */ if(list==='inventory')useInventoryIndex(idx); }
 function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let used=false,msg='';
  if(it.use==='healthPotion'){const h=roll(2).total;p.health=Math.min(p.maxHealth,p.health+h);msg='Health Potion restores '+h+' health.';used=true;}
@@ -1102,6 +1106,26 @@ function tileSVG(tile){
  path+=`<rect x="${c-w-3}" y="${c-w-3}" width="${(w+3)*2}" height="${(w+3)*2}"/>`;
  return `<svg viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" fill="var(--cream)"/><g fill="var(--ink)">${path}</g></svg>`;
 }
+function renderCarriedRingHud(){
+ const viewport=document.getElementById('viewport');
+ if(!viewport)return;
+ let hud=document.getElementById('carriedRingHud');
+ if(!hud){
+  hud=document.createElement('div');
+  hud.id='carriedRingHud';
+  hud.setAttribute('aria-label','Ring of Creation carried');
+  const image=document.createElement('img');
+  image.alt='Ring of Creation';
+  hud.appendChild(image);
+  viewport.appendChild(hud);
+ }
+ const src=assetSrc('Ring');
+ const image=hud.querySelector('img');
+ if(image&&image.getAttribute('src')!==src)image.src=src;
+ const inGame=document.getElementById('charSelect')?.classList.contains('hidden');
+ hud.classList.toggle('visible',!!(state?.player?.hasRing&&inGame));
+}
+
 function render(){
  if(!state)return;
  document.getElementById('stats').innerHTML=`<div class="sectionTitle">${state.charDef?state.charDef.name:'Adventurer'}</div><div class="row"><span>Health</span><b class="hp">${state.player.health}/${state.player.maxHealth}</b></div><div class="hearts">${heartLine(state.player.health,state.player.maxHealth)}</div><div class="row"><span>AP</span><b class="ap">${state.player.ap}/${state.player.maxAp}</b></div><div class="statline">Combat: ${pDice()}d6+${pCombatMod()} &nbsp; Armour: -${pDamageReduction()}</div><div class="statline">Lives: ${state.player.lives} &nbsp; Ring: ${state.player.hasRing?`<span class="ringStatus">${iconHTML('Ring','◎')}<b>YES</b></span>`:'no'}</div>`;
@@ -1110,6 +1134,7 @@ function render(){
  renderWorld();
  renderControls();
  renderDev();
+ renderCarriedRingHud();
 
  document.getElementById('deckBadge').textContent='Tiles '+state.tileDeck.length;
  document.getElementById('monsterBadge').textContent='Monsters '+state.monsterDeck.length;
@@ -1154,7 +1179,10 @@ function renderInventory(){
  for(let i=0;i<BACKPACK_LIMIT;i++){const it=p.backpack[i];html+=`<div class="backpackSlot">${it?`<div class="slotItem" onclick="inspectBackpack(${i})"><div class="slotArt">${iconHTML(it.name,it.icon||'?')}</div><div class="slotName">${it.name}</div><div class="slotDesc">${it.desc||'No effect description.'}</div></div>`:'<div class="slotEmpty">Empty</div>'}</div>`;}
  html+=`</div>
  <div class="sectionTitle">Companions</div>
- <div class="slotGrid"><div class="equipSlot wide"><span class="slotLabel">${slotSymbolHTML('companion')}<span class="slotLabelText">Companions</span></span>${p.companionBear?`<div class="slotItem" onclick="inspectBear()"><div class="slotArt">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</div><div class="slotName">Loyal Bear</div><div class="slotDesc">Does not use inventory space.</div></div>`:'<div class="slotEmpty">No companions</div>'}</div></div>`;
+ <div class="slotGrid"><div class="equipSlot wide"><span class="slotLabel">${slotSymbolHTML('companion')}<span class="slotLabelText">Companions</span></span>
+ ${p.companionBear?`<div class="slotItem" onclick="inspectBear()"><div class="slotArt">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</div><div class="slotName">Loyal Bear</div><div class="slotDesc">+1 combat die.</div></div>`:''}
+ ${p.companionFirkin?`<div class="slotItem" onclick="inspectFirkin()"><div class="slotArt">${iconHTML('Firkin','F')}</div><div class="slotName">Firkin</div><div class="slotDesc">+3 to every attack roll.</div></div>`:''}
+ ${!p.companionBear&&!p.companionFirkin?'<div class="slotEmpty">No companions</div>':''}</div></div>`;
  const t=getTile(p.x,p.y);
  if(t&&t.droppedItems&&t.droppedItems.length)html+='<div class="sectionTitle">On this tile</div><div class="invgrid">'+t.droppedItems.map((x,i)=>`<button class="itemBtn" onclick="pickupDropped(${i})" title="Pick up ${x.name}">${iconHTML(x.name,x.icon||'?')}<span class="dropMark">+</span></button>`).join('')+'</div>';
  if(p.equipment.weapon&&p.equipment.weapon.name==='Magic Sword')html+=magicSwordPeekHTML();
@@ -1163,7 +1191,7 @@ function renderInventory(){
 function magicSwordPeekHTML(){const p=state.player;let rows=[];for(const dir of dirOrder){const d=DIRS[dir],t=getTile(p.x+d.dx,p.y+d.dy);if(t&&(t.monsterPending||(t.monster&&!t.monster.revealed)))rows.push(`<button class="peekBtn" onclick="peekMonster('${dir}')">View ${dir}</button>`);}return rows.length?'<div class="sectionTitle">Magic Sword</div><div class="small">View adjacent monster:</div>'+rows.join(' '):'';}
 window.peekMonster=function(dir){const p=state.player,d=DIRS[dir],t=getTile(p.x+d.dx,p.y+d.dy);if(!t)return;if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;}if(t.monster){t.monster.peeked=true;showModal('Magic Sword: '+dir,t.monster.name+'\nHealth '+t.monster.maxHealth+'\nCombat '+t.monster.dice+'d6+'+t.monster.mod,[{text:'Close',fn:closeModal}]);render();}};
 function carriedAt(slot){return state.player.slots[slot];}
-window.inspectCarried=function(slot){const item=carriedAt(slot);if(item)inspectItemObject(item);};window.inspectBackpack=function(idx){const item=state.player.backpack[idx];if(item)inspectItemObject(item);};window.inspectBear=function(){if(state.player.companionBear)inspectItemObject(state.player.companionBear);};
+window.inspectCarried=function(slot){const item=carriedAt(slot);if(item)inspectItemObject(item);};window.inspectBackpack=function(idx){const item=state.player.backpack[idx];if(item)inspectItemObject(item);};window.inspectBear=function(){if(state.player.companionBear)inspectItemObject(state.player.companionBear);};window.inspectFirkin=function(){if(!state.player.companionFirkin)return;showModal('Firkin','Rose’s rescued husband. Firkin adds +3 to every attack roll and can fight alongside the Loyal Bear.',[{text:'Close',fn:closeModal}]);};
 function inspectItemObject(item){const buttons=[];const eq=equippedSlotFor(item);if(item.type==='equipment'||isHandItem(item)||isAttire(item)){if(eq&&eq!=='companion')buttons.push({text:'Move to Backpack',fn:()=>{if(unequipItem(item)){closeModal();render();}}});if(isArmour(item)&&eq!=='armour')buttons.push({text:'Wear Armour',cls:'green',fn:()=>{if(equipToSlot(item,'armour')){closeModal();render();}}});else if(isBoots(item)&&eq!=='boots')buttons.push({text:'Wear Boots',cls:'green',fn:()=>{if(equipToSlot(item,'boots')){closeModal();render();}}});else if(isCloak(item)&&eq!=='attire')buttons.push({text:'Wear Attire',cls:'green',fn:()=>{if(equipToSlot(item,'cloak')){closeModal();render();}}});else if(isHandItem(item)&&eq!=='both hands'){buttons.push({text:isTwoHanded(item)?'Equip Both Hands':'Equip Left Hand',cls:'green',fn:()=>{if(equipToSlot(item,'left')){closeModal();render();}}});if(!isTwoHanded(item))buttons.push({text:'Equip Right Hand',cls:'green',fn:()=>{if(equipToSlot(item,'right')){closeModal();render();}}});}}
  if(!isChest(item)&&(item.type==='spell'||item.type==='consumable'||item.use))buttons.push({text:'Use',cls:'green',fn:()=>{closeModal();useItemObject(item);}});buttons.push({text:'Drop',cls:'red',fn:()=>dropItemObject(item)});buttons.push({text:'Close',fn:closeModal});showModal(item.name,(item.desc||'Item')+(eq?'\n\nActive: '+eq:''),buttons);}
 function useItemObject(item){if(item.use==='iceStaff'){useItem(item);return;}useItem(item,()=>{removeFromCurrentLocation(item);state.itemDiscard.push(item);syncEquipment();render();});}
@@ -1294,7 +1322,7 @@ function beginDroppedPickup(tileKey,idx){
  },0);
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.hasFirkin)d.innerHTML+=`<span class="firkinMark" aria-label="Firkin is waiting here">${iconHTML('Firkin','F')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
  const visible=t.droppedItems.slice(0,5);
  d.innerHTML+=`<span class="tileItemStack" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${visible.map((item,i)=>`<span class="tileItemMarker">${iconHTML(item.name,item.icon||'?')}${i===visible.length-1&&t.droppedItems.length>visible.length?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`).join('')}</span>`;
 }if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?monsterBoardHTML(t.monster,rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':'',k):`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);wireBoardModels(d);
@@ -1328,8 +1356,8 @@ function updateMobileDpad(){
  if(!dpad||!state)return;
 
  const p=state.player;
- const canPayLay=p.ap>=1||!!(p.equipment.torch&&p.flags.torchFreeLay);
- const blocked=state.gameOver||!!combat||!!placement||!!teleportItem||!!rangedMode;
+ const canPayLay=p.ap>=1;
+ const blocked=!view3d.enabled||state.gameOver||!!combat||!!placement||!!teleportItem||!!rangedMode;
 
  dpad.querySelectorAll('.dpadBtn').forEach(btn=>{
   const dir=btn.dataset.dir;
@@ -1371,8 +1399,30 @@ function renderControls(){
  if(rangedMode){addBtn(wrap,'Cancel Ranged Attack','red',cancelRangedAttack);return;}
 
  const p=state.player;
- if(p.equipment.bow)addBtn(wrap,p.equipment.bow.name+' — Range 1-3 (3 AP)','blue',()=>startRangedAttack('bow'),p.ap<3);
- if(p.equipment.staff)addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),p.ap<4);
+ const hasTargets=(range,allowCorners=false)=>
+  typeof rangedTargets==='function'&&rangedTargets(range,allowCorners).length>0;
+ const equippedHands=[...new Set([p.slots.left,p.slots.right].filter(Boolean))];
+ const equippedFireball=equippedHands.find(item=>item.use==='fireball');
+ const equippedDaggers=equippedHands.find(item=>item.use==='daggers');
+ const consumeEquippedSpell=item=>{
+  removeFromCurrentLocation(item);
+  state.itemDiscard.push(item);
+  syncEquipment();
+  render();
+ };
+
+ if(p.equipment.bow&&hasTargets(3)){
+  addBtn(wrap,p.equipment.bow.name+' — Range 1-3 (3 AP)','blue',()=>startRangedAttack('bow'),!view3d.enabled||p.ap<3);
+ }
+ if(p.equipment.staff&&hasTargets(2)){
+  addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),!view3d.enabled||p.ap<4);
+ }
+ if(equippedFireball&&hasTargets(3)){
+  addBtn(wrap,'Fireball — Range 1-3 (2 AP)','blue',()=>startRangedAttack('fireball',equippedFireball,()=>consumeEquippedSpell(equippedFireball)),!view3d.enabled||p.ap<2);
+ }
+ if(equippedDaggers&&hasTargets(3,true)){
+  addBtn(wrap,'Flying Daggers — Range 1-3 (2 AP)','blue',()=>startRangedAttack('daggers',equippedDaggers,()=>consumeEquippedSpell(equippedDaggers)),!view3d.enabled||p.ap<2);
+ }
 
  // Directional movement/tile laying is handled by the shared N/E/S/W D-pad
  // on both desktop and mobile. Avoid rendering the old duplicate labelled row.
@@ -1405,6 +1455,7 @@ function applyView3D(){
   if(view3d.enabled&&state)window.BOD3D.render(state);
  }
 }
+function mapMinimumScale(){return window.matchMedia('(max-width: 800px)').matches?.06:.2;}
 function fitFullMap(){
  if(!state||!state.tiles)return;
  const coords=Object.keys(state.tiles)
@@ -1416,7 +1467,7 @@ function fitFullMap(){
  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
  const mapW=(maxX-minX+1)*STEP,mapH=(maxY-minY+1)*STEP;
  const pad=window.matchMedia('(max-width: 800px)').matches?24:48;
- pan.scale=Math.max(.2,Math.min(2.6,Math.min((rect.width-pad*2)/mapW,(rect.height-pad*2)/mapH)));
+ pan.scale=Math.max(mapMinimumScale(),Math.min(2.6,Math.min((rect.width-pad*2)/mapW,(rect.height-pad*2)/mapH)));
  const cx=(minX+maxX)*STEP/2+TILE/2,cy=(minY+maxY)*STEP/2+TILE/2;
  pan.x=rect.width/2-cx*pan.scale;pan.y=rect.height/2-cy*pan.scale;
  applyPan();
@@ -1424,11 +1475,13 @@ function fitFullMap(){
 function toggleView3D(){
  view3d.enabled=!view3d.enabled;
  applyView3D();
+ renderControls();
  if(!view3d.enabled)setTimeout(fitFullMap,0);
 }
 function resetView3D(){
  view3d.enabled=true;
  applyView3D();
+ renderControls();
  if(window.BOD3D)window.BOD3D.resetCamera();
 }
 function applyPan(){document.getElementById('world').style.transform=`translate(${pan.x}px,${pan.y}px) scale(${pan.scale})`;}
@@ -1453,7 +1506,7 @@ function zoomAt(clientX,clientY,newScale){
   const rect=vp.getBoundingClientRect();
   const px=clientX-rect.left,py=clientY-rect.top;
   const wx=(px-pan.x)/pan.scale,wy=(py-pan.y)/pan.scale;
-  pan.scale=Math.max(.45,Math.min(2.6,newScale));
+  pan.scale=Math.max(mapMinimumScale(),Math.min(2.6,newScale));
   pan.x=px-wx*pan.scale;pan.y=py-wy*pan.scale;applyPan();
 }
 const vp=document.getElementById('viewport');
@@ -1493,13 +1546,13 @@ function endPointer(e){
   else if(activePointers.size===1){const p=[...activePointers.values()][0];dragOrigin={x:p.x,y:p.y,panX:pan.x,panY:pan.y};pinchStart=null;}
 }
 vp.addEventListener('pointerup',endPointer);vp.addEventListener('pointercancel',endPointer);
-vp.addEventListener('dblclick',e=>{e.preventDefault();centreOnHero(true);});
-vp.addEventListener('touchend',e=>{if(e.touches.length)return;const now=Date.now();if(now-lastTap<320)centreOnHero(true);lastTap=now;},{passive:true});
+vp.addEventListener('dblclick',e=>{e.preventDefault();if(view3d.enabled)centreOnHero(true);else fitFullMap();});
+vp.addEventListener('touchend',e=>{if(e.touches.length)return;const now=Date.now();if(now-lastTap<320){if(view3d.enabled)centreOnHero(true);else fitFullMap();}lastTap=now;},{passive:true});
 vp.addEventListener('contextmenu',e=>{if(view3d.enabled)e.preventDefault();});
 vp.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY,pan.scale*(e.deltaY<0?1.12:0.89));},{passive:false});
-window.addEventListener('resize',()=>{if(state)centreOnHero(false);});
+window.addEventListener('resize',()=>{if(!state)return;if(view3d.enabled)centreOnHero(false);else fitFullMap();});
 document.getElementById('viewBtn').onclick=()=>{audio();toggleView3D();};
-function migrateSave(){if(!state||!state.player)return;const p=state.player;p.slots=p.slots||{left:null,right:null,armour:null,boots:null};p.backpack=p.backpack||[];p.flags=p.flags||{};p.flags.bootsBonus=!!p.flags.bootsBonus;p.flags.torchFreeLay=!!p.flags.torchFreeLay;if(Array.isArray(p.inventory)&&!p.backpack.length){p.inventory.slice(0,4).forEach(x=>p.backpack.push(x));}p.companionBear=p.companionBear||null;p.inventory=[];syncEquipment();}
+function migrateSave(){if(!state||!state.player)return;const p=state.player;p.slots=p.slots||{left:null,right:null,armour:null,boots:null};p.backpack=p.backpack||[];p.flags=p.flags||{};p.flags.bootsBonus=false;p.flags.torchFreeLay=!!p.flags.torchFreeLay;if(Array.isArray(p.inventory)&&!p.backpack.length){p.inventory.slice(0,4).forEach(x=>p.backpack.push(x));}p.companionBear=p.companionBear||null;p.inventory=[];syncEquipment();}
 
 
 function saveGame(){
@@ -1673,18 +1726,8 @@ function testerEquipItem(name,slot){
   if(p.slots.cloak)testerDropDisplaced([p.slots.cloak]);
   p.slots.cloak=item;
  }else if(slot==='boots'){
-  if(p.slots.boots?.name==='Magic Boots'&&p.flags.bootsBonus){
-   p.flags.bootsBonus=false;
-   p.maxAp=Math.max(1,p.maxAp-1);
-   p.ap=Math.min(p.ap,p.maxAp);
-  }
   if(p.slots.boots)testerDropDisplaced([p.slots.boots]);
   p.slots.boots=item;
-  if(item.name==='Magic Boots'&&!p.flags.bootsBonus){
-   p.flags.bootsBonus=true;
-   p.maxAp+=1;
-   p.ap+=1;
-  }
  }else if(slot==='bear'){
   if(p.companionBear)testerDropDisplaced([p.companionBear]);
   p.companionBear=item;
@@ -1757,12 +1800,6 @@ function testerAddToBackpack(name){
 function testerClearEquipment(){
  if(!state)return;
  const p=state.player;
-
- if(p.slots.boots?.name==='Magic Boots'&&p.flags.bootsBonus){
-  p.flags.bootsBonus=false;
-  p.maxAp=Math.max(1,p.maxAp-1);
-  p.ap=Math.min(p.ap,p.maxAp);
- }
 
  p.slots={left:null,right:null,armour:null,boots:null,cloak:null};
  p.companionBear=null;
@@ -2085,6 +2122,7 @@ function developerBuildCompleteDungeon(withMonsters){
  };
 
  const frontier=[{x:0,y:0}];
+ let lastLaid=null;
 
  function findPlacement(raw){
   const candidates=[];
@@ -2145,7 +2183,6 @@ function developerBuildCompleteDungeon(withMonsters){
    }
   }else{
    delete tile.monsterMarker;
-   delete tile.mNumber;
    delete tile.monsterPending;
    delete tile.monster;
    delete tile.itemMarker;
@@ -2156,26 +2193,18 @@ function developerBuildCompleteDungeon(withMonsters){
   generated[key(placementChoice.x,placementChoice.y)]=tile;
   frontier.push({x:placementChoice.x,y:placementChoice.y});
   state.tileDiscard.push(raw);
- }
-
- // Add the Exit as the final connected tile.
- const exitRaw={kind:'exit'};
- const exitPlacement=findPlacement(exitRaw);
-
- if(exitPlacement){
-  const exitTile={
-   kind:'exit',
-   rot:exitPlacement.rot,
-   opens:openings('exit',exitPlacement.rot),
-   visited:false
-  };
-
-  generated[key(exitPlacement.x,exitPlacement.y)]=exitTile;
-  state.exitPlaced=true;
+  lastLaid={x:placementChoice.x,y:placementChoice.y,tile};
  }
 
  state.tiles=generated;
  state.tileDeck=[];
+
+ // Use the real end-of-dungeon routine so developer-built dungeons receive
+ // the guarded Exit and the normal M2-M12 Ring location roll.
+ if(lastLaid){
+  placeExitAndRing(lastLaid.x,lastLaid.y,lastLaid.tile);
+  if(withMonsters)setTimeout(()=>window.BODAssignRingGuardian?.(),0);
+ }else log('[TEST] Could not place the Exit because no dungeon tiles were generated.','combat');
 
  if(withMonsters){
   log('[TEST] Spawned a complete random dungeon with revealed monsters.','system');
@@ -2259,6 +2288,42 @@ function developerAction(action){
    openSoundManager();
    break;
  }
+}
+
+function wireMobileDeveloperHold(){
+ const viewButton=document.getElementById('viewBtn');
+ if(!viewButton||viewButton.dataset.devHoldWired)return;
+ viewButton.dataset.devHoldWired='1';
+ viewButton.style.userSelect='none';
+ viewButton.style.webkitUserSelect='none';
+ viewButton.style.webkitTouchCallout='none';
+ viewButton.style.touchAction='manipulation';
+ let holdTimer=null,suppressNextClick=false;
+ const cancelHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}};
+ const startHold=()=>{
+  cancelHold();
+  holdTimer=setTimeout(()=>{
+   holdTimer=null;
+   suppressNextClick=true;
+   setTimeout(()=>{suppressNextClick=false;},1000);
+   if(navigator.vibrate)navigator.vibrate(40);
+   openDeveloperConsole();
+  },5000);
+ };
+ if('ontouchstart' in window){
+  viewButton.addEventListener('touchstart',startHold,{passive:true});
+  ['touchend','touchcancel'].forEach(type=>viewButton.addEventListener(type,cancelHold,{passive:true}));
+ }else{
+  viewButton.addEventListener('pointerdown',event=>{if(event.pointerType!=='mouse')startHold();});
+  ['pointerup','pointercancel'].forEach(type=>viewButton.addEventListener(type,cancelHold));
+ }
+ viewButton.addEventListener('click',event=>{
+  if(!suppressNextClick)return;
+  suppressNextClick=false;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+ },true);
+ viewButton.addEventListener('contextmenu',event=>{if(event.pointerType!=='mouse')event.preventDefault();});
 }
 
 function wireDeveloperConsole(){
@@ -2403,9 +2468,10 @@ function handleGameKeyboard(e){
  if(anyGameOverlayOpen()||state.gameOver||teleportItem||rangedMode)return;
  const dir=keyboardDirection(e);if(!dir)return;
  e.preventDefault();
+ if(!view3d.enabled){toast('Return to 3D to move');return;}
  if(canMove(dir)){move(dir);return;}
  if(canLay(dir)){
-  const p=state.player,canPay=p.ap>=1||!!(p.equipment.torch&&p.flags.torchFreeLay);
+  const p=state.player,canPay=p.ap>=1;
   if(canPay)startPlace(dir);else toast('Not enough AP');
  }
 }
@@ -2441,13 +2507,63 @@ if(document.readyState==='loading'){
  document.addEventListener('DOMContentLoaded',()=>{
   wireItemTester();
   wireDeveloperConsole();
+  wireMobileDeveloperHold();
  });
 }else{
  wireItemTester();
  wireDeveloperConsole();
+ wireMobileDeveloperHold();
 }
 
-function win(){state.gameOver=true;sndWin();closeCombat();showModal('YOU ESCAPED!','You defeated the Dragon and escaped with the Ring of Creation.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
+function endingParagraph(text){return '<p class="testerStoryParagraph">'+text+'</p>';}
+function endingScrollHTML(rescuedFirkin){
+ const heading='<div class="testerStoryHeading">CONGRATULATIONS, ADVENTURER!</div>';
+ const stats='<div class="testerStoryHeading endingStatsHeading">YOUR ADVENTURE</div><p class="testerStoryParagraph endingStats">'+adventureStats().replace(/\n/g,'<br>')+'</p>';
+ const end='<div class="testerStoryHeading endingTheEnd">THE END</div>';
+ const rescued=[
+  'You found the Ring of Creation—the legends were true! Better still, you helped Firkin escape from the dungeon.',
+  'Exhausted, you collapse outside the cave entrance. Smoke billows into the night, obscuring the stars. You and Firkin rest beside the dying fire and share stories of your adventures.',
+  'Firkin cannot thank you enough.',
+  '“Well, Firkin, I may have a surprise for you—but it’ll cost you a mug of ale!”',
+  'At last, you make your way back to the Wasted Wizard Tavern and slump your weary bones into what feels like the finest firelit alcove in all the realm.',
+  'Mary recognises you immediately.',
+  '“Our hero returns!” she calls across the room, giving you a knowing look. “I knew you’d be back. Still, I’m glad you settled your tab first!” she laughs.',
+  'Suddenly, Firkin cries out.',
+  '“Rose! Rose, my love!”',
+  'Rose looks up from her table. Mary has been kind enough to look after her while she waited. She rushes across the tavern and throws herself into Firkin’s arms.',
+  '“How can I ever repay you?” she asks, turning to you.',
+  'Then she looks at Firkin.',
+  '“And how can I ever forgive you?” she adds, slapping him across the back of the head.',
+  'All’s well that ends well—and this adventure did end well.',
+  'At least, until another map turns up…'
+ ];
+ const missing=[
+  'You found the Ring of Creation—the legends were true!',
+  'Exhausted, you collapse outside the cave entrance. Smoke billows into the night, obscuring the stars. As you rest beneath their faint light, the horrors of the dungeon slowly begin to fade.',
+  'Once you have gathered your strength, you make your way back to the Wasted Wizard Tavern, victorious—but carrying sad news for Rose.',
+  'You slump your weary bones into the warmth of the finest firelit alcove in all the realm.',
+  'Mary recognises you immediately.',
+  '“Our hero returns!” she calls across the room. “I knew you’d be back. Still, I’m glad you settled your tab first!” she laughs.',
+  'Rose looks up from her table, hope shining in her eyes.',
+  '“I found the Ring,” you tell her quietly, “but I couldn’t find Firkin.”',
+  'Her eyes fill with tears.',
+  'You place a reassuring hand upon her shoulder.',
+  '“Perhaps the dungeon hasn’t claimed him. Let me rest, and I will go in again. Trust me.”',
+  'Somewhere beneath the earth, in the cold darkness of the dungeon, a frightened halfling waits.',
+  'Your adventure is over—for now.'
+ ];
+ return '<div class="testerWarningScroll hasStory endingScroll">'+heading+
+  (rescuedFirkin?rescued:missing).map(endingParagraph).join('')+stats+end+'</div>';
+}
+function win(){
+ state.gameOver=true;
+ sndWin();
+ closeCombat();
+ const rescuedFirkin=!!state.player.companionFirkin;
+ showModal('YOU ESCAPED!','',[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);
+ const body=document.getElementById('modalBody');
+ if(body)body.innerHTML=endingScrollHTML(rescuedFirkin);
+}
 function lose(){state.gameOver=true;sndLose();closeCombat();showModal('GAME OVER','The dungeon claims another adventurer.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
 
 // v11.19: Clear any settled or still-animating dice at the start of a new game.

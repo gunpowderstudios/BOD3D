@@ -1,5 +1,158 @@
 # BOD3D-TEST Changelog
 
+## v12.10
+
+- Fixed the intro ambience switching prematurely from `distant-monsters.mp3` to `dungeon-sounds.mp3`.
+- The Android/page-lifecycle audio controller now recognises the actual `#charSelect` screen used by the game.
+- Focus, pageshow and tab-return events now restore the correct track for the visible screen.
+
+## v12.09
+
+- Restored ACME Insurance under the single-life rules: it is consumed automatically on defeat and grants one resurrection.
+- The hero returns to Start with full Health and AP.
+- All equipped and backpack items drop on the exact death tile; the Ring also drops there if carried.
+- Companions are not treated as dropped items.
+- Removed the old Dragon-death rule that transferred items to the Healing Pool.
+- Updated the ACME Insurance item description and removed its obsolete legacy inventory hook.
+
+## v12.08
+
+- Fixed Firkin’s guardian assignment so the whimpering message can no longer refer to an older revealed monster elsewhere in the dungeon.
+- Firkin now attaches only to the specific 10+ Health monster in the current combat encounter.
+- The Red Dragon and Ring guardian remain excluded; running away leaves Firkin attached to that monster.
+- Changed the notification to: “You hear whimpering nearby…!”
+
+## v12.07
+
+- Added Firkin as a hidden rescue companion after 15 tiles and 6 monster kills, with a 25% chance on each newly revealed 8+ Health monster and a guaranteed next suitable guardian from tile 25.
+- Prevented Firkin from sharing a guardian with the Ring or Red Dragon.
+- Added melee, ranged and trap rescue handling; a distant Firkin waits on the guardian’s tile until reached.
+- Firkin adds +3 to every attack roll and stacks with the Loyal Bear’s extra combat die.
+- Added Firkin to the companion panel, Asset Manager and 2D/3D token rendering at `assets/companions/firkin.png`.
+- Changed Firkin’s disappearance in the introduction from many years to many days.
+- Added scroll-based rescued-Firkin and missing-Firkin victory endings using the approved stories.
+
+## v12.06
+
+- Replaced the body of “A SHORT STORY…” with the revised tavern and dungeon introduction.
+- Corrected dialogue punctuation, hyphenation, capitalisation and sentence structure while preserving the existing title.
+
+## v12.05
+
+- Removed the stray punctuation before “If your hero falls…” and placed the exclamation mark correctly inside “ONE LIFE!”.
+- Added the Ring guardian tip and retained the Red Dragon warning in red text on the opening scroll.
+
+## v12.04
+
+- Removed the separate white “3D” text beneath the opening-screen logo because the updated logo graphic now includes it.
+- Kept the visible version number beneath the logo and left the logo artwork itself unchanged.
+
+## v12.03
+
+- Moved the character-selection logo down on mobile so it no longer clashes with the upper-left BUY BOD tag or upper-right mute control.
+- Preserved the existing logo size and desktop placement.
+
+## v12.02
+
+- Changed Dragonlance from three extra damage dice after a hit to +1 normal combat die against the Red Dragon only.
+- Dragonlance now behaves like the Bear's dice bonus, but never applies against ordinary monsters.
+- Updated the item description to match the corrected rule.
+
+## v12.01
+
+- Moved the solid-blue BUY BOD button flush to the upper-left corner on desktop and mobile.
+- Restyled it as a neat fabric/jeans-style tag with a squared attached corner, subtle inset edge and compact raised shadow.
+- Shifted the mobile Centre circle to the right so it remains clear of the tag without moving Map, mute, menu or fullscreen controls.
+
+## v12.00
+
+- Restyled BUY BOD as a smaller solid-blue button with bold white text.
+- Matched the bordered, raised and pressed appearance of the compact red mobile action buttons without changing its link or position.
+
+## v11.99
+
+- Added a persistent blue BUY BOD tab on the right edge of desktop and mobile screens.
+- The button opens `https://www.gunpowderstudios.co.uk/` in a new tab with safe external-link attributes.
+- Positioned it away from the left-side Ring/hearts and the centred movement and ranged controls.
+
+## v11.98
+
+- Ranged-action buttons now appear only when the relevant item is equipped and at least one legal monster target is within its permitted range.
+- Applied the automatic-button rule to Bow, Elven Bow, Ice Staff, and equipped Fireball or Flying Daggers; backpack-only spells remain available through Items.
+- Preserved weapon and backpack switching during melee combat so a player can change to a hand weapon after a monster charges.
+- Randomised each dungeon to contain a hidden total of 40–50 ordinary tiles before the Dragon's Exit appears, while retaining three Spike Traps, the Healing Pool, M2–M12, two item locations, and the 20-tile Ring guardian rule.
+
+## v11.97
+
+- Restored the player's AP after a ranged encounter fully resolves, allowing permanent ranged weapons such as the Bow and Elven Bow to be used again against later monsters.
+- A ranged kill or trap kill restores AP immediately; a surviving monster's charge restores it only after the resulting melee encounter closes.
+- Moved desktop ranged-action buttons into a bounded low-left column so they no longer overlap the centred NSEW D-pad.
+
+## v11.96
+
+- Restored the complete-dungeon fit when entering 2D Map mode on mobile.
+- Kept one-finger panning and two-finger pinch zoom enabled in the reference-only map.
+- Matched the pinch-zoom minimum scale to the full-map fit so large dungeons no longer jump back to a cropped 0.45 scale.
+- Double-tapping the 2D map or rotating/resizing the screen now refits the entire dungeon.
+
+## v11.95
+
+- Added a small floating Ring of Creation image at the upper-left of the board after the player physically collects the Ring.
+- The indicator uses the current Ring asset mapping, does not intercept controls, and hides when the Ring is not carried or the player returns to character selection.
+- Preserved the user's updated “A SHORT STORY…” heading and story text unchanged.
+
+## v11.94
+
+- Made the five-second Map/3D mobile Developer Tools hold reliable by using native touch start/end handling and allowing normal finger drift during the hold.
+- Confirmed and restored the v11.65 Ring rule: after at least 20 ordinary dungeon tiles, a random living non-Dragon monster with 10+ starting Health carries the Ring.
+- The Ring replaces that guardian's normal item reward and remains on its tile after a ranged kill until the hero reaches it.
+- Complete developer dungeons containing monsters now explicitly run the same Ring guardian assignment. Tiles-only dungeons cannot assign the Ring until an eligible monster exists.
+
+## v11.93
+
+- Fixed complete dungeons generated by Developer Tools so they use the normal end-of-dungeon routine.
+- Developer-built dungeons now include the Exit guarded by the Red Dragon and perform the normal two-dice Ring location roll across M2–M12.
+- Preserved M2–M12 locations in the tiles-only complete-dungeon test so the Ring can still be placed correctly.
+
+## v11.92
+
+- Moved the five-second mobile Developer Console gesture from the version number to the always-visible Map/3D button during gameplay.
+- A normal tap still switches views; a completed long press opens Developer Tools without also switching the view.
+
+## v11.91
+
+- Added a TEST-only mobile shortcut: press and hold the visible version number continuously for five seconds to open the existing Developer Console.
+- Preserved the current desktop Developer Console, dice rolls, calibration, tuning controls, and keyboard shortcut unchanged.
+
+## v11.90
+
+- Fixed the D-pad and combat controls remaining disabled after returning from the reference-only 2D map to 3D.
+- Control availability now refreshes whenever the board view changes or the 3D view is reset.
+
+## v11.89
+
+- Replaced the Magic Boots' obsolete +1 AP effect with improved protection against Old Spikey: the trap springs only on a roll of 1 while the boots are equipped, instead of 1–2.
+- Increased the shuffled dungeon from one Spike Trap tile to three.
+- Removed all remaining Magic Boots AP adjustments from equipment, inventory, save migration, and tester paths.
+
+## v11.88
+
+- Changed the equipped Torch to grant +1 Combat.
+- Removed the Torch's obsolete AP-free second tile effect.
+- Made 2D/map mode reference-only: map pan and zoom remain available, but movement, tile laying, and combat actions require returning to 3D.
+
+## v11.87
+
+- Removed unresolved Git conflict markers from `assets/assets.js`.
+- Restored the canonical PNG mappings for Sirrus, Tamara, Mud Monster, Giant Snake and Mirror Monster in the Asset Manager.
+- Removed obsolete duplicate runtime patches from the asset-path file; current dedicated patches remain unchanged.
+- Updated the `assets.js` cache tag so browsers load the repaired mapping table.
+
+## v11.86
+
+- Made permanent blood pools and droplets left by defeated monsters slightly redder.
+- Changed only the two blood-material colours; shape, size, opacity and behaviour are unchanged.
+
 ## v11.85
 
 - Replaced the large mobile ranged control with a compact red combat-style button low-left beside the D-pad.
