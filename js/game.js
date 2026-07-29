@@ -3,6 +3,10 @@
 
 const VERSION='v11.23';
 
+// Developer tools are available only on TEST and local development builds.
+// The same code can be promoted safely: LIVE disables every activation route automatically.
+const DEVELOPER_TOOLS_ENABLED=(location.protocol==='file:'||/\/(?:BOD3D-TEST)(?:\/|$)/i.test(location.pathname)||/^(?:localhost|127\.0\.0\.1)$/.test(location.hostname));
+
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
  {id:'tamara',name:'Tamara the Fighter',glyph:'⚔',desc:'Fearless sword fighter.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
@@ -1920,6 +1924,7 @@ function handleItemTesterClick(event){
  closeItemTester();
 }
 function openItemTester(){
+ if(!DEVELOPER_TOOLS_ENABLED)return;
  if(!state){
   toast('Start a game first');
   return;
@@ -1951,6 +1956,7 @@ function closeItemTester(){
 
 
 function openDeveloperConsole(){
+ if(!DEVELOPER_TOOLS_ENABLED)return;
  if(!state){
   toast('Start a game first');
   return;
@@ -2336,6 +2342,7 @@ function developerAction(action){
 }
 
 function wireMobileDeveloperHold(){
+ if(!DEVELOPER_TOOLS_ENABLED)return;
  const viewButton=document.getElementById('viewBtn');
  if(!viewButton||viewButton.dataset.devHoldWired)return;
  viewButton.dataset.devHoldWired='1';
@@ -2372,6 +2379,7 @@ function wireMobileDeveloperHold(){
 }
 
 function wireDeveloperConsole(){
+ if(!DEVELOPER_TOOLS_ENABLED){document.getElementById('developerConsole')?.remove();return;}
  const consoleEl=document.getElementById('developerConsole');
  const closeButton=document.getElementById('developerConsoleClose');
  if(!consoleEl||!closeButton)return;
@@ -2437,8 +2445,9 @@ function wireDeveloperConsole(){
 
 function handleGameKeyboard(e){
  if(
+  DEVELOPER_TOOLS_ENABLED &&
   e.code==='Escape' &&
-  document.getElementById('developerConsole').classList.contains('open')
+  document.getElementById('developerConsole')?.classList.contains('open')
  ){
   e.preventDefault();
   closeDeveloperConsole();
@@ -2446,8 +2455,9 @@ function handleGameKeyboard(e){
  }
 
  if(
+  DEVELOPER_TOOLS_ENABLED &&
   e.code==='Escape' &&
-  document.getElementById('itemTester').classList.contains('open')
+  document.getElementById('itemTester')?.classList.contains('open')
  ){
   e.preventDefault();
   closeItemTester();
@@ -2457,7 +2467,7 @@ function handleGameKeyboard(e){
  // Hidden tester shortcuts. These are intentionally absent from the player-facing menu.
  // Mac: Control + Option + Shift. Windows: Ctrl + Alt + Shift.
  // S = save, L = load, A = Asset Manager, M = Sound Manager, I = Item Tester, D = Developer Console.
- if(e.ctrlKey&&e.altKey&&e.shiftKey&&!e.metaKey){
+ if(DEVELOPER_TOOLS_ENABLED&&e.ctrlKey&&e.altKey&&e.shiftKey&&!e.metaKey){
   if(e.code==='KeyS'){
    e.preventDefault();
    if(state)saveGame();else toast('No active game to save.');
@@ -2523,6 +2533,7 @@ function handleGameKeyboard(e){
 document.addEventListener('keydown',handleGameKeyboard);
 
 function wireItemTester(){
+ if(!DEVELOPER_TOOLS_ENABLED){document.getElementById('itemTester')?.remove();return;}
  const closeButton=document.getElementById('itemTesterClose');
  const healButton=document.getElementById('testerHeal');
  const clearButton=document.getElementById('testerClear');

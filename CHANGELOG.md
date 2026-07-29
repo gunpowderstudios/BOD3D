@@ -1,5 +1,31 @@
 # BOD3D-TEST Changelog
 
+## v12.26
+
+- Adopted the uploaded 1024×1024 `assets/ui/app-icon.png` as the master application icon.
+- Generated proper 192×192 and 512×512 PNG application icons from the master.
+- Updated the web-app manifest and Apple touch icon to use the custom artwork.
+- Removed the temporary generated SVG application icons.
+
+## v12.25
+
+- Removed a trailing install-helper console error found during final runtime validation.
+- No game mechanics, layout or install behaviour changed.
+
+## v12.24
+
+- Added a TEST-scoped installable web-app manifest and app icons.
+- Added an Install BOD3D App button beneath Enter the Dungeon on the character screen.
+- Chromium browsers use the native install prompt; iPhone/iPad and Safari receive Add to Home Screen/Add to Dock instructions.
+- Added standalone display metadata so an installed copy opens like an app.
+- Deliberately omitted a service worker and offline caching to avoid stale game code, sounds or artwork.
+
+## v12.23
+
+- Added an automatic environment guard for developer tools.
+- Kept the Developer Console, Item Tester, desktop shortcuts and mobile five-second hold enabled on BOD3D-TEST and local development.
+- Disabled all of those activation routes automatically on the LIVE /BOD3D/ site, making future TEST-to-LIVE promotions safe by default.
+
 ## v12.22
 
 - Widened the intro and both end-game story scroll text areas to 85% of the parchment on desktop.
