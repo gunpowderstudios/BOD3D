@@ -1,9 +1,10 @@
-// BOD3D v12.25 — safe install/Add to Home Screen helper (no offline cache)
+// BOD3D v12.27 — mobile-only install/Add to Home Screen helper (no offline cache)
 (function(){
  'use strict';
  let deferredPrompt=null;
  const standalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||navigator.standalone===true;
  const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(/macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+ const isMobileDevice=()=>isIOS()||/android|mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&window.matchMedia?.('(max-width: 900px)').matches);
  function instructions(){
   if(isIOS())return '<b>iPhone or iPad:</b> tap the Share button, then choose <b>Add to Home Screen</b>.';
   if(/macintosh|mac os x/i.test(navigator.userAgent)&&/safari/i.test(navigator.userAgent)&&!/chrome|chromium/i.test(navigator.userAgent))return '<b>Safari on Mac:</b> open the File menu and choose <b>Add to Dock</b>.';
@@ -27,7 +28,7 @@
   showHelp();
  }
  function buildUI(){
-  if(standalone()||document.getElementById('bodInstallButton'))return;
+  if(!isMobileDevice()||standalone()||document.getElementById('bodInstallButton'))return;
   const enter=document.getElementById('chooseHeroBtn');
   if(!enter)return;
   const button=document.createElement('button');
@@ -46,6 +47,7 @@
   document.getElementById('bodInstallClose')?.addEventListener('click',closeHelp);
  }
  window.addEventListener('beforeinstallprompt',event=>{
+  if(!isMobileDevice())return;
   event.preventDefault();
   deferredPrompt=event;
   buildUI();
