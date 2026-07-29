@@ -1,4 +1,4 @@
-/* BOD3D-TEST v11.63 — warning copy uses the central 75% of the parchment while preserving curled edges */
+/* BOD3D-TEST v12.22 — desktop story copy uses 85% of the parchment */
 #modal:has(.testerWarningScroll){
   padding:clamp(8px,2vw,24px)!important;
   overflow:auto!important;
@@ -13,7 +13,7 @@
   aspect-ratio:1.58 / 1!important;
   margin:auto!important;
   /* Leave the curled rolls clear, but use most of the flat parchment. */
-  padding:7.5% 12.5% 6.5% 14.5%!important;
+  padding:7.5% 7.5% 6.5% 7.5%!important;
   border:0!important;
   background:transparent url('../assets/ui/scroll.png') center / 100% 100% no-repeat!important;
   box-shadow:none!important;
@@ -34,7 +34,7 @@
   height:100%!important;
   min-height:0!important;
   margin:0!important;
-  padding:clamp(4px,.7vh,9px) 1.5%!important;
+  padding:clamp(4px,.7vh,9px) 0!important;
   background:none!important;
   color:#000!important;
   border:0!important;
@@ -98,7 +98,7 @@
   #modal .card:has(.testerWarningScroll){
     width:min(820px,calc(100vw - 28px),calc((100dvh - 12px) * 1.58))!important;
     max-height:calc(100dvh - 12px)!important;
-    padding:7% 12.5% 5.8% 14.5%!important;
+    padding:7% 7.5% 5.8% 7.5%!important;
     gap:5px!important;
   }
   .testerWarningScroll{font-size:clamp(14px,1.3vw,18px)!important;line-height:1.18!important;padding-top:2px!important}
