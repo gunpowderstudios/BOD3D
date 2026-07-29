@@ -1,5 +1,52 @@
 # BOD3D-TEST Changelog
 
+## v12.19
+
+- Fixed the home-screen “Enter the Dungeon” button so its text turns black against the pale cream hover background.
+- Scoped the change to that button only; its normal appearance and all other buttons remain unchanged.
+
+## v12.18
+
+- Replay the current monster's assigned individual sound whenever melee combat opens, including cloak failures and ranged-charge fights.
+- Fall back to the generic monster sound when no individual sound file or browser override is available.
+
+## v12.17
+
+- Made the Exit a real final tile at the bottom of the dungeon deck: 40-50 ordinary tiles are laid first, then the player legally connects the Exit and its Dragon.
+- Removed the extra post-deck Exit placement and its unsafe fallback, which could place the Dragon behind a wall.
+- Preserved the full M2-M12 marker set and both item locations by reserving the final Exit before markers are assigned.
+
+## v12.16
+
+- Fixed ACME Insurance resurrection camera tracking: returning to Start now cancels the stale combat-exit camera tween and automatically centres the hero on the Start tile.
+
+## v12.15
+
+- Restored Flying Daggers to range 1-4 while retaining connected-path targeting around corners.
+- Restored Fireball to range 1-5.
+- Added a visible die roll when using the Invisibility Cloak; rolls of 1-2 start a no-escape fight.
+- Small and Large Chest results now wait until the visible die animation has played before being applied and announced.
+
+## v12.14
+
+- Fixed dual-wield combat so bonuses from both equipped one-handed melee weapons are added to the displayed score and actual attack roll.
+- Two-handed melee weapons still count only once even though they occupy both hand slots.
+- Sirrus and Tamara with a Morning Star and Small Axe now fight at 2d6+5.
+
+## v12.13
+
+- Added Developer Console buttons to preview both real end-game scrolls: Firkin rescued and Firkin lost.
+- Ending previews do not end or modify the active test game.
+
+## v12.12
+
+- Enlarged the Sound Manager explanatory text and red/green status messages from 12px to 16px.
+- Enlarged the sound file paths from 10px to 14px for easier reading.
+
+## v12.11
+
+- Renamed the opening-scroll button from “Enter at your own risk” to “Begin your quest…” so it matches the story’s premise that the hero awakens inside the dungeon.
+
 ## v12.10
 
 - Fixed the intro ambience switching prematurely from `distant-monsters.mp3` to `dungeon-sounds.mp3`.

@@ -25,7 +25,7 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/main.css?v=12.19">
 <link rel="stylesheet" href="css/combat.css">
 <link rel="stylesheet" href="css/mobile.css">
 <!--
@@ -346,10 +346,10 @@ Changes:
 
 <script src="assets/assets.js?v=12.07"></script>
 <script src="assets/reward-fix.js?v=11.35"></script>
-<script src="js/game.js?v=12.09"></script>
-<script src="js/combat.js?v=12.09"></script>
+<script src="js/game.js?v=12.18"></script>
+<script src="js/combat.js?v=12.18"></script>
 
-<script type="module" src="js/scene3d.js?v=12.07"></script>
+<script type="module" src="js/scene3d.js?v=12.16"></script>
 
 
 <div id="itemTester" aria-hidden="true">
@@ -389,6 +389,8 @@ Changes:
           <button type="button" data-dev-action="save">Save Game</button>
           <button type="button" data-dev-action="load">Load Game</button>
           <button type="button" data-dev-action="restore">Restore Health &amp; AP</button>
+          <button type="button" data-dev-action="ending-firkin">Preview Ending — Firkin Rescued</button>
+          <button type="button" data-dev-action="ending-no-firkin">Preview Ending — Firkin Lost</button>
         </div>
       </section>
 

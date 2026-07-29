@@ -156,6 +156,11 @@ button:disabled{opacity:.45;cursor:not-allowed;}
  font-size:17px;letter-spacing:.03em;
 }
 .chooseHeroBtn:hover{background:linear-gradient(#44351f,#17120b);color:#fff0b3}
+#chooseHeroBtn:hover:not(:disabled){
+ color:#000!important;
+ -webkit-text-fill-color:#000!important;
+ text-shadow:none;
+}
 .heroDots{display:flex;justify-content:center;gap:7px;margin-top:8px}
 .heroDot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.28);border:0;padding:0;box-shadow:none}
 .heroDot.active{background:#e7b954;transform:scale(1.2)}
@@ -179,11 +184,11 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 .slotSymbolDivider{font-size:16px;line-height:1;opacity:.8}
 .slotLabelText{line-height:1}
 
-.soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundStatus{font-size:12px;opacity:.9;line-height:1.25}
+.soundRow{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;align-items:center;border-bottom:1px dotted var(--ink);padding:7px 0;text-align:left}.soundRow button{padding:6px 8px}.soundList{max-height:58vh;overflow:auto;padding:4px}.soundManagerInfo{font-size:16px;line-height:1.35}.soundStatus{font-size:16px;opacity:.9;line-height:1.3}
 .soundStatus.github{color:#185c20;font-weight:bold}
 .soundStatus.browser{color:#704400;font-weight:bold}
 .soundStatus.missing{color:#9b1c16;font-weight:bold}
-.soundPath{display:block;font-size:10px;font-weight:normal;opacity:.72;overflow-wrap:anywhere;margin-top:2px}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
+.soundPath{display:block;font-size:14px;font-weight:normal;opacity:.72;overflow-wrap:anywhere;margin-top:2px}.volumeRow{display:grid;grid-template-columns:90px 1fr 42px;gap:8px;align-items:center;margin:8px 0}.volumeRow input{width:100%}
 
 /* ===== GLB monster layer v7.21 ===== */
 .glbMonsterWrap{

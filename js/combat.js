@@ -3,7 +3,7 @@
 // Split out of index.html for easier editing. Depends on state/helpers from game.js, so
 // this must load AFTER game.js.
 
-function pCombatMod(){const p=state.player,e=p.equipment;return p.baseMod+applyEquipmentStats(e.weapon)+(e.torch?1:0)+(p.companionFirkin?3:0)}
+function pCombatMod(){const p=state.player,e=p.equipment;const weapons=e.weapons||[e.weapon].filter(Boolean);return p.baseMod+weapons.reduce((total,weapon)=>total+applyEquipmentStats(weapon),0)+(e.torch?1:0)+(p.companionFirkin?3:0)}
 function pDamageReduction(){const e=state.player.equipment;return applyEquipmentStats(e.armour)+applyEquipmentStats(e.shield)}
 function pDice(){const p=state.player;const dragonBonus=!!(combat?.tile?.monster?.isDragon&&p.equipment.dragonlance);return p.baseDice+(p.equipment.bear?1:0)+(p.temp.strength?1:0)+(dragonBonus?1:0)}
 function openCombat(tile,options={}){
@@ -39,7 +39,10 @@ function openCombat(tile,options={}){
  const combatElement=document.getElementById('combat');
  combatElement.classList.remove('open');
  setTimeout(()=>{
-  if(combat&&combat.tile===tile)combatElement.classList.add('open');
+  if(combat&&combat.tile===tile){
+   combatElement.classList.add('open');
+   sndMonsterCombat(m.name);
+  }
  },520);
  document.getElementById('combatTitle').textContent=
   options.rangedEngagement?'The Monster Charges!':(options.noEscape?'Spotted!':'Combat');
@@ -218,7 +221,7 @@ function startRangedAttack(type,item=null,consume=null){
    toast('Equip or carry a Fireball first');
    return;
   }
-  range=3;
+  range=5;
   cost=2;
   label='Fireball';
  }else if(type==='daggers'){
@@ -226,7 +229,7 @@ function startRangedAttack(type,item=null,consume=null){
    toast('Carry Flying Daggers first');
    return;
   }
-  range=3;
+  range=4;
   cost=2;
   label='Flying Daggers';
  }else{

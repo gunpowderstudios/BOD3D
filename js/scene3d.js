@@ -2996,7 +2996,10 @@ window.BOD3D={
   cameraInitialised=false;
  },
  snapHeroToPlayer(){
-  // Used by Run Away, Tornado and other instant repositioning.
+  // Used by Run Away, Tornado, ACME resurrection and other instant repositioning.
+  // Cancel any combat-exit camera tween so it cannot pull the view back to
+  // the old fight tile after the hero has already returned to Start.
+  cameraTween=null;
   if(heroModel&&heroModel.parent===boardGroup)boardGroup.remove(heroModel);
   heroModel=null;
   heroTurn=null;

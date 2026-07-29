@@ -155,7 +155,7 @@ const ITEM_MASTER=[
  {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: gain another life, drop all items where you fell, and return to Start.'},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
  {name:'Torch',copies:1,type:'equipment',slot:'tool',icon:'🔥',desc:'+1 Combat while equipped.',apply:p=>{p.equipment.torch={name:'Torch',icon:'🔥',value:1};}},
- {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-3; spend 2 AP and roll 2 dice damage. Can fly around connected corners. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
+ {name:'Flying Daggers',copies:1,type:'spell',icon:'✣',desc:'One-use ranged spell. Range 1-4; spend 2 AP and roll 2 dice damage. Can fly around connected corners. Hidden or revealed monsters may be targeted. If it survives, it charges and there is no escape. The Dragon is immune.',use:'daggers'},
  {name:'Steel Sword',copies:1,type:'equipment',slot:'weapon',icon:'⚔',desc:'+1 combat roll.'},
  {name:"Sorcerer's Skull",copies:1,type:'spell',icon:'☠',desc:'1 use: 1 dice damage to all on tile.',use:'skull'},
  {name:'Magic Sword',copies:1,type:'equipment',slot:'weapon',icon:'🗡',desc:'+2 combat roll. View adjacent monster.'},
@@ -550,6 +550,14 @@ async function sndMonster(monsterName=''){
  }
  playSound('monsterReveal');
 }
+async function sndMonsterCombat(monsterName=''){
+ const specificKey=monsterLandSoundKey(monsterName);
+ if(USER_SOUNDS[specificKey]||await resolveGitHubSound(specificKey)){
+  playSound(specificKey);
+  return;
+ }
+ playSound('monsterReveal');
+}
 function sndWin(){playSound('win')}
 function sndLose(){playSound('lose')}
 
@@ -635,7 +643,7 @@ function openSoundManager(){
    <input id="soundVolume" type="range" min="0" max="1" step="0.05" value="${soundVolume}">
    <span id="soundVolumeValue">${Math.round(soundVolume*100)}%</span>
   </div>
-  <div class="small">
+  <div class="small soundManagerInfo">
    Green means the sound was found on GitHub and can be heard by everyone.
    Brown means a private browser override is active.
    Red means the expected GitHub file could not be loaded.
@@ -698,8 +706,8 @@ function resetAllSounds(){
 loadSounds();
 window.addEventListener('pointerdown',()=>{try{audio()}catch(e){}},{once:true});
 function createTileDeck(){
-  // Start is face up and Exit is set aside. Each dungeon secretly contains
-  // 40-50 ordinary tiles before the Dragon's Exit appears.
+  // Start is face up. The Exit is kept at the bottom of the deck so the
+  // player legally connects 40-50 ordinary tiles before drawing the Dragon's tile.
   const deck=[...Array(15)].map(()=>({kind:'straight'}))
     .concat([...Array(14)].map(()=>({kind:'corner'})),[...Array(2)].map(()=>({kind:'t'})),[...Array(5)].map(()=>({kind:'cross'})),[...Array(3)].map(()=>({kind:'spike'})),[{kind:'pool'}]);
   const extraCount=Math.floor(Math.random()*11);
@@ -739,10 +747,10 @@ function createTileDeck(){
     throw new Error('Dungeon setup failed: exactly two item markers are required.');
   }
 
-  return shuffle(deck);
+  return [{kind:'exit'},...shuffle(deck)];
 }
 function showTesterWarning(){
- showModal('A WARNING FROM THE DUNGEON','',[{text:'Enter at your own risk',cls:'green',fn:closeModal}]);
+ showModal('A WARNING FROM THE DUNGEON','',[{text:'Begin your quest…',cls:'green',fn:closeModal}]);
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">TIP: The Ring may be hidden on one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
@@ -767,7 +775,7 @@ function isHandItem(item){return !!item&&!isAttire(item)&&!isBear(item);}
 function occupiedSpaceCount(){const p=state.player;let n=p.backpack.length;n+=p.slots.armour?1:0;n+=p.slots.boots?1:0;n+=p.slots.cloak?1:0;n+=p.slots.left?1:0;n+=p.slots.right?1:0;return n;}
 function carriedCount(){return occupiedSpaceCount();}
 function allCarriedItems(){const p=state.player;const out=[...p.backpack];['left','right','armour','boots','cloak'].forEach(s=>{const it=p.slots[s];if(it&&!out.includes(it))out.push(it)});if(p.companionBear)out.push(p.companionBear);return out;}
-function syncEquipment(){const p=state.player,s=p.slots,e={};const hands=[s.left,s.right].filter(Boolean);const weapon=hands.find(x=>['Steel Sword','Magic Sword','Small Axe','Iron Axe','Large Steel Axe','Morning Star'].includes(x.name));const shield=hands.find(x=>['Steel Shield','Magic Shield'].includes(x.name));const bow=hands.find(x=>['Bow','Elven Bow'].includes(x.name));const staff=hands.find(x=>x.name==='Ice Staff');const dragonlance=hands.find(x=>x.name==='Dragonlance');const cloak=s.cloak;const torch=hands.find(x=>x.name==='Torch');if(weapon)e.weapon=weapon;if(shield)e.shield=shield;if(bow)e.bow={...bow,dice:1,bonus:bow.name==='Elven Bow'?2:0};if(staff)e.staff=staff;if(dragonlance)e.dragonlance=dragonlance;if(cloak)e.cloak=cloak;if(torch)e.torch=torch;else if(p.flags)p.flags.torchFreeLay=false;if(s.armour)e.armour=s.armour;if(s.boots)e.boots=s.boots;if(p.companionBear)e.bear=p.companionBear;p.equipment=e;}
+function syncEquipment(){const p=state.player,s=p.slots,e={};const hands=[s.left,s.right].filter(Boolean);const weapons=[...new Set(hands.filter(x=>['Steel Sword','Magic Sword','Small Axe','Iron Axe','Large Steel Axe','Morning Star'].includes(x.name)))];const weapon=weapons[0];const shield=hands.find(x=>['Steel Shield','Magic Shield'].includes(x.name));const bow=hands.find(x=>['Bow','Elven Bow'].includes(x.name));const staff=hands.find(x=>x.name==='Ice Staff');const dragonlance=hands.find(x=>x.name==='Dragonlance');const cloak=s.cloak;const torch=hands.find(x=>x.name==='Torch');if(weapon){e.weapon=weapon;e.weapons=weapons;}if(shield)e.shield=shield;if(bow)e.bow={...bow,dice:1,bonus:bow.name==='Elven Bow'?2:0};if(staff)e.staff=staff;if(dragonlance)e.dragonlance=dragonlance;if(cloak)e.cloak=cloak;if(torch)e.torch=torch;else if(p.flags)p.flags.torchFreeLay=false;if(s.armour)e.armour=s.armour;if(s.boots)e.boots=s.boots;if(p.companionBear)e.bear=p.companionBear;p.equipment=e;}
 function removeFromCurrentLocation(item){const p=state.player;const bi=p.backpack.indexOf(item);if(bi>=0)p.backpack.splice(bi,1);['left','right','armour','boots','cloak'].forEach(s=>{if(p.slots[s]===item)p.slots[s]=null});syncEquipment();}
 function moveToBackpack(item){const p=state.player;if(p.backpack.includes(item))return true;if(p.backpack.length>=BACKPACK_LIMIT){toast('Backpack is full');return false;}removeFromCurrentLocation(item);p.backpack.push(item);syncEquipment();playSound('unequip');return true;}
 function equipToSlot(item,slot){const p=state.player;if(slot==='armour'&&!isArmour(item))return false;if(slot==='boots'&&!isBoots(item))return false;if(slot==='cloak'&&!isCloak(item))return false;if((slot==='left'||slot==='right')&&!isHandItem(item))return false;
@@ -825,25 +833,33 @@ document.getElementById('placeBtn').onclick=()=>{const p=state.player,d=DIRS[pla
  sndTile();log('Placed '+TILE_LABEL[tile.kind]+(tile.itemMarker?' with item marker':'')+' to the '+placement.dir+'.','system');if(state.tileDeck.length===0&&!state.exitPlaced)placeExitAndRing(nx,ny,tile);placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
 function placeExitAndRing(x,y,fromTile){
  state.exitPlaced=true;
- let exitKey=null, placed=false;
- for(const dir of dirOrder){
-  const d=DIRS[dir],ex=x+d.dx,ey=y+d.dy;
-  if(fromTile.opens[dir]&&!getTile(ex,ey)){
-   exitKey=key(ex,ey);
-   state.tiles[exitKey]={kind:'exit',opens:{...TILE_BASE.exit},rot:0,visited:false,monster:{name:'Red Dragon',dice:4,mod:0,maxHealth:20,health:20,glyph:'🐉',revealed:true,isDragon:true}};
-   placed=true;break;
-  }
- }
- if(!placed){
-  for(const dir of dirOrder){
-   const d=DIRS[dir],ex=x+d.dx,ey=y+d.dy;
-   if(!getTile(ex,ey)){
-    exitKey=key(ex,ey);
-    state.tiles[exitKey]={kind:'exit',opens:{...TILE_BASE.exit},rot:0,visited:false,monster:{name:'Red Dragon',dice:4,mod:0,maxHealth:20,health:20,glyph:'🐉',revealed:true,isDragon:true}};
-    break;
-   }
-  }
- }
+ const exitKey=key(x,y);
+ const exitTile=state.tiles[exitKey]||fromTile;
+
+ // The Exit is the final tile the player has just legally connected.
+ // Never append another tile beside it: the old fallback could put the
+ // Dragon behind a wall when the final floor tile had no free open edge.
+ exitTile.kind='exit';
+ exitTile.opens={...TILE_BASE.exit};
+ exitTile.rot=0;
+ exitTile.visited=!!exitTile.visited;
+ delete exitTile.monsterMarker;
+ delete exitTile.monsterPending;
+ delete exitTile.mNumber;
+ delete exitTile.itemMarker;
+ delete exitTile.itemPending;
+ delete exitTile.item;
+ exitTile.monster={
+  name:'Red Dragon',
+  dice:4,
+  mod:0,
+  maxHealth:20,
+  health:20,
+  glyph:'🐉',
+  revealed:true,
+  isDragon:true
+ };
+ state.tiles[exitKey]=exitTile;
  // Board-game Ring system: when the Exit appears, roll 2 dice and place the Ring on the matching M2-M12 floor tile.
  const rr=roll(2);
  const ringNumber=rr.total;
@@ -921,10 +937,16 @@ function showCloakChoice(tile){
    {
     text:'Sneak Past',
     cls:'green',
-    fn:()=>{
+    fn:async()=>{
      closeModal();
      m.revealed=true;
-     const roll1=roll(1).total;
+     const sneakRoll=roll(1);
+     const roll1=sneakRoll.total;
+     playSound('dice');
+     const dicePromise=window.BODDice3D?.roll?.(sneakRoll.rolls,'hero');
+     if(dicePromise&&typeof dicePromise.then==='function'){
+      try{await dicePromise;}catch(error){console.warn('Cloak dice animation failed.',error);}
+     }
 
      if(roll1<=2){
       log('You roll '+roll1+' — the '+m.name+' spots you! There is no escape.','combat');
@@ -1219,35 +1241,37 @@ function openChestOnTile(tileKey,item){
  const p=state.player;
  const chestRoll=roll(1);
  const r=chestRoll.total;
- playSound('dice');
- let msg='';
- let rewardCount=0;
 
- if(item.use==='smallChest'){
-  if(r<=2){p.health-=2;msg='TRAPPED! Take 2 damage.';}
-  else{rewardCount=1;msg='Small Chest opened: draw 1 item.';}
- }else{
-  if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';}
-  else{rewardCount=2;msg='Large Chest opened: draw 2 items.';}
- }
-
- state.itemDiscard.push(item);
- playSound('spell');
- log(msg,p.health<=0?'combat':'loot');
- toast(msg);
  closeModal();
+ playSound('dice');
  render();
 
  const finishChestResolution=()=>{
+  let msg='';
+  let rewardCount=0;
+
+  if(item.use==='smallChest'){
+   if(r<=2){p.health-=2;msg='TRAPPED! Take 2 damage.';}
+   else{rewardCount=1;msg='Small Chest opened: draw 1 item.';}
+  }else{
+   if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';}
+   else{rewardCount=2;msg='Large Chest opened: draw 2 items.';}
+  }
+
+  state.itemDiscard.push(item);
+  playSound('spell');
+  log('Chest roll: '+r+'. '+msg,p.health<=0?'combat':'loot');
+  toast('Rolled '+r+' — '+msg);
+  render();
+
   if(p.health<=0){death();return;}
   for(let i=0;i<rewardCount;i++)awardItem();
   // Defensive restart: if a dice/modal timing race ever interrupted the queue,
   // explicitly resume the normal item-placement flow.
-  if(pendingItemQueue.length) setTimeout(processPendingItem,40);
+  if(pendingItemQueue.length)setTimeout(processPendingItem,40);
  };
 
- // The 3D die is visual only, but chest resolution now waits for it to finish
- // so its animation cannot overwrite or obscure the reward placement dialog.
+ // Show the physical die first, then resolve the chest after its animation.
  const dicePromise=window.BODDice3D?.roll?.(chestRoll.rolls,'hero');
  if(dicePromise&&typeof dicePromise.then==='function'){
   dicePromise.then(()=>{
@@ -1417,11 +1441,11 @@ function renderControls(){
  if(p.equipment.staff&&hasTargets(2)){
   addBtn(wrap,'Ice Staff — Range 1-2 (4 AP)','blue',()=>startRangedAttack('iceStaff'),!view3d.enabled||p.ap<4);
  }
- if(equippedFireball&&hasTargets(3)){
-  addBtn(wrap,'Fireball — Range 1-3 (2 AP)','blue',()=>startRangedAttack('fireball',equippedFireball,()=>consumeEquippedSpell(equippedFireball)),!view3d.enabled||p.ap<2);
+ if(equippedFireball&&hasTargets(5)){
+  addBtn(wrap,'Fireball — Range 1-5 (2 AP)','blue',()=>startRangedAttack('fireball',equippedFireball,()=>consumeEquippedSpell(equippedFireball)),!view3d.enabled||p.ap<2);
  }
- if(equippedDaggers&&hasTargets(3,true)){
-  addBtn(wrap,'Flying Daggers — Range 1-3 (2 AP)','blue',()=>startRangedAttack('daggers',equippedDaggers,()=>consumeEquippedSpell(equippedDaggers)),!view3d.enabled||p.ap<2);
+ if(equippedDaggers&&hasTargets(4,true)){
+  addBtn(wrap,'Flying Daggers — Range 1-4 (2 AP)','blue',()=>startRangedAttack('daggers',equippedDaggers,()=>consumeEquippedSpell(equippedDaggers)),!view3d.enabled||p.ap<2);
  }
 
  // Directional movement/tile laying is handled by the shared N/E/S/W D-pad
@@ -2231,6 +2255,21 @@ function developerBuildCompleteDungeon(withMonsters){
  );
 }
 
+function developerPreviewEnding(rescuedFirkin){
+ if(!state)return;
+ closeDeveloperConsole();
+ showModal(
+  rescuedFirkin?'ENDING PREVIEW — FIRKIN RESCUED':'ENDING PREVIEW — FIRKIN LOST',
+  '',
+  [{text:'Return to Game',cls:'green',fn:closeModal}]
+ );
+ const body=document.getElementById('modalBody');
+ if(body){
+  body.innerHTML=endingScrollHTML(rescuedFirkin);
+  body.scrollTop=0;
+ }
+}
+
 function developerAction(action){
  switch(action){
   case 'items':
@@ -2286,6 +2325,12 @@ function developerAction(action){
   case 'sounds':
    closeDeveloperConsole();
    openSoundManager();
+   break;
+  case 'ending-firkin':
+   developerPreviewEnding(true);
+   break;
+  case 'ending-no-firkin':
+   developerPreviewEnding(false);
    break;
  }
 }

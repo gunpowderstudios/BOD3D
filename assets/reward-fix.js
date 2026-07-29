@@ -1,6 +1,6 @@
-// BOD3D-TEST v12.10 — correct intro/dungeon ambience handoff
+// BOD3D-TEST v12.19 — black Enter the Dungeon hover text
 (function(){
-  const BUILD='12.10';
+  const BUILD='12.19';
   const VERSION='v'+BUILD;
   window.BOD3D_BUILD_VERSION=VERSION;
   function syncVersion(){document.title='Bag of Dungeon 3D '+VERSION;const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
