@@ -1,5 +1,11 @@
 # BOD3D-TEST Changelog
 
+## v12.29
+
+- Replaced the outdated 8BITBOD Alpha About copy with current Bag of Dungeon 3D credits and ownership wording.
+- Corrected the grammar and clarified that BOD3D may be shared for non-commercial use.
+- Kept all About sections consistently single-spaced with no doubled blank lines.
+
 ## v12.28
 
 - Added a clearly marked TEST-only robots meta directive: `noindex, nofollow, noarchive, nosnippet`.

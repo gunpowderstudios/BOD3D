@@ -1076,18 +1076,13 @@ function openAbout(){
     {text:'Close',fn:closeModal}
   ]);
   document.getElementById('modalBody').innerHTML=`
-    <div style="text-align:center;line-height:1.35">
-      <div style="font-size:24px;font-weight:bold;margin-bottom:4px">8BITBOD</div>
-      <div style="font-size:14px;margin-bottom:14px">Version ${VERSION} Alpha</div>
-      <div style="font-size:18px;font-weight:bold;margin-bottom:7px">Credits</div>
-      <div><b>Original game design</b><br>Tim Sharville, Paul Sharville &amp; Russ Law</div>
-      <div style="margin-top:11px"><b>Digital adaptation &amp; artwork</b><br>Gunpowder Studios</div>
-      <p style="margin:14px 0 8px"><b>8BITBOD</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</p>
-      <p style="margin:8px 0">Visit our website to see the full range:<br>
-        <a href="https://www.gunpowderstudios.co.uk" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a>
-      </p>
-      <p style="margin:14px 0 5px">© Gunpowder Studios Ltd. All rights reserved.</p>
-      <p style="font-weight:bold;margin:12px 0 0">Thanks for playing, your journey continues over at our website.</p>
+    <div style="display:grid;gap:10px;text-align:center;line-height:1.35">
+      <div style="font-size:20px;font-weight:bold">Credits</div>
+      <div>Original game design, board game mechanics, 3D models and concept by<br><b>Tim Sharville, Paul Sharville &amp; Russ Law</b></div>
+      <div>Digital adaptation and artwork remain the property of<br><b>Gunpowder Studios</b>. Please feel free to share BOD3D for non-commercial use.</div>
+      <div><b>BOD3D</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</div>
+      <div>Visit our website to see the full range:<br><a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a></div>
+      <div><b>Thanks for playing. Your journey continues over at our website.</b><br>© Gunpowder Studios Ltd. All rights reserved.</div>
     </div>`;
 }
 function openMenu(){
