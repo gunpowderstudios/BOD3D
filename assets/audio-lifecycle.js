@@ -1,4 +1,4 @@
-// BOD3D-TEST v12.10 — reliable intro/dungeon ambience detection
+// BOD3D-TEST v12.33 — managed intro, dungeon and end-game music
 (function () {
   'use strict';
 
@@ -10,6 +10,8 @@
   const originalPlay = HTMLMediaElement.prototype.play;
   let muted = false;
   let pageActive = !document.hidden;
+  let endingActive = false;
+  let endGameAudio = null;
 
   try {
     muted = localStorage.getItem(MUTE_KEY) === 'true';
@@ -18,7 +20,7 @@
   function isAmbience(media) {
     const src = String(media.currentSrc || media.src || '');
     return media.loop ||
-      /(?:dungeon-sounds|distant-monsters)\.(?:mp3|ogg|wav)(?:\?|$)/i.test(src);
+      /(?:dungeon-sounds|distant-monsters|end-game-music)\.(?:mp3|ogg|wav)(?:\?|$)/i.test(src);
   }
 
   function rememberMedia() {
@@ -74,7 +76,11 @@
       stopBothAmbiences();
       return;
     }
-    if (startScreenVisible()) {
+    if (endingActive) {
+      try { window.stopDungeonAmbience?.(); } catch (_) {}
+      try { window.stopDistantMonstersAmbience?.(); } catch (_) {}
+      if (endGameAudio?.paused) endGameAudio.play().catch(() => {});
+    } else if (startScreenVisible()) {
       try { window.stopDungeonAmbience?.(); } catch (_) {}
       try { window.startDistantMonstersAmbience?.(); } catch (_) {}
     } else {
@@ -82,6 +88,33 @@
       try { window.startDungeonAmbience?.(); } catch (_) {}
     }
   }
+
+  function startEndGameMusic() {
+    endingActive = true;
+    try { window.stopDungeonAmbience?.(); } catch (_) {}
+    try { window.stopDistantMonstersAmbience?.(); } catch (_) {}
+    if (!endGameAudio) {
+      endGameAudio = new Audio('./assets/sounds/end-game-music.mp3');
+      endGameAudio.loop = true;
+      endGameAudio.volume = 0.36;
+      endGameAudio.preload = 'auto';
+      trackedMedia.add(endGameAudio);
+    }
+    endGameAudio.currentTime = 0;
+    if (!muted && pageActive && !document.hidden) {
+      endGameAudio.play().catch(() => {});
+    }
+  }
+
+  function stopEndGameMusic() {
+    endingActive = false;
+    if (!endGameAudio) return;
+    endGameAudio.pause();
+    endGameAudio.currentTime = 0;
+  }
+
+  window.startEndGameMusic = startEndGameMusic;
+  window.stopEndGameMusic = stopEndGameMusic;
 
   function updateMuteButton() {
     const button = document.getElementById('dungeonSoundToggle');

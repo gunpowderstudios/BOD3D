@@ -124,6 +124,7 @@ function startGame(c){
 }
 function showCharSelect(){
  document.body.classList.remove('combatActive');closeModal();closeCombat();
+ if(window.stopEndGameMusic)window.stopEndGameMusic();
  // Returning from Game Over/New Game: explicitly hand audio back to the
  // character/loading screen. This runs from the player's button tap, so it
  // also satisfies mobile browser audio-interaction requirements.
@@ -154,7 +155,7 @@ const ITEM_MASTER=[
  {name:'Rusty Armour',copies:1,type:'equipment',slot:'armour',icon:'▤',desc:'One fight: -1 damage from attacks, then discard.'},
  {name:'Steel Armour',copies:1,type:'equipment',slot:'armour',icon:'▥',desc:'-1 damage from attacks.'},
  {name:'Magic Armour',copies:1,type:'equipment',slot:'armour',icon:'▦',desc:'-2 damage from attacks.'},
- {name:'Magic Boots',copies:2,type:'equipment',slot:'boots',icon:'👢',desc:'Old Spikey springs only on a roll of 1 while equipped (normally 1–2).'},
+ {name:'Magic Boots',copies:1,type:'equipment',slot:'boots',icon:'👢',desc:'Old Spikey springs only on a roll of 1 while equipped (normally 1–2).'},
  {name:'Teleport Crystal',copies:1,type:'spell',icon:'◆',desc:'1 use: teleport to any revealed tile.',use:'teleport'},
  {name:'Acme Insurance',copies:1,type:'other',icon:'☂',desc:'Used automatically on defeat: gain another life, drop all items where you fell, and return to Start.'},
  {name:"Imp's Teeth",copies:1,type:'consumable',icon:'☷',desc:'1 use: reroll your next combat roll.',use:'reroll'},
@@ -173,13 +174,13 @@ const ITEM_MASTER=[
  {name:'Steel Shield',copies:1,type:'equipment',slot:'shield',icon:'◫',desc:'-1 damage from attacks.'},
  {name:'Magic Shield',copies:1,type:'equipment',slot:'shield',icon:'⬟',desc:'-2 damage from attacks.'},
  {name:'Strength Potion',copies:1,type:'consumable',icon:'▲',desc:'1 use: +1 combat die for one fight.',use:'strengthPotion'},
- {name:'Health Potion',copies:2,type:'consumable',icon:'♥',desc:'1 use: regain 2 dice of health.',use:'healthPotion'},
+ {name:'Health Potion',copies:1,type:'consumable',icon:'♥',desc:'1 use: regain 2 dice of health.',use:'healthPotion'},
  {name:'Ice Staff',copies:1,type:'equipment',slot:'staff',icon:'❄',desc:'Permanent. Range 1-2. Spend 4 AP for 2 dice ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',use:'iceStaff',apply:p=>{p.equipment.staff={name:'Ice Staff',icon:'❄',dice:2,cost:4};}},
  {name:'Small Axe',copies:1,type:'equipment',slot:'weapon',icon:'⛏',desc:'+1 combat roll.'},
  {name:'Iron Axe',copies:1,type:'equipment',slot:'weapon',icon:'⚒',desc:'+2 combat roll.'},
  {name:'Large Steel Axe',copies:1,type:'equipment',slot:'weapon',icon:'🪓',desc:'Two-handed. +3 combat roll.'},
  {name:'Invisibility Cloak',copies:1,type:'equipment',slot:'cloak',icon:'◌',desc:'Walk past normal monsters without fighting. Does not work on Dragon.',apply:p=>{p.equipment.cloak={name:'Invisibility Cloak',icon:'◌'};}},
- {name:'Bomb',copies:2,type:'spell',icon:'●',desc:'1 use, 1 AP: 2 dice damage to current monster.',use:'bomb'},
+ {name:'Bomb',copies:1,type:'spell',icon:'●',desc:'1 use, 1 AP: 2 dice damage to current monster.',use:'bomb'},
  {name:'Tornado',copies:1,type:'spell',icon:'↻',desc:'1 use, 1 AP: move away from current monster without losing HP.',use:'tornado'},
  {name:'Morning Star',copies:1,type:'equipment',slot:'weapon',icon:'✹',desc:'+2 combat roll.'},
  {name:'Dragonlance',copies:1,type:'equipment',slot:'dragonlance',icon:'♜',desc:'One-handed. +1 combat die against the Red Dragon only.',apply:p=>{p.equipment.dragonlance={name:'Dragonlance',icon:'♜'};}},
@@ -403,7 +404,7 @@ function monsterLandSoundKey(name){
 }
 
 const SOUND_DEFS=[
- ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['sword','Hand weapon attack'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['lose','Defeat'],['click','UI click'],
+ ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['sword','Hand weapon attack'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['endGameMusic','End-game scroll music'],['lose','Defeat'],['click','UI click'],
  // One landing-thud sound per monster, played when its reveal drop-in
  // animation hits the floor. File names follow the usual kebab convention,
  // e.g. Goblin -> assets/sounds/goblin.mp3, Giant Snake -> giant-snake.mp3.
@@ -2259,10 +2260,11 @@ function developerBuildCompleteDungeon(withMonsters){
 function developerPreviewEnding(rescuedFirkin){
  if(!state)return;
  closeDeveloperConsole();
+ window.startEndGameMusic?.();
  showModal(
   rescuedFirkin?'ENDING PREVIEW — FIRKIN RESCUED':'ENDING PREVIEW — FIRKIN LOST',
   '',
-  [{text:'Return to Game',cls:'green',fn:closeModal}]
+  [{text:'Return to Game',cls:'green',fn:()=>{window.stopEndGameMusic?.();closeModal();}}]
  );
  const body=document.getElementById('modalBody');
  if(body){
@@ -2610,8 +2612,9 @@ function win(){
  state.gameOver=true;
  sndWin();
  closeCombat();
+ window.startEndGameMusic?.();
  const rescuedFirkin=!!state.player.companionFirkin;
- showModal('YOU ESCAPED!','',[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);
+ showModal('YOU ESCAPED!','',[{text:'New Game',cls:'green',fn:()=>{window.stopEndGameMusic?.();showCharSelect();}}]);
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=endingScrollHTML(rescuedFirkin);
 }

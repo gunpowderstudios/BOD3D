@@ -1,6 +1,6 @@
-// BOD3D-TEST v12.32 — move tally and show Firkin melee bonus
+// BOD3D-TEST v12.33 — unique item deck and end-game music
 (function(){
-  const BUILD='12.32';
+  const BUILD='12.33';
   const VERSION='v'+BUILD;
   window.BOD3D_BUILD_VERSION=VERSION;
   function syncVersion(){document.title='Bag of Dungeon 3D '+VERSION;const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
