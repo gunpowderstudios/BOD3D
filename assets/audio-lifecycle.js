@@ -119,7 +119,9 @@
   function updateMuteButton() {
     const button = document.getElementById('dungeonSoundToggle');
     if (!button) return false;
-    button.textContent = muted ? '🔇' : '🔊';
+    button.innerHTML = muted
+      ? '<svg class="controlIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 4m0-4l-4 4"/></svg>'
+      : '<svg class="controlIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5c1 .9 1.5 2.1 1.5 3.5S17 14.6 16 15.5"/><path d="M18.5 6c1.7 1.6 2.5 3.6 2.5 6s-.8 4.4-2.5 6"/></svg>';
     button.title = muted ? 'Sound muted — click to turn on' : 'Sound on — click to mute';
     button.setAttribute('aria-label', button.title);
     button.setAttribute('aria-pressed', muted ? 'true' : 'false');
