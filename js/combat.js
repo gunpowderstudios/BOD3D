@@ -426,7 +426,7 @@ async function fireRangedAt(tileKey,event){
   },1450);
  },520);
 }
-function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div><div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(
+function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;const firkinBonus=p.companionFirkin?'<div class="small">Firkin: +3 melee bonus included</div>':'';document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div>'+firkinBonus+'<div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(
  b,
  combat.noEscape
   ?'No Escape!'
@@ -528,18 +528,19 @@ function resolveFightRound(){
  combat.pendingDiceRoll=null;
  let crit=isCritical(pr.rolls);
  let diceScore=pr.total;
- let pt=(crit?diceScore*2:diceScore)+pCombatMod();
+ const heroCombatMod=pCombatMod();
+ let pt=(crit?diceScore*2:diceScore)+heroCombatMod;
  let mt=mr.total+m.mod;
  if(p.flags.reroll){
    p.flags.reroll=false;
    pr=roll(pDice());
    crit=isCritical(pr.rolls);
    diceScore=pr.total;
-   pt=(crit?diceScore*2:diceScore)+pCombatMod();
+   pt=(crit?diceScore*2:diceScore)+heroCombatMod;
    log("Imp's Teeth reroll used.",'loot');
  }
  showDice(pr.rolls,mr.rolls,false);
- let text='You rolled '+pr.rolls.join(', ')+' = '+pr.total+(crit?' — CRITICAL! dice score doubled to '+(pr.total*2):'')+' + '+pCombatMod()+' = '+pt+'. Monster rolled '+mr.rolls.join(', ')+' = '+mr.total+' + '+m.mod+' = '+mt+'. ';
+ let text='You rolled '+pr.rolls.join(', ')+' = '+pr.total+(crit?' — CRITICAL! dice score doubled to '+(pr.total*2):'')+' + '+heroCombatMod+(p.companionFirkin?' (includes Firkin +3 melee)':'')+' = '+pt+'. Monster rolled '+mr.rolls.join(', ')+' = '+mr.total+' + '+m.mod+' = '+mt+'. ';
  let damageToMonster=0,damageToHero=0;
  const deadeye=p.special==='Dead-eye'&&pr.rolls.includes(6);
  if(deadeye){damageToMonster=Math.max(0,m.health);m.health=0;text+='Dead-eye! Instant kill.';}
