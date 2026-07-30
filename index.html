@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#000000" />
-<title>Bag of Dungeon 3D v12.37</title>
+<title>Bag of Dungeon 3D v12.38</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -25,7 +25,7 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.37">
+<link rel="stylesheet" href="css/main.css?v=12.38">
 <link rel="stylesheet" href="css/combat.css">
 <link rel="stylesheet" href="css/mobile.css">
 <!--
@@ -195,6 +195,7 @@ Changes:
 <!-- v12.35: Updated the Reacher information screen to say: Sting range 1 tile, direct damage! -->
 <!-- v12.36: The number beneath assets/ui/logo.png now comes directly from the game VERSION, and the opening/loading screen has its own fullscreen control. -->
 <!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
+<!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
@@ -241,7 +242,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.37</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.38</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -351,8 +352,8 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.37"></script>
-<script src="js/game.js?v=12.37"></script>
+<script src="assets/reward-fix.js?v=12.38"></script>
+<script src="js/game.js?v=12.38"></script>
 <script src="js/combat.js?v=12.34"></script>
 
 <script type="module" src="js/scene3d.js?v=12.16"></script>
@@ -478,6 +479,6 @@ Changes:
 </div>
 
 
-<script src="js/patches.js?v=12.37"></script>
+<script src="js/patches.js?v=12.38"></script>
 </body>
 </html>
