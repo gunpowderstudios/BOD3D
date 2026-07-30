@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#000000" />
-<title>Bag of Dungeon 3D v12.34</title>
+<title>Bag of Dungeon 3D v12.37</title>
 <!--
 8BITBOD
 Version: v3.9
@@ -25,7 +25,7 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.33">
+<link rel="stylesheet" href="css/main.css?v=12.37">
 <link rel="stylesheet" href="css/combat.css">
 <link rel="stylesheet" href="css/mobile.css">
 <!--
@@ -192,11 +192,15 @@ Changes:
 <!-- v11.21: Moved Inventory and Backpack above Companions on the character panel. -->
 <!-- v11.23: Fixed full Map view by reading tile coordinates from the dungeon keys; combat framing now tilts 20 degrees farther overhead so dice faces are easier to read. -->
 <!-- v12.34: Firkin now adds +1 to melee attacks. A revealed living Reacher stings for 1 direct, armour-ignoring hit when the hero moves onto a directly connected neighbouring tile; uses assets/sounds/reacher-sting.mp3. -->
+<!-- v12.35: Updated the Reacher information screen to say: Sting range 1 tile, direct damage! -->
+<!-- v12.36: The number beneath assets/ui/logo.png now comes directly from the game VERSION, and the opening/loading screen has its own fullscreen control. -->
+<!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
 
 <div id="charSelect">
+  <button id="homeFullscreenBtn" class="fullscreenControl" type="button" title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
   <img id="heroSelectLogo" class="heroSelectLogo" src="assets/ui/bod3d-logo.png?v=10.58" alt="Bag of Dungeon" decoding="async">
   
 
@@ -237,7 +241,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.34</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.37</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -245,7 +249,7 @@ Changes:
     <div class="box" id="killTally"></div>
   </aside>
   <main id="main">
-    <button id="fullscreenBtn" type="button" title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
+    <button id="fullscreenBtn" class="fullscreenControl" type="button title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
       <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="menuBtn">☰ Menu</button></div>
@@ -347,8 +351,8 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.33"></script>
-<script src="js/game.js?v=12.34"></script>
+<script src="assets/reward-fix.js?v=12.37"></script>
+<script src="js/game.js?v=12.37"></script>
 <script src="js/combat.js?v=12.34"></script>
 
 <script type="module" src="js/scene3d.js?v=12.16"></script>
@@ -474,6 +478,6 @@ Changes:
 </div>
 
 
-<script src="js/patches.js"></script>
+<script src="js/patches.js?v=12.37"></script>
 </body>
 </html>
