@@ -27,8 +27,9 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #main{position:relative;overflow:hidden;background:#000;touch-action:none;}
 #topbar{position:absolute;left:10px;right:10px;top:10px;z-index:20;display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
 #topbar .cluster{display:flex;gap:8px;pointer-events:auto;flex-wrap:wrap}.badge{background:var(--cream);border:3px solid var(--ink);padding:8px 10px;box-shadow:2px 2px 0 var(--shadow);font-weight:bold}
-#fullscreenBtn{position:absolute;top:10px;right:10px;z-index:65;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);border-radius:5px;background:var(--cream);color:var(--ink);box-shadow:2px 2px 0 #000;font:700 22px/1 Arial,sans-serif;pointer-events:auto}
-#fullscreenBtn:hover{background:#fff1c9}
+#fullscreenBtn,#homeFullscreenBtn{position:absolute;top:10px;right:10px;z-index:65;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);border-radius:5px;background:var(--cream);color:var(--ink);box-shadow:2px 2px 0 #000;font:700 22px/1 Arial,sans-serif;pointer-events:auto}
+#fullscreenBtn:hover,#homeFullscreenBtn:hover{background:#fff1c9}
+#homeFullscreenBtn{position:fixed;z-index:520}
 #topbar{right:52px}
 #viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;perspective:1200px}#viewport.dragging{cursor:grabbing}
 #camera3d{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 50%;pointer-events:none}
@@ -570,19 +571,10 @@ body.threeMode.lightingOn #viewport::after{
 
 /* Version number under logo */
 /* v10.90 — Version number lives beneath the top-left 3D logo */
-#logoWrap,#gameLogoWrap,.logoWrap,.gameLogoWrap,.topLogo,.brandLogo{
-  position:relative;
-}
+/* Legacy generated version labels are disabled. #visibleBuildVersion is the single source. */
 #logoWrap::after,#gameLogoWrap::after,.logoWrap::after,.gameLogoWrap::after,.topLogo::after,.brandLogo::after{
-  content:"v10.92";
-  display:block;
-  text-align:center;
-  margin-top:2px;
-  font-size:10px;
-  line-height:1;
-  letter-spacing:.08em;
-  opacity:.65;
-  color:#e6d6a8;
+  content:none!important;
+  display:none!important;
 }
 
 /* Mystery counters hidden */
