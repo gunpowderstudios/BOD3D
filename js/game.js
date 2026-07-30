@@ -1,7 +1,10 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.34';
+const VERSION='v12.37';
+const visibleBuildVersion=document.getElementById('visibleBuildVersion');
+if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
+document.title='Bag of Dungeon 3D '+VERSION;
 
 // Developer tools are available only on TEST and local development builds.
 // The same code can be promoted safely: LIVE disables every activation route automatically.
@@ -148,7 +151,7 @@ const MONSTER_MASTER=[
  {name:'Mud Monster',copies:2,dice:2,mod:2,maxHealth:9,glyph:'♨'}, {name:'Werewolf',copies:2,dice:2,mod:3,maxHealth:10,glyph:'♞'},
  {name:'Troll',copies:3,dice:2,mod:4,maxHealth:10,glyph:'♜'}, {name:'Minotaur',copies:1,dice:2,mod:5,maxHealth:11,glyph:'♉'},
  {name:'Skeleton',copies:2,dice:2,mod:1,maxHealth:12,glyph:'☠'}, {name:'Giant Snake',copies:2,dice:2,mod:6,maxHealth:13,glyph:'🐍'},
- {name:'Reacher',copies:1,dice:2,mod:7,maxHealth:15,glyph:'☣',special:'Sting range 4. Half damage to all.'},
+ {name:'Reacher',copies:1,dice:2,mod:7,maxHealth:15,glyph:'☣',special:'Sting range 1 tile, direct damage!'},
  {name:'Mirror Monster',copies:2,dice:0,mod:0,maxHealth:0,glyph:'◈',special:'Mirrors your current Health & Combat.'}
 ];
 const ITEM_MASTER=[
