@@ -35,10 +35,10 @@
 // ==================== Fullscreen control (v11.20) ====================
     // v11.20: Small top-right fullscreen control. The browser's native Esc key exits.
     (function(){
-      const button=document.getElementById('fullscreenBtn');
-      if(!button)return;
+      const buttons=[...document.querySelectorAll('.fullscreenControl')];
+      if(!buttons.length)return;
       const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement;
-      button.addEventListener('click',async()=>{
+      const toggleFullscreen=async()=>{
         try{
           if(fullscreenElement()){
             if(document.exitFullscreen)await document.exitFullscreen();
@@ -50,15 +50,19 @@
             else toast('Full screen is not supported by this browser.');
           }
         }catch(error){console.warn('Full screen request failed:',error);}
-      });
-      const syncFullscreenButton=()=>{
-        const active=!!fullscreenElement();
-        button.textContent=active?'×':'⛶';
-        button.title=active?'Exit full screen (or press Esc)':'Full screen — press Esc to exit';
-        button.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');
       };
-      document.addEventListener('fullscreenchange',syncFullscreenButton);
-      document.addEventListener('webkitfullscreenchange',syncFullscreenButton);
+      buttons.forEach(button=>button.addEventListener('click',toggleFullscreen));
+      const syncFullscreenButtons=()=>{
+        const active=!!fullscreenElement();
+        buttons.forEach(button=>{
+          button.textContent=active?'×':'⛶';
+          button.title=active?'Exit full screen (or press Esc)':'Full screen — press Esc to exit';
+          button.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');
+        });
+      };
+      document.addEventListener('fullscreenchange',syncFullscreenButtons);
+      document.addEventListener('webkitfullscreenchange',syncFullscreenButtons);
+      syncFullscreenButtons();
     })();
 
 
@@ -297,6 +301,7 @@
 // ==================== Version placement under logo ====================
 (function(){
  function placeVersionUnderLogo(){
+  if(document.getElementById('visibleBuildVersion'))return;
   if(document.getElementById('topLogoVersion'))return;
   const imgs=[...document.querySelectorAll('img')];
   const logo=imgs.find(img=>/bod3d-logo|bod3d_logo|logo/i.test((img.getAttribute('src')||'')));
@@ -336,6 +341,7 @@
 /* v10.90 — Move version from welcome Quest Log entry to beneath 3D logo */
 (function(){
  function fixVersionPlacement(){
+  if(document.getElementById('visibleBuildVersion'))return;
   // Clean the actual welcome log entry, including dynamically generated text.
   document.querySelectorAll('*').forEach(function(el){
    if(el.children.length)return;
