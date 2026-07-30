@@ -14,18 +14,18 @@
 /* Keep the sound control present independently of older responsive rules. */
 #dungeonSoundToggle{
   position:fixed!important;
-  top:18px!important;
-  right:66px!important;
+  top:12px!important;
+  right:58px!important;
   z-index:5000!important;
   display:flex!important;
   visibility:visible!important;
   opacity:1!important;
   align-items:center!important;
   justify-content:center!important;
-  width:46px!important;
-  height:46px!important;
-  min-width:46px!important;
-  min-height:46px!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
   margin:0!important;
   padding:0!important;
   border:0!important;
@@ -173,13 +173,12 @@
     right:142px!important;
   }
   #dungeonSoundToggle{
-    top:7px!important;
-    right:47px!important;
-    width:42px!important;
-    height:42px!important;
-    min-width:42px!important;
-    min-height:42px!important;
-    font-size:21px!important;
+    top:12px!important;
+    right:58px!important;
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
   }
 }
 
