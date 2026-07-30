@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.38';
+const VERSION='v12.39';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Bag of Dungeon 3D '+VERSION;
@@ -171,7 +171,7 @@ const ITEM_MASTER=[
  {name:'Small Chest',copies:1,type:'consumable',icon:'□',desc:'Chest: may be trapped, may contain an item. Open it to roll the die.',use:'smallChest'},
  {name:'Large Chest',copies:1,type:'consumable',icon:'▣',desc:'Chest: may be trapped, may contain items. Open it to roll the die.',use:'largeChest'},
  {name:'Vampire Teeth',copies:1,type:'spell',icon:'⌇',desc:'1 use: drain and gain 5 health.',use:'vampire'},
- {name:"Witch's Claw",copies:1,type:'spell',icon:' claw',desc:'1 use: weaken the current monster.',use:'claw'},
+ {name:"Witch's Claw",copies:1,type:'spell',icon:' claw',desc:'1 use: remove the current monster’s Combat bonus for this fight. Cannot be used on the Red Dragon.',use:'claw'},
  {name:'Elven Bow',copies:1,type:'equipment',slot:'bow',icon:'➶',desc:'Two-handed. Range 1-3. Spend 3 AP for 1 die +2 ranged damage. May target hidden or revealed monsters. If it survives, it charges into melee. The Dragon is immune.',apply:p=>{p.equipment.bow={name:'Elven Bow',icon:'➶',dice:1,bonus:2};}},
  {name:'Fireball',copies:1,type:'spell',icon:'☄',desc:'1 use, 2 AP: 3 dice damage to monster.',use:'fireball'},
  {name:'Steel Shield',copies:1,type:'equipment',slot:'shield',icon:'◫',desc:'-1 damage from attacks.'},
@@ -1029,7 +1029,7 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
   startRangedAttack('daggers',it,consume);
   return;
  }
- if(['bomb','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){m.mod=Math.max(0,m.mod-2);dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
+ if(['bomb','skull','vine','vampire','claw'].includes(it.use)&&m){let dmg=0,cost=0;if(it.use==='bomb'){dmg=roll(2).total;cost=1;}if(it.use==='skull'){dmg=roll(1).total;}if(it.use==='vine'){dmg=roll(1).total;cost=1;combat.monsterSkip=true;window.BOD3D?.playEffect?.('vine');}if(it.use==='vampire'){dmg=5;p.health=Math.min(p.maxHealth,p.health+5);}if(it.use==='claw'){if(m.isDragon){toast("Witch’s Claw has no effect on the Red Dragon!");return;}m.mod=0;dmg=0;}if(p.ap<cost){toast('Not enough AP');return;}p.ap-=cost;m.health-=dmg;msg=it.use==='claw'?it.name+' used. '+m.name+' loses its Combat bonus for this fight.':it.name+' used. '+(dmg?m.name+' takes '+dmg+' damage.':'Monster weakened.');used=true;}
  if(it.use==='tornado'&&combat){
  if(combat.noEscape){toast('There is no escape from this fight!');return;}
  msg='Tornado carries you safely away.';window.BOD3D?.playEffect?.('tornado');
