@@ -544,7 +544,7 @@ function resolveFightRound(){
  const deadeye=p.special==='Dead-eye'&&pr.rolls.includes(6);
  if(deadeye){damageToMonster=Math.max(0,m.health);m.health=0;text+='Dead-eye! Instant kill.';}
  else if(pt>mt){let dmg=pt-mt;damageToMonster=dmg;m.health-=dmg;text+='You hit for '+dmg+'.';}
- else if(mt>pt){if(combat.monsterSkip){combat.monsterSkip=false;text+=m.name+' is held and misses.';}else{let dmg=Math.max(0,mt-pt-pDamageReduction());damageToHero=dmg;p.health-=dmg;text+=m.name+' hits for '+dmg+'.';if(dmg>0&&p.equipment.bear){text+=' Loyal Bear is defeated protecting you.';if(p.companionBear)state.itemDiscard.push(p.companionBear);p.companionBear=null;syncEquipment();}}}
+ else if(mt>pt){if(combat.monsterSkip){combat.monsterSkip=false;text+=m.name+' is held and misses.';}else{let dmg=Math.max(0,mt-pt-pDamageReduction());damageToHero=dmg;p.health-=dmg;text+=m.name+' hits for '+dmg+'.';}}
  else{text+='Both miss.';}
  combat.rolling=false;
  combat.mustFightRound=false;

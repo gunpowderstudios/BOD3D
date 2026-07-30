@@ -183,7 +183,7 @@ const ITEM_MASTER=[
  {name:'Tornado',copies:1,type:'spell',icon:'↻',desc:'1 use, 1 AP: move away from current monster without losing HP.',use:'tornado'},
  {name:'Morning Star',copies:1,type:'equipment',slot:'weapon',icon:'✹',desc:'+2 combat roll.'},
  {name:'Dragonlance',copies:1,type:'equipment',slot:'dragonlance',icon:'♜',desc:'One-handed. +1 combat die against the Red Dragon only.',apply:p=>{p.equipment.dragonlance={name:'Dragonlance',icon:'♜'};}},
- {name:'Loyal Bear',copies:1,type:'equipment',slot:'bear',icon:'🐻',desc:'+1 combat die until defeated. Takes no inventory space.',apply:p=>{p.equipment.bear={name:'Loyal Bear',icon:'🐻'};}},
+ {name:'Loyal Bear',copies:1,type:'equipment',slot:'bear',icon:'🐻',desc:'+1 combat die until game over. Takes no inventory space.',apply:p=>{p.equipment.bear={name:'Loyal Bear',icon:'🐻'};}},
  {name:'Magic Vine',copies:1,type:'spell',icon:'♧',desc:'1 use, 1 AP: 1 dice damage and monster skips its next attack.',use:'vine'}
 ];
 
@@ -756,7 +756,7 @@ function createTileDeck(){
 function showTesterWarning(){
  showModal('A WARNING FROM THE DUNGEON','',[{text:'Begin your quest…',cls:'green',fn:closeModal}]);
  const body=document.getElementById('modalBody');
- if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">TIP: The Ring may be hidden on one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br><br>Good luck, brave adventurer. You’ll need it.</div>`;
+ if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">TIP: The Ring may be hidden on one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
 function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,companionFirkin:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
 
