@@ -52,10 +52,13 @@
         }catch(error){console.warn('Full screen request failed:',error);}
       };
       buttons.forEach(button=>button.addEventListener('click',toggleFullscreen));
+      const fullscreenIcon=active=>active
+        ? '<svg class="controlIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4m11-5v5h5M9 20v-5H4m11 5v-5h5"/></svg>'
+        : '<svg class="controlIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M9 20H4v-5m11 5h5v-5"/></svg>';
       const syncFullscreenButtons=()=>{
         const active=!!fullscreenElement();
         buttons.forEach(button=>{
-          button.textContent=active?'×':'⛶';
+          button.innerHTML=fullscreenIcon(active);
           button.title=active?'Exit full screen (or press Esc)':'Full screen — press Esc to exit';
           button.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');
         });
