@@ -3,7 +3,7 @@
 // Split out of index.html for easier editing. Depends on state/helpers from game.js, so
 // this must load AFTER game.js.
 
-function pCombatMod(){const p=state.player,e=p.equipment;const weapons=e.weapons||[e.weapon].filter(Boolean);return p.baseMod+weapons.reduce((total,weapon)=>total+applyEquipmentStats(weapon),0)+(e.torch?1:0)+(p.companionFirkin?3:0)}
+function pCombatMod(){const p=state.player,e=p.equipment;const weapons=e.weapons||[e.weapon].filter(Boolean);return p.baseMod+weapons.reduce((total,weapon)=>total+applyEquipmentStats(weapon),0)+(e.torch?1:0)+(p.companionFirkin?1:0)}
 function pDamageReduction(){const e=state.player.equipment;return applyEquipmentStats(e.armour)+applyEquipmentStats(e.shield)}
 function pDice(){const p=state.player;const dragonBonus=!!(combat?.tile?.monster?.isDragon&&p.equipment.dragonlance);return p.baseDice+(p.equipment.bear?1:0)+(p.temp.strength?1:0)+(dragonBonus?1:0)}
 function openCombat(tile,options={}){
@@ -426,7 +426,7 @@ async function fireRangedAt(tileKey,event){
   },1450);
  },520);
 }
-function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;const firkinBonus=p.companionFirkin?'<div class="small">Firkin: +3 melee bonus included</div>':'';document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div>'+firkinBonus+'<div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(
+function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;const firkinBonus=p.companionFirkin?'<div class="small">Firkin: +1 melee bonus included</div>':'';document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div>'+firkinBonus+'<div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(
  b,
  combat.noEscape
   ?'No Escape!'
@@ -540,7 +540,7 @@ function resolveFightRound(){
    log("Imp's Teeth reroll used.",'loot');
  }
  showDice(pr.rolls,mr.rolls,false);
- let text='You rolled '+pr.rolls.join(', ')+' = '+pr.total+(crit?' — CRITICAL! dice score doubled to '+(pr.total*2):'')+' + '+heroCombatMod+(p.companionFirkin?' (includes Firkin +3 melee)':'')+' = '+pt+'. Monster rolled '+mr.rolls.join(', ')+' = '+mr.total+' + '+m.mod+' = '+mt+'. ';
+ let text='You rolled '+pr.rolls.join(', ')+' = '+pr.total+(crit?' — CRITICAL! dice score doubled to '+(pr.total*2):'')+' + '+heroCombatMod+(p.companionFirkin?' (includes Firkin +1 melee)':'')+' = '+pt+'. Monster rolled '+mr.rolls.join(', ')+' = '+mr.total+' + '+m.mod+' = '+mt+'. ';
  let damageToMonster=0,damageToHero=0;
  const deadeye=p.special==='Dead-eye'&&pr.rolls.includes(6);
  if(deadeye){damageToMonster=Math.max(0,m.health);m.health=0;text+='Dead-eye! Instant kill.';}
