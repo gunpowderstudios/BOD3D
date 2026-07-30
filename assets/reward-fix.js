@@ -1,6 +1,6 @@
-// BOD3D-TEST v12.33 — unique item deck and end-game music
+// BOD3D — unique item deck, end-game music and cache-version loader
 (function(){
-  const BUILD='12.33';
+  const BUILD=(document.currentScript&&new URL(document.currentScript.src,location.href).searchParams.get('v'))||'12.37';
   const VERSION='v'+BUILD;
   window.BOD3D_BUILD_VERSION=VERSION;
   function syncVersion(){document.title='Bag of Dungeon 3D '+VERSION;const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
