@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v11.23';
+const VERSION='v12.34';
 
 // Developer tools are available only on TEST and local development builds.
 // The same code can be promoted safely: LIVE disables every activation route automatically.
@@ -404,7 +404,7 @@ function monsterLandSoundKey(name){
 }
 
 const SOUND_DEFS=[
- ['move','Footstep / movement'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['sword','Hand weapon attack'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['endGameMusic','End-game scroll music'],['lose','Defeat'],['click','UI click'],
+ ['move','Footstep / movement'],['reacherSting','Reacher sting'],['tilePlace','Tile placed'],['pickup','Item found / picked up'],['equip','Equip item'],['unequip','Unequip item'],['drop','Drop item'],['dice','Dice roll'],['hit','Combat hit'],['critical','Critical hit'],['sword','Hand weapon attack'],['bow','Bow shot'],['arrowHit','Arrow hit'],['spell','Generic spell'],['fireball','Fireball'],['ice','Ice Staff'],['heal','Healing / potion'],['teleport','Teleport'],['trap','Old Spikey'],['monsterReveal','Monster revealed'],['monsterDie','Monster defeated'],['heroHurt','Hero hurt'],['run','Run away'],['ring','Ring found'],['dragon','Dragon reveal / roar'],['win','Victory'],['endGameMusic','End-game scroll music'],['lose','Defeat'],['click','UI click'],
  // One landing-thud sound per monster, played when its reveal drop-in
  // animation hits the floor. File names follow the usual kebab convention,
  // e.g. Goblin -> assets/sounds/goblin.mp3, Giant Snake -> giant-snake.mp3.
@@ -415,10 +415,11 @@ function loadSounds(){try{USER_SOUNDS=JSON.parse(localStorage.getItem('bodDigita
 function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.stringify(USER_SOUNDS));localStorage.setItem('bodDigitalSoundVolume',String(soundVolume));localStorage.setItem('bodDigitalSoundOn',String(soundOn));}catch(e){alert('This sound is too large for browser storage. Use a shorter/compressed MP3 or add it to assets/sounds on GitHub.');}}
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
 function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
-function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
+function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),reacherSting:()=>{beep(820,.06,'sawtooth',.13);beep(150,.16,'square',.12,.04)},tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
 // v10.90: Default monster reveal/drop sound. Individual monster sounds can override this later.
 window.SOUND_PATHS=window.SOUND_PATHS||{};
 window.SOUND_PATHS.monsterReveal='assets/sounds/monster.mp3';
+window.SOUND_PATHS.reacherSting='assets/sounds/reacher-sting.mp3';
 
 const GITHUB_SOUND_CACHE={};
 
@@ -907,7 +908,28 @@ function collectRingIfSafe(tileKey){
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
 
+function applyReacherSting(){
+ const p=state.player,current=getTile(p.x,p.y);
+ if(!current)return false;
+ const reacherNearby=Object.entries(DIRS).some(([dir,d])=>{
+  if(!current.opens[dir])return false;
+  const neighbour=getTile(p.x+d.dx,p.y+d.dy);
+  if(!neighbour||!neighbour.opens[d.opp])return false;
+  const monster=neighbour.monster;
+  return !!(monster&&monster.name==='Reacher'&&monster.health>0&&monster.revealed);
+ });
+ if(!reacherNearby)return false;
+ p.health-=1;
+ playSound('reacherSting');
+ showCombatImpact('hero',p.health<=0?'kill':'hit',1);
+ log('The Reacher lashes out as you pass! Its sting causes 1 direct hit — armour has no effect.','combat');
+ toast('Reacher sting! Lose 1 Health.');
+ if(p.health<=0){death();return true;}
+ return false;
+}
+
 function move(dir){if(!view3d.enabled){toast('Return to 3D to move');return;}window.BOD3D?.clearDice3D?.();const p=state.player;if(p.ap<1)return;const d=DIRS[dir];p.facing=dir;p.prevX=p.x;p.prevY=p.y;p.x+=d.dx;p.y+=d.dy;p.ap-=1;sndMove();const t=getTile(p.x,p.y);t.visited=true;
+ if(applyReacherSting()){render();centreOnHero(false);return;}
  if(t.kind==='spike'){promptOldSpikey(t);render();centreOnHero(false);return;}
  if(t.kind==='pool'&&!t.poolUsed){promptHealingPool(t);}
  if(t.itemPending&&!t.itemUsed){t.itemUsed=true;t.itemPending=false;awardItem(drawItem());}
@@ -1203,7 +1225,7 @@ function renderInventory(){
  <div class="sectionTitle">Companions</div>
  <div class="slotGrid"><div class="equipSlot wide"><span class="slotLabel">${slotSymbolHTML('companion')}<span class="slotLabelText">Companions</span></span>
  ${p.companionBear?`<div class="slotItem" onclick="inspectBear()"><div class="slotArt">${iconHTML('Loyal Bear',p.companionBear.icon||'🐻')}</div><div class="slotName">Loyal Bear</div><div class="slotDesc">+1 combat die.</div></div>`:''}
- ${p.companionFirkin?`<div class="slotItem" onclick="inspectFirkin()"><div class="slotArt">${iconHTML('Firkin','F')}</div><div class="slotName">Firkin</div><div class="slotDesc">+3 to every melee attack roll.</div></div>`:''}
+ ${p.companionFirkin?`<div class="slotItem" onclick="inspectFirkin()"><div class="slotArt">${iconHTML('Firkin','F')}</div><div class="slotName">Firkin</div><div class="slotDesc">+1 to every melee attack roll.</div></div>`:''}
  ${!p.companionBear&&!p.companionFirkin?'<div class="slotEmpty">No companions</div>':''}</div></div>`;
  const t=getTile(p.x,p.y);
  if(t&&t.droppedItems&&t.droppedItems.length)html+='<div class="sectionTitle">On this tile</div><div class="invgrid">'+t.droppedItems.map((x,i)=>`<button class="itemBtn" onclick="pickupDropped(${i})" title="Pick up ${x.name}">${iconHTML(x.name,x.icon||'?')}<span class="dropMark">+</span></button>`).join('')+'</div>';
@@ -1213,7 +1235,7 @@ function renderInventory(){
 function magicSwordPeekHTML(){const p=state.player;let rows=[];for(const dir of dirOrder){const d=DIRS[dir],t=getTile(p.x+d.dx,p.y+d.dy);if(t&&(t.monsterPending||(t.monster&&!t.monster.revealed)))rows.push(`<button class="peekBtn" onclick="peekMonster('${dir}')">View ${dir}</button>`);}return rows.length?'<div class="sectionTitle">Magic Sword</div><div class="small">View adjacent monster:</div>'+rows.join(' '):'';}
 window.peekMonster=function(dir){const p=state.player,d=DIRS[dir],t=getTile(p.x+d.dx,p.y+d.dy);if(!t)return;if(t.monsterPending&&!t.monster){t.monster=drawMonster();t.monsterPending=false;}if(t.monster){t.monster.peeked=true;showModal('Magic Sword: '+dir,t.monster.name+'\nHealth '+t.monster.maxHealth+'\nCombat '+t.monster.dice+'d6+'+t.monster.mod,[{text:'Close',fn:closeModal}]);render();}};
 function carriedAt(slot){return state.player.slots[slot];}
-window.inspectCarried=function(slot){const item=carriedAt(slot);if(item)inspectItemObject(item);};window.inspectBackpack=function(idx){const item=state.player.backpack[idx];if(item)inspectItemObject(item);};window.inspectBear=function(){if(state.player.companionBear)inspectItemObject(state.player.companionBear);};window.inspectFirkin=function(){if(!state.player.companionFirkin)return;showModal('Firkin','Rose’s rescued husband. Firkin adds +3 to every melee attack roll and can fight alongside the Loyal Bear. He does not affect ranged attacks.',[{text:'Close',fn:closeModal}]);};
+window.inspectCarried=function(slot){const item=carriedAt(slot);if(item)inspectItemObject(item);};window.inspectBackpack=function(idx){const item=state.player.backpack[idx];if(item)inspectItemObject(item);};window.inspectBear=function(){if(state.player.companionBear)inspectItemObject(state.player.companionBear);};window.inspectFirkin=function(){if(!state.player.companionFirkin)return;showModal('Firkin','Rose’s rescued husband. Firkin adds +1 to every melee attack roll and can fight alongside the Loyal Bear. He does not affect ranged attacks.',[{text:'Close',fn:closeModal}]);};
 function inspectItemObject(item){const buttons=[];const eq=equippedSlotFor(item);if(item.type==='equipment'||isHandItem(item)||isAttire(item)){if(eq&&eq!=='companion')buttons.push({text:'Move to Backpack',fn:()=>{if(unequipItem(item)){closeModal();render();}}});if(isArmour(item)&&eq!=='armour')buttons.push({text:'Wear Armour',cls:'green',fn:()=>{if(equipToSlot(item,'armour')){closeModal();render();}}});else if(isBoots(item)&&eq!=='boots')buttons.push({text:'Wear Boots',cls:'green',fn:()=>{if(equipToSlot(item,'boots')){closeModal();render();}}});else if(isCloak(item)&&eq!=='attire')buttons.push({text:'Wear Attire',cls:'green',fn:()=>{if(equipToSlot(item,'cloak')){closeModal();render();}}});else if(isHandItem(item)&&eq!=='both hands'){buttons.push({text:isTwoHanded(item)?'Equip Both Hands':'Equip Left Hand',cls:'green',fn:()=>{if(equipToSlot(item,'left')){closeModal();render();}}});if(!isTwoHanded(item))buttons.push({text:'Equip Right Hand',cls:'green',fn:()=>{if(equipToSlot(item,'right')){closeModal();render();}}});}}
  if(!isChest(item)&&(item.type==='spell'||item.type==='consumable'||item.use))buttons.push({text:'Use',cls:'green',fn:()=>{closeModal();useItemObject(item);}});buttons.push({text:'Drop',cls:'red',fn:()=>dropItemObject(item)});buttons.push({text:'Close',fn:closeModal});showModal(item.name,(item.desc||'Item')+(eq?'\n\nActive: '+eq:''),buttons);}
 function useItemObject(item){if(item.use==='iceStaff'){useItem(item);return;}useItem(item,()=>{removeFromCurrentLocation(item);state.itemDiscard.push(item);syncEquipment();render();});}
