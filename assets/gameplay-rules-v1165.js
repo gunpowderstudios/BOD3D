@@ -150,7 +150,7 @@
       return true;
     }
 
-    function collectFirkinIfSafe(tileKey) {
+    function collectFirkinIfSafe(tileKey, afterWelcome) {
       if (!state || state.player?.companionFirkin || !tileKey) return false;
       if (key(state.player.x, state.player.y) !== tileKey) return false;
       const tile = state.tiles?.[tileKey];
@@ -175,7 +175,16 @@
       showModal(
         'FIRKIN RESCUED',
         '',
-        [{ text: 'Welcome, Firkin', cls: 'green', fn: closeModal }]
+        [{
+          text: 'Welcome, Firkin',
+          cls: 'green',
+          fn: () => {
+            closeModal();
+            if (typeof afterWelcome === 'function') {
+              setTimeout(afterWelcome, 0);
+            }
+          }
+        }]
       );
       const body = document.getElementById('modalBody');
       if (body) {
@@ -335,6 +344,9 @@
       const tileKey = combat.sourceKey || key(state.player.x, state.player.y);
       const carriesRing = Boolean(monster.carriesRing);
       const guardsFirkin = Boolean(monster.guardsFirkin);
+      const defeatedDragon = Boolean(
+        monster.isDragon || monster.name === 'Red Dragon'
+      );
 
       playSound('monsterDie');
       playTileEffect(tileKey, 'monsterDeath', 1000);
@@ -356,17 +368,34 @@
         log(monster.name + ' drops the Ring of Creation!', 'loot');
       }
 
-      if (monster.isDragon && state.player.hasRing) {
-        win();
+      if (defeatedDragon) {
+        closeCombat();
+        render();
+
+        if (state.player.hasRing) {
+          setTimeout(() => win(), 80);
+        } else {
+          const message =
+            'The Red Dragon is defeated—but your quest is not over. ' +
+            'Find the Ring of Creation and return to the Exit!';
+          log(message, 'loot');
+          setTimeout(() => {
+            showModal(
+              'YOUR QUEST IS NOT OVER',
+              message,
+              [{ text: 'Find the Ring', cls: 'green', fn: closeModal }]
+            );
+          }, 80);
+        }
         return;
       }
 
       // The Ring replaces the guardian's ordinary item reward.
-      const rewardCount = (!monster.isDragon && !carriesRing)
+      const rewardCount = (!defeatedDragon && !carriesRing)
         ? (monster.maxHealth >= 10 ? 2 : (monster.maxHealth >= 6 ? 1 : 0))
         : 0;
 
-      if (!monster.isDragon && !carriesRing && !rewardCount) {
+      if (!defeatedDragon && !carriesRing && !rewardCount) {
         log(monster.name + ' had ' + monster.maxHealth + ' starting Health: no item reward.', 'system');
       }
       if (rewardCount) {
@@ -380,19 +409,28 @@
       closeCombat();
       render();
 
+      const awardRewards = () => {
+        if (!rewardCount) return;
+        if (typeof queueMonsterRewards === 'function') {
+          queueMonsterRewards(rewardCount);
+        } else {
+          for (let index = 0; index < rewardCount; index++) awardItem();
+        }
+      };
+
       if (guardsFirkin) {
-        setTimeout(() => collectFirkinIfSafe(tileKey), 80);
+        setTimeout(() => {
+          const collected = collectFirkinIfSafe(
+            tileKey,
+            rewardCount ? awardRewards : null
+          );
+          if (!collected && rewardCount) awardRewards();
+        }, 80);
       }
       if (carriesRing) {
         setTimeout(() => collectRingIfSafe(tileKey), guardsFirkin ? 180 : 80);
-      } else if (rewardCount) {
-        setTimeout(() => {
-          if (typeof queueMonsterRewards === 'function') {
-            queueMonsterRewards(rewardCount);
-          } else {
-            for (let index = 0; index < rewardCount; index++) awardItem();
-          }
-        }, 120);
+      } else if (rewardCount && !guardsFirkin) {
+        setTimeout(awardRewards, 120);
       }
     };
 

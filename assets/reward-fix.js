@@ -1,6 +1,6 @@
-// BOD3D v12.30 — updated BOD3D About and credits copy
+// BOD3D-TEST v12.31 — sequence Firkin rewards and clarify Dragon victory
 (function(){
-  const BUILD='12.30';
+  const BUILD='12.31';
   const VERSION='v'+BUILD;
   window.BOD3D_BUILD_VERSION=VERSION;
   function syncVersion(){document.title='Bag of Dungeon 3D '+VERSION;const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
