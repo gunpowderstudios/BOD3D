@@ -9,7 +9,7 @@ const DEVELOPER_TOOLS_ENABLED=(location.protocol==='file:'||/\/(?:BOD3D-TEST)(?:
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
- {id:'tamara',name:'Tamara the Fighter',glyph:'⚔',desc:'Fearless sword fighter.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
+ {id:'tamara',name:'Tamara the Fighter',glyph:'⚔',desc:'Experienced sword fighter and ranger.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
  {id:'duric',name:'Duric the Dwarf',glyph:'🪓',desc:'Former head of the King\'s Guard.',maxHealth:12,maxAp:4,baseDice:2,baseMod:3,special:'Brace',specialDesc:'Once per game block an attack and take no damage.'},
  {id:'marria',name:'Marria the Dwarf',glyph:'🪓',desc:'Stout-hearted and legendary with an axe.',maxHealth:12,maxAp:4,baseDice:2,baseMod:3,special:'Brace',specialDesc:'Once per game block an attack and take no damage.'},
  {id:'rill',name:'Rill the Healer',glyph:'✋',desc:'Wise in the lore of medicine.',maxHealth:9,maxAp:5,baseDice:2,baseMod:0,special:'Renew',specialDesc:'Spend 3 AP to heal 2 dice of health. Three uses per game.'},
