@@ -3,7 +3,7 @@
   const BUILD=(document.currentScript&&new URL(document.currentScript.src,location.href).searchParams.get('v'))||'12.37';
   const VERSION='v'+BUILD;
   window.BOD3D_BUILD_VERSION=VERSION;
-  function syncVersion(){document.title='Bag of Dungeon 3D '+VERSION;const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
+  function syncVersion(){document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';const visible=document.getElementById('visibleBuildVersion');if(visible)visible.textContent=VERSION;}
   function versioned(path){return path+(path.includes('?')?'&':'?')+'v='+BUILD;}
   function reportLoadFailure(path){
     console.error('[BOD3D '+VERSION+'] Required patch failed to load:',path);
