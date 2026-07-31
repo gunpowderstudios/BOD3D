@@ -426,13 +426,25 @@ async function fireRangedAt(tileKey,event){
   },1450);
  },520);
 }
+function requestRunAway(){
+ if(!combat)return;
+ if(state.player.health>1){runAway();return;}
+ showModal(
+  'RUNNING AWAY WILL KILL YOU!',
+  'Escaping costs 1 Health. You only have 1 Health remaining. Are you sure?',
+  [
+   {text:'Keep Fighting',fn:closeModal},
+   {text:'Run Anyway',cls:'red',fn:()=>{closeModal();runAway();}}
+  ]
+ );
+}
 function renderCombat(){if(!combat)return;const p=state.player,m=combat.tile.monster,c=state.charDef||CHARACTERS[0];document.getElementById('heroGlyph').innerHTML=iconHTML(c.name,c.glyph||'🧑');const heroNameEl=document.getElementById('heroCombatName');if(heroNameEl)heroNameEl.textContent=c.name;const firkinBonus=p.companionFirkin?'<div class="small">Firkin: +1 melee bonus included</div>':'';document.getElementById('heroCombatStats').innerHTML='<div class="hearts">'+heartLine(p.health,p.maxHealth)+'</div><div>HP '+p.health+'/'+p.maxHealth+'</div><div>Combat '+pDice()+'d6+'+pCombatMod()+'</div>'+firkinBonus+'<div>Damage reduction -'+pDamageReduction()+'</div><div>AP '+p.ap+'/'+p.maxAp+'</div>';document.getElementById('monsterGlyph').innerHTML=iconHTML(m.name,m.glyph||'👹');document.getElementById('monsterName').textContent=m.name;document.getElementById('monsterCombatStats').innerHTML='<div class="hearts combatHearts">'+heartLine(m.health,m.maxHealth)+'</div><div>HP '+m.health+'/'+m.maxHealth+'</div><div>Combat '+m.dice+'d6+'+m.mod+'</div><div class="small">Monsters never score critical hits.</div><div class="small">'+(m.special||'')+'</div>';const b=document.getElementById('combatBtns');b.innerHTML='';addBtn(b,combat.rolling?'Rolling...':'Fight','green',fightRound,combat.rolling);addBtn(
  b,
  combat.noEscape
   ?'No Escape!'
   :(combat.mustFightRound?'Run Away — fight first':'Run Away (-1 HP)'),
  'red',
- runAway,
+ requestRunAway,
  combat.noEscape||combat.mustFightRound
 );combatItemButtons(b);}
 const COMBAT_IMPACT_MS={hit:1600,critical:2400,kill:2800,miss:1500};
