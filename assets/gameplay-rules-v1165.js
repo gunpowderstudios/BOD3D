@@ -1,4 +1,4 @@
-// BOD3D-TEST v11.94 — restored 20-tile Ring guardian and developer assignment
+// BOD3D-TEST v12.43 — 10+ Health monsters offer two items; choose one
 (function () {
   'use strict';
 
@@ -14,38 +14,12 @@
 
     window.__bodGameplayRulesV1165Installed = true;
 
-    const LOCKED_ITEMS = new Set(['Ice Staff', 'Large Steel Axe']);
-
-    function laidTileCount() {
-      if (!state?.tiles) return 0;
-      return Object.values(state.tiles).filter(tile =>
-        tile && tile.kind !== 'start' && tile.kind !== 'exit'
-      ).length;
-    }
-
-    const originalDrawItem = drawItem;
-    drawItem = function () {
-      if (laidTileCount() >= 20) {
-        return originalDrawItem.apply(this, arguments);
-      }
-      if (!state?.itemDeck?.length) return null;
-
-      // Preserve the locked cards in the deck. Draw the next eligible card only.
-      for (let index = state.itemDeck.length - 1; index >= 0; index--) {
-        const candidate = state.itemDeck[index];
-        if (candidate && !LOCKED_ITEMS.has(candidate.name)) {
-          const item = state.itemDeck.splice(index, 1)[0];
-          return item ? { ...item } : null;
-        }
-      }
-      return null;
-    };
-
     function ringAlreadyAssigned() {
       return Boolean(
         state && (
           state.player?.hasRing ||
           state.ringCarrierAssigned ||
+          (state.monsterDeck || []).some(monster => monster?.carriesRing) ||
           Object.values(state.tiles || {}).some(tile =>
             tile?.hasRing || tile?.monster?.carriesRing
           )
@@ -53,31 +27,29 @@
       );
     }
 
-    function qualifyingGuardians() {
-      return Object.entries(state?.tiles || {}).filter(([, tile]) => {
-        const monster = tile?.monster;
-        return monster &&
-          monster.health > 0 &&
-          !monster.isDragon &&
-          !monster.guardsFirkin &&
-          Number(monster.maxHealth) >= 10;
-      });
+    function randomFrom(list) {
+      return list[Math.floor(Math.random() * list.length)];
     }
 
     function assignRingGuardian() {
-      if (!state || laidTileCount() < 20 || ringAlreadyAssigned()) return false;
-      const candidates = qualifyingGuardians();
+      if (!state || ringAlreadyAssigned()) return false;
+      const candidates = (state.monsterDeck || []).filter(monster =>
+        monster &&
+        !monster.isDragon &&
+        !monster.guardsFirkin &&
+        Number(monster.maxHealth) >= 10
+      );
       if (!candidates.length) return false;
 
-      const [tileKey, tile] = candidates[Math.floor(Math.random() * candidates.length)];
-      tile.monster.carriesRing = true;
+      const monster = randomFrom(candidates);
+      monster.carriesRing = true;
       state.ringCarrierAssigned = true;
       state.ringActivated = true;
-      state.ringKey = tileKey;
+      state.ringKey = null;
       state.ringNumber = null;
       state.ringRoll = null;
       if (typeof log === 'function') {
-        log('A powerful monster somewhere in the dungeon now carries the Ring of Creation.', 'loot');
+        log('A powerful monster somewhere in the dungeon carries the Ring of Creation.', 'loot');
       }
       return true;
     }
@@ -88,6 +60,7 @@
           state.player?.companionFirkin ||
           state.firkinRescued ||
           state.firkinGuardianAssigned ||
+          (state.monsterDeck || []).some(monster => monster?.guardsFirkin) ||
           Object.values(state.tiles || {}).some(tile =>
             tile?.hasFirkin || tile?.monster?.guardsFirkin
           )
@@ -95,50 +68,44 @@
       );
     }
 
-    function currentFirkinCandidate() {
-      if (!combat?.tile?.monster) return null;
-
-      const tile = combat.tile;
-      const monster = tile.monster;
-      const tileEntry = Object.entries(state?.tiles || {})
-        .find(([, candidateTile]) => candidateTile === tile);
-      const tileKey = tileEntry?.[0] || key(state.player.x, state.player.y);
-
+    function announceFirkinGuardian() {
+      const monster = combat?.tile?.monster;
       if (
-        monster.health <= 0 ||
+        !monster ||
         !monster.revealed ||
-        monster.isDragon ||
-        monster.carriesRing ||
-        monster.guardsFirkin ||
-        monster.firkinChecked ||
-        Number(monster.maxHealth) < 10
-      ) return null;
-
-      return [tileKey, tile];
-    }
-
-    function assignFirkinGuardian() {
-      if (
-        !state ||
-        firkinAlreadyPlacedOrRescued() ||
-        laidTileCount() < 15 ||
-        Number(state.player?.killed?.length || 0) < 6
+        !monster.guardsFirkin ||
+        monster.firkinAnnounced
       ) return false;
 
-      const candidate = currentFirkinCandidate();
-      if (!candidate) return false;
-
-      const [tileKey, tile] = candidate;
-      const guaranteed = laidTileCount() >= 25;
-      tile.monster.firkinChecked = true;
-      if (!guaranteed && Math.random() >= 0.25) return false;
-
-      tile.monster.guardsFirkin = true;
-      state.firkinGuardianAssigned = true;
-      state.firkinGuardianKey = tileKey;
+      monster.firkinAnnounced = true;
       log('You hear whimpering nearby…!', 'loot');
       if (typeof toast === 'function') toast('You hear whimpering nearby…!');
       return true;
+    }
+
+    function assignFirkinGuardian() {
+      if (!state) return false;
+
+      if (!firkinAlreadyPlacedOrRescued()) {
+        const deck = state.monsterDeck || [];
+        // Monsters are drawn from the end of the array, so the first half
+        // contains monsters that will appear in the later half of the game.
+        const laterHalf = deck.slice(0, Math.ceil(deck.length / 2));
+        const candidates = laterHalf.filter(monster =>
+          monster &&
+          !monster.isDragon &&
+          !monster.carriesRing &&
+          Number(monster.maxHealth) >= 10
+        );
+        if (!candidates.length) return false;
+
+        const monster = randomFrom(candidates);
+        monster.guardsFirkin = true;
+        state.firkinGuardianAssigned = true;
+        state.firkinGuardianKey = null;
+      }
+
+      return announceFirkinGuardian();
     }
 
     function placeFirkinOnTile(tile, tileKey, monsterName) {
@@ -303,6 +270,8 @@
     rangedKill = function (tile, tileKey, monster) {
       const carriesRing = Boolean(monster?.carriesRing);
       const guardsFirkin = Boolean(monster?.guardsFirkin);
+      const chooseOneReward = !carriesRing && !monster?.isDragon &&
+        Number(monster?.maxHealth) >= 10;
       if (carriesRing) {
         // Prevent the original ranged-kill routine awarding normal loot or
         // collecting the Ring remotely. The Ring remains on the guardian tile.
@@ -310,15 +279,24 @@
         state.ringActivated = true;
         state.ringCarrierAssigned = true;
         state.ringKey = tileKey;
-        monster.isDragon = true;
       }
+      // The original ranged routine awards two separate items to 10+ Health
+      // monsters. Suppress that reward so the choice rule can handle it.
+      if (carriesRing || chooseOneReward) monster.isDragon = true;
       if (guardsFirkin) placeFirkinOnTile(tile, tileKey, monster.name);
 
       const result = originalRangedKill.apply(this, arguments);
 
+      if (carriesRing || chooseOneReward) monster.isDragon = false;
       if (carriesRing) {
-        monster.isDragon = false;
         log(monster.name + ' drops the Ring of Creation!', 'loot');
+      }
+      if (chooseOneReward) {
+        log(monster.name + ' had ' + monster.maxHealth +
+          ' starting Health: draw 2 items and choose 1.', 'loot');
+        setTimeout(() => {
+          if (typeof queueMonsterRewards === 'function') queueMonsterRewards(2);
+        }, 120);
       }
       if (guardsFirkin) {
         log('Firkin is waiting on the fallen monster’s tile. Reach him to complete the rescue.', 'loot');
@@ -401,7 +379,7 @@
       if (rewardCount) {
         log(
           monster.name + ' had ' + monster.maxHealth + ' starting Health: draw ' +
-          rewardCount + ' item' + (rewardCount === 1 ? '' : 's') + '.',
+          (rewardCount === 2 ? '2 items and choose 1.' : '1 item.'),
           'loot'
         );
       }
@@ -434,7 +412,7 @@
       }
     };
 
-    // Assign as soon as tile 20 exists and a qualifying living guardian is present.
+    // Secretly assign both guardians from the shuffled monster deck.
     assignRingGuardian();
     assignFirkinGuardian();
     setInterval(() => {
