@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.46';
+const VERSION='v12.48';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -761,7 +761,7 @@ function createTileDeck(){
 function showTesterWarning(){
  showModal('A WARNING FROM THE DUNGEON','',[{text:'Begin your quest…',cls:'green',fn:closeModal}]);
  const body=document.getElementById('modalBody');
- if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#246B2F;font-weight:bold;">TIP: The Ring may be carried by one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.<br>If you’re brave enough, you may even find a friend!</span><br>Good luck, brave adventurer. You’ll need it.</div>`;
+ if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#246B2F;font-weight:bold;">Advice for new adventurers! Hmm, advice? Well, we can’t offer you much—this is your journey, but you’re braver than you look! Anyway, nobody has ever returned from these dungeons. Not that we want to worry you! The rumours say that the Ring may be hidden on one of the large monsters; the Red Dragon may fry you without warning (look out for her at the Exit); and, finally, if you’re brave enough, you might just meet a friend! See the story below…</span><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
 function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,companionFirkin:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false,lastDeath:null};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
 
@@ -1124,7 +1124,7 @@ function openMenu(){
   ]);
 }
 
-function showModal(title,body,buttons){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));document.getElementById('modal').classList.add('open');}
+function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
@@ -1676,6 +1676,7 @@ if(compassEl){
  };
 }
 document.getElementById('menuBtn').onclick=openMenu;
+document.getElementById('questLogBtn').onclick=()=>showQuestLogViewer(false);
 
 const mobileDpadCentre=document.querySelector('.dpadCentre');
 wireCentreControl(mobileDpadCentre);
@@ -2672,24 +2673,31 @@ function showGameOverModal(){
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=gameOverBodyHTML();
 }
-function showDeathQuestLog(){
+function questLogEntriesHTML(){
  const source=document.getElementById('log');
  const lines=source?Array.from(source.children):[];
- const html=lines.map(line=>{
+ return lines.map(line=>{
   const colour=line.classList.contains('combat')?'#ff6b6b':line.classList.contains('loot')?'#f2c94c':line.classList.contains('heal')?'#7ee081':'#ffffff';
   return '<div style="padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.15);color:'+colour+'">'+line.textContent+'</div>';
  }).join('');
- showModal('QUEST LOG','',[
-  {text:'Back to Game Over',fn:showGameOverModal},
-  {text:'New Game',cls:'green',fn:()=>{showCharSelect();}}
- ]);
+}
+function showQuestLogViewer(fromGameOver=false){
+ const buttons=fromGameOver
+  ?[{text:'Back to Game Over',fn:showGameOverModal},{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]
+  :[{text:'Close',fn:closeModal}];
+ showModal('QUEST LOG','',buttons);
+ const modal=document.getElementById('modal');
+ modal.classList.remove('modalEdge');
+ modal.classList.add('questLogModal');
  const body=document.getElementById('modalBody');
  if(body){
-  body.innerHTML='<div id="deathQuestLog" style="max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#080808;border:3px solid #1b1208;border-radius:8px;padding:10px;text-align:left;font-size:15px;line-height:1.35">'+(html||'<div style="color:#fff">No quest entries recorded.</div>')+'</div>';
-  const scroller=document.getElementById('deathQuestLog');
+  const html=questLogEntriesHTML();
+  body.innerHTML='<div id="questLogViewer" style="height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#080808;border:3px solid #1b1208;border-radius:8px;padding:10px;text-align:left;font-size:15px;line-height:1.35">'+(html||'<div style="color:#fff">No quest entries recorded.</div>')+'</div>';
+  const scroller=document.getElementById('questLogViewer');
   if(scroller)scroller.scrollTop=scroller.scrollHeight;
  }
 }
+function showDeathQuestLog(){showQuestLogViewer(true);}
 function lose(){state.gameOver=true;sndLose();closeCombat();showGameOverModal();}
 
 // v11.19: Clear any settled or still-animating dice at the start of a new game.
