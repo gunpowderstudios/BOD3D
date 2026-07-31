@@ -23,7 +23,7 @@
   function loadCombatItemsMenu(){loadScriptOnce('script[data-bod-combat-items-menu]','assets/combat-items-menu.js','bodCombatItemsMenu');}
   function loadCharactersOnly(){loadScriptOnce('script[data-bod-characters-only]','assets/characters-only.js','bodCharactersOnly');}
   function loadAudioLifecycle(){loadScriptOnce('script[data-bod-audio-lifecycle]','assets/audio-lifecycle.js','bodAudioLifecycle');}
-  function loadGameplayRules(){loadScriptOnce('script[data-bod-gameplay-rules-v1165]','assets/gameplay-rules-v1165.js','bodGameplayRulesV1165');}
+  function loadGameplayRules(){loadScriptOnce('script[data-bod-gameplay-rules-v1165]','assets/gameplay-rules-v1165.js?v=12.43','bodGameplayRulesV1165');}
   function loadHealthHud(){loadScriptOnce('script[data-bod-health-hud]','assets/health-hud.js','bodHealthHud');}
   function loadStoryIntro(){loadScriptOnce('script[data-bod-story-intro]','assets/story-intro.js','bodStoryIntro');}
   function loadWarningScrollStyles(){loadStyleOnce('link[data-bod-warning-scroll]','css/warning-scroll.css','bodWarningScroll');}
@@ -46,9 +46,68 @@
     function modalBusy(){const modal=document.getElementById('modal');return !!(modal&&modal.classList.contains('open'));}
     function inventoryBusy(){return typeof pendingItemQueue!=='undefined'&&Array.isArray(pendingItemQueue)&&pendingItemQueue.length>0;}
     function waitUntilReady(callback){let attempts=0;const timer=setInterval(()=>{if((!modalBusy()&&!inventoryBusy())||++attempts>1200){clearInterval(timer);callback();}},50);}
-    function deliverNext(){if(!rewardQueue.length){delivering=false;return;}delivering=true;const item=rewardQueue.shift();const delivered=originalAwardItem(item);if(delivered===false&&typeof log==='function')log('Could not deliver '+item.name+'; continuing with remaining rewards.','system');waitUntilReady(()=>setTimeout(deliverNext,80));}
-    window.queueMonsterRewards=function(count){const total=Math.max(0,Number(count)||0);for(let i=0;i<total;i++){const item=drawItem();if(item)rewardQueue.push(item);else if(typeof log==='function')log('No items left in the item deck.','system');}if(!delivering&&rewardQueue.length)setTimeout(deliverNext,120);};
-    awardItem=function(item){const drawn=item||drawItem();if(!drawn){if(typeof log==='function')log('No items left in the item deck.','system');return false;}rewardQueue.push(drawn);if(!delivering)setTimeout(deliverNext,40);return true;};
+    function returnToBag(item){if(!item||!state?.itemDeck)return;const index=Math.floor(Math.random()*(state.itemDeck.length+1));state.itemDeck.splice(index,0,item);}
+    function chooseMonsterReward(items){
+      const choose=(chosen,returned)=>{
+        closeModal();
+        returnToBag(returned);
+        if(typeof log==='function')log('Chose '+chosen.name+'. '+returned.name+' goes back in the bag.','loot');
+        rewardQueue.unshift({type:'item',item:chosen});
+        setTimeout(deliverNext,80);
+      };
+      showModal(
+        'Choose one item',
+        '',
+        items.map((item,index)=>({
+          text:'Choose '+item.name,
+          cls:'green',
+          fn:()=>choose(item,items[index===0?1:0])
+        }))
+      );
+      const body=document.getElementById('modalBody');
+      if(body){
+        body.innerHTML=
+          '<div style="margin-bottom:14px">This powerful monster carried two items. Choose one—the other goes back in the bag.</div>'+
+          '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch">'+
+          items.map(item=>
+            '<div style="border:3px solid #1b1208;border-radius:8px;padding:10px 8px;background:rgba(255,255,255,.18);min-width:0">'+
+              '<div style="font-size:42px;line-height:1;margin-bottom:7px">'+iconHTML(item.name,item.icon||'?')+'</div>'+
+              '<div style="font-size:17px;font-weight:bold;line-height:1.15;margin-bottom:7px">'+item.name+'</div>'+
+              '<div style="font-size:14px;line-height:1.25">'+(item.desc||'No special effect.')+'</div>'+
+            '</div>'
+          ).join('')+
+          '</div>';
+      }
+    }
+    function deliverNext(){
+      if(!rewardQueue.length){delivering=false;return;}
+      delivering=true;
+      const task=rewardQueue.shift();
+      if(task.type==='choice'){waitUntilReady(()=>chooseMonsterReward(task.items));return;}
+      const item=task.item;
+      const delivered=originalAwardItem(item);
+      if(delivered===false&&typeof log==='function')log('Could not deliver '+item.name+'; continuing with remaining rewards.','system');
+      waitUntilReady(()=>setTimeout(deliverNext,80));
+    }
+    window.queueMonsterRewards=function(count){
+      const total=Math.max(0,Number(count)||0);
+      const drawn=[];
+      for(let i=0;i<total;i++){
+        const item=drawItem();
+        if(item)drawn.push(item);
+        else if(typeof log==='function')log('No items left in the item deck.','system');
+      }
+      if(drawn.length===2&&total===2)rewardQueue.push({type:'choice',items:drawn});
+      else drawn.forEach(item=>rewardQueue.push({type:'item',item}));
+      if(!delivering&&rewardQueue.length)setTimeout(deliverNext,120);
+    };
+    awardItem=function(item){
+      const drawn=item||drawItem();
+      if(!drawn){if(typeof log==='function')log('No items left in the item deck.','system');return false;}
+      rewardQueue.push({type:'item',item:drawn});
+      if(!delivering)setTimeout(deliverNext,40);
+      return true;
+    };
     return true;
   }
   function loadAll(){syncVersion();loadWarningScrollStyles();loadDesktopHudStyles();loadDarkCombatStyles();loadDarkHudStyles();loadMobileActionFix();loadCombatItemsStyles();loadUiFixes();loadQuestLogColours();loadWarningScrollV1177();loadCarriedRingHud();loadBuyBod();loadLethalBlow();loadMobileSheetFix();loadCombatCleanup();loadCombatOnlyAP();loadCombatItemsMenu();loadCharactersOnly();loadEnterButtonFix();loadAudioLifecycle();loadGameplayRules();loadHealthHud();loadStoryIntro();}
