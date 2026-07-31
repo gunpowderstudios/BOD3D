@@ -1,4 +1,4 @@
-// BOD3D-TEST v12.43 — 10+ Health monsters offer two items; choose one
+// BOD3D-TEST v12.52 — guaranteed Ring and Firkin guardians
 (function () {
   'use strict';
 
@@ -27,15 +27,56 @@
       );
     }
 
+    const MONSTERS_DRAWN_PER_DUNGEON = 11;
+
     function randomFrom(list) {
       return list[Math.floor(Math.random() * list.length)];
     }
 
+    function guardianBandBounds(laterInDungeon) {
+      const deck = state?.monsterDeck || [];
+      const drawCount = Math.min(MONSTERS_DRAWN_PER_DUNGEON, deck.length);
+      const start = deck.length - drawCount;
+      const split = start + Math.ceil(drawCount / 2);
+      // Monsters are popped from the end: the lower half of this final
+      // draw pool appears later in the dungeon.
+      return laterInDungeon
+        ? { start, end: split }
+        : { start: split, end: deck.length };
+    }
+
+    function guardianCandidates(laterInDungeon, predicate) {
+      const deck = state?.monsterDeck || [];
+      const bounds = guardianBandBounds(laterInDungeon);
+      let candidates = deck.slice(bounds.start, bounds.end).filter(predicate);
+      if (candidates.length) return candidates;
+
+      // Guarantee a suitable guardian will be drawn by swapping one from
+      // outside the required band into an unassigned position inside it.
+      const sourceIndex = deck.findIndex((monster, index) =>
+        (index < bounds.start || index >= bounds.end) && predicate(monster)
+      );
+      const targetIndexes = [];
+      for (let index = bounds.start; index < bounds.end; index += 1) {
+        const monster = deck[index];
+        if (monster && !monster.carriesRing && !monster.guardsFirkin) {
+          targetIndexes.push(index);
+        }
+      }
+      if (sourceIndex >= 0 && targetIndexes.length) {
+        const targetIndex = randomFrom(targetIndexes);
+        [deck[sourceIndex], deck[targetIndex]] = [deck[targetIndex], deck[sourceIndex]];
+        candidates = deck.slice(bounds.start, bounds.end).filter(predicate);
+      }
+      return candidates;
+    }
+
     function assignRingGuardian() {
       if (!state || ringAlreadyAssigned()) return false;
-      const candidates = (state.monsterDeck || []).filter(monster =>
+      const candidates = guardianCandidates(false, monster =>
         monster &&
         !monster.isDragon &&
+        !monster.carriesRing &&
         !monster.guardsFirkin &&
         Number(monster.maxHealth) >= 10
       );
@@ -87,14 +128,13 @@
       if (!state) return false;
 
       if (!firkinAlreadyPlacedOrRescued()) {
-        const deck = state.monsterDeck || [];
-        // Monsters are drawn from the end of the array, so the first half
-        // contains monsters that will appear in the later half of the game.
-        const laterHalf = deck.slice(0, Math.ceil(deck.length / 2));
-        const candidates = laterHalf.filter(monster =>
+        // Firkin is guarded by a different 10+ Health monster in the
+        // later half of the monsters guaranteed to appear in this dungeon.
+        const candidates = guardianCandidates(true, monster =>
           monster &&
           !monster.isDragon &&
           !monster.carriesRing &&
+          !monster.guardsFirkin &&
           Number(monster.maxHealth) >= 10
         );
         if (!candidates.length) return false;
