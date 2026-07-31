@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.44';
+const VERSION='v12.45';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -763,7 +763,7 @@ function showTesterWarning(){
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#B4201A;font-weight:bold;">TIP: The Ring may be hidden on one of the many large monsters that dwell in this dungeon.<br>BEWARE! The Red Dragon waits patiently for you at the Exit.</span><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
-function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,companionFirkin:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
+function newGame(charDef=CHARACTERS[0]){document.getElementById('log').innerHTML='';pan={x:0,y:0,scale:1};view3d={enabled:true};if(window.BOD3D)window.BOD3D.resetHeroFacing();state={charDef,tiles:{},tileDeck:createTileDeck(),monsterDeck:expanded(MONSTER_MASTER),itemDeck:expanded(ITEM_MASTER),tileDiscard:[],monsterDiscard:[],itemDiscard:[],exitPlaced:false,ringActivated:false,ringKey:null,ringNumber:null,ringRoll:null,turns:1,startedAt:Date.now(),player:{x:0,y:0,prevX:0,prevY:0,facing:'S',maxHealth:charDef.maxHealth,health:charDef.maxHealth,maxAp:charDef.maxAp,ap:charDef.maxAp,baseDice:charDef.baseDice,baseMod:charDef.baseMod,lives:1,hasRing:false,equipment:{},slots:{left:null,right:null,armour:null,boots:null,cloak:null},backpack:[],companionBear:null,companionFirkin:null,inventory:[],flags:{special:charDef.special,usedSpecial:false,renewCharges:3,bootsBonus:false,torchFreeLay:false},temp:{},killed:[]},gameOver:false,lastDeath:null};state.tiles['0,0']={kind:'start',opens:{...TILE_BASE.start},rot:0,visited:true};log(charDef.name+' enters the dungeon.','system');log('Welcome to Bag of Dungeon 3D '+VERSION+'.','system');render();setTimeout(()=>{setOpeningCamera();showTesterWarning();},0);}
 
 const TESTER_SINGLE_LIFE=true;
 const INVENTORY_LIMIT=8;
@@ -927,7 +927,7 @@ function applyReacherSting(){
  showCombatImpact('hero',p.health<=0?'kill':'hit',1);
  log('The Reacher lashes out as you pass! Its sting causes 1 direct hit — armour has no effect.','combat');
  toast('Reacher sting! Lose 1 Health.');
- if(p.health<=0){death();return true;}
+ if(p.health<=0){recordFinalBlow('Stung by the Reacher','The Reacher lashes out as you pass. Its sting causes 1 direct damage—armour has no effect.');death();return true;}
  return false;
 }
 
@@ -1003,7 +1003,7 @@ function promptOldSpikey(tile){
  const carried=allCarriedItems().filter(x=>!isBear(x));
  const buttons=[];
  if(carried.length)buttons.push({text:'Destroy an Item',cls:'red',fn:()=>chooseSpikeSacrifice(tile)});
- buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;const triggerLimit=state.player.equipment.boots?.name==='Magic Boots'?1:2;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=triggerLimit){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playSound('hit');playSound('heroHurt');showCombatImpact('hero',state.player.health<=0?'kill':'hit',dmg);playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
+ buttons.push({text:'Roll the Dice',cls:'green',fn:async()=>{closeModal();const triggerRoll=roll(1);const trigger=triggerRoll.total;const triggerLimit=state.player.equipment.boots?.name==='Magic Boots'?1:2;playSound('dice');const triggerDice=window.BODDice3D?.roll?.(triggerRoll.rolls,'hero');if(triggerDice&&typeof triggerDice.then==='function')await triggerDice;if(trigger<=triggerLimit){const dmgRoll=roll(1);const dmg=dmgRoll.total;const damageDice=window.BODDice3D?.roll?.(dmgRoll.rolls,'hero');if(damageDice&&typeof damageDice.then==='function')await damageDice;state.player.health-=dmg;playSound('trap');playSound('hit');playSound('heroHurt');showCombatImpact('hero',state.player.health<=0?'kill':'hit',dmg);playCurrentTileEffect('trap',900);log('Old Spikey rolls '+trigger+' and springs! You take '+dmg+' direct damage.','combat');if(state.player.health<=0){recordFinalBlow('Killed by Old Spikey','Old Spikey rolled '+trigger+' and sprang! The damage die rolled '+dmg+', causing '+dmg+' direct damage.');death();return;}}else log('Old Spikey rolls '+trigger+'. You cross safely.','system');render();}});
  showModal('Old Spikey','Destroy one carried item to jam the mechanism, or roll a die. '+(state.player.equipment.boots?.name==='Magic Boots'?'Your Magic Boots help you pass: only a 1 springs the trap.':'On 1–2 the trap springs and deals one die of direct damage.'),buttons);
 }
 function chooseSpikeSacrifice(tile){const items=allCarriedItems().filter(x=>!isBear(x));showModal('Jam Old Spikey','Choose an item to destroy.',items.map(it=>({text:it.name,cls:'red',fn:()=>{dropDestroyedItem(it);closeModal();log('Destroyed '+it.name+' to jam Old Spikey.','system');render();}})).concat([{text:'Back',fn:()=>promptOldSpikey(tile)}]));}
@@ -1051,8 +1051,8 @@ function useItem(it,consume){const p=state.player,m=combat?.tile?.monster;let us
  centreOnHero(false);
  return;
 }
- if(it.use==='smallChest'){const r=roll(1).total;if(r<=2){p.health-=2;msg='Chest trap! Take 2 damage.';}else{awardItem();msg='Small Chest opened: draw 1 item.';}used=true;}
- if(it.use==='largeChest'){const r=roll(1).total;if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';}else{awardItem();awardItem();msg='Large Chest opened: draw 2 items.';}used=true;}
+ if(it.use==='smallChest'){const r=roll(1).total;if(r<=2){p.health-=2;msg='Chest trap! Take 2 damage.';if(p.health<=0)recordFinalBlow('Killed by a trapped Small Chest','The chest trap caused 2 direct damage.');}else{awardItem();msg='Small Chest opened: draw 1 item.';}used=true;}
+ if(it.use==='largeChest'){const r=roll(1).total;if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';if(p.health<=0)recordFinalBlow('Killed by a trapped Large Chest','The chest trap caused 5 direct damage.');}else{awardItem();awardItem();msg='Large Chest opened: draw 2 items.';}used=true;}
  if(it.use==='teleport'){showTeleport(it);used=false;}
  if(msg){if(it.use==='fireball'){playSound('spell');playCurrentTileEffect('fireball',1000);}else if(it.use==='bomb'){playCurrentTileEffect('explosion',950);sndSpell();}else if(it.name==='Ice Staff'){playSound('spell');playCurrentTileEffect('ice',900);}else if(it.use==='healthPotion'){playSound('heal');playCurrentTileEffect('heal',1000);}else if(it.use==='teleport')playSound('teleport');else sndSpell();log(msg,it.use==='healthPotion'?'heal':'loot');toast(msg);} if(used&&consume)consume(); if(m&&m.health<=0){killMonster();return;} if(p.health<=0){death();return;}render();if(combat)renderCombat();}
 function showTeleport(item){
@@ -1128,6 +1128,10 @@ function showModal(title,body,buttons){document.getElementById('modalTitle').tex
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
+function recordFinalBlow(title,detail){
+ if(!state)return;
+ state.lastDeath={title:title||'Claimed by the dungeon',detail:detail||'Your adventure ended in the dungeon.'};
+}
 function tileAssetName(tile){
  // Item and monster locations keep their randomly drawn floor artwork.
  // Their markers are rendered separately as transparent overlays.
@@ -1276,10 +1280,10 @@ function openChestOnTile(tileKey,item){
   let rewardCount=0;
 
   if(item.use==='smallChest'){
-   if(r<=2){p.health-=2;msg='TRAPPED! Take 2 damage.';}
+   if(r<=2){p.health-=2;msg='TRAPPED! Take 2 damage.';if(p.health<=0)recordFinalBlow('Killed by a trapped Small Chest','The chest rolled '+r+' and caused 2 direct damage.');}
    else{rewardCount=1;msg='Small Chest opened: draw 1 item.';}
   }else{
-   if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';}
+   if(r<=2){p.health-=5;msg='TRAPPED! Take 5 damage.';if(p.health<=0)recordFinalBlow('Killed by a trapped Large Chest','The chest rolled '+r+' and caused 5 direct damage.');}
    else{rewardCount=2;msg='Large Chest opened: draw 2 items.';}
   }
 
@@ -2643,7 +2647,50 @@ function win(){
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=endingScrollHTML(rescuedFirkin);
 }
-function lose(){state.gameOver=true;sndLose();closeCombat();showModal('GAME OVER','The dungeon claims another adventurer.\n\n'+adventureStats(),[{text:'New Game',cls:'green',fn:()=>{showCharSelect();}}]);}
+function deathStatsHTML(){
+ const p=state.player;
+ const mins=Math.max(0,Math.round((Date.now()-(state.startedAt||Date.now()))/60000));
+ const explored=Object.values(state.tiles||{}).filter(tile=>tile?.visited).length;
+ return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;margin-top:14px;text-align:left">'+
+  '<div><b>Monsters defeated:</b> '+p.killed.length+'</div>'+
+  '<div><b>Tiles explored:</b> '+explored+'</div>'+
+  '<div><b>Turns survived:</b> '+(state.turns||1)+'</div>'+
+  '<div><b>Time survived:</b> '+mins+' mins</div>'+
+ '</div>';
+}
+function gameOverBodyHTML(){
+ const death=state.lastDeath||{title:'Claimed by the dungeon',detail:'Your adventure ended in the dungeon.'};
+ return '<div style="font-size:21px;font-weight:bold;color:#a51414;margin-bottom:10px">'+death.title+'</div>'+
+  '<div style="border:3px solid #1b1208;border-radius:8px;padding:12px;text-align:left;line-height:1.35;background:rgba(255,255,255,.18)">'+death.detail+'</div>'+
+  deathStatsHTML();
+}
+function showGameOverModal(){
+ showModal('GAME OVER','',[
+  {text:'View Quest Log',fn:showDeathQuestLog},
+  {text:'New Game',cls:'green',fn:()=>{showCharSelect();}}
+ ]);
+ const body=document.getElementById('modalBody');
+ if(body)body.innerHTML=gameOverBodyHTML();
+}
+function showDeathQuestLog(){
+ const source=document.getElementById('log');
+ const lines=source?Array.from(source.children):[];
+ const html=lines.map(line=>{
+  const colour=line.classList.contains('combat')?'#ff6b6b':line.classList.contains('loot')?'#f2c94c':line.classList.contains('heal')?'#7ee081':'#ffffff';
+  return '<div style="padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.15);color:'+colour+'">'+line.textContent+'</div>';
+ }).join('');
+ showModal('QUEST LOG','',[
+  {text:'Back to Game Over',fn:showGameOverModal},
+  {text:'New Game',cls:'green',fn:()=>{showCharSelect();}}
+ ]);
+ const body=document.getElementById('modalBody');
+ if(body){
+  body.innerHTML='<div id="deathQuestLog" style="max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#080808;border:3px solid #1b1208;border-radius:8px;padding:10px;text-align:left;font-size:15px;line-height:1.35">'+(html||'<div style="color:#fff">No quest entries recorded.</div>')+'</div>';
+  const scroller=document.getElementById('deathQuestLog');
+  if(scroller)scroller.scrollTop=scroller.scrollHeight;
+ }
+}
+function lose(){state.gameOver=true;sndLose();closeCombat();showGameOverModal();}
 
 // v11.19: Clear any settled or still-animating dice at the start of a new game.
 // The death() wrapper lives in combat.js because combat.js loads after this file.
