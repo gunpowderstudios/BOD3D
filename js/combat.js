@@ -556,7 +556,7 @@ function resolveFightRound(){
  else if(mt>pt){playSound('hit');showCombatImpact('hero',p.health<=0?'kill':'hit',damageToHero);}
  else{showCombatImpact('monster','miss',0);}
  if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');setTimeout(()=>killMonster(),combatImpactDuration('kill'));return;}
- if(p.health<=0){playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');setTimeout(()=>death(),combatImpactDuration('kill'));return;}
+ if(p.health<=0){const rawDamage=Math.max(0,mt-pt);const blocked=Math.max(0,rawDamage-damageToHero);const finalDetail=text+(blocked?' Your armour blocked '+blocked+' damage.':'')+' Final damage: '+damageToHero+'.';recordFinalBlow('Slain by the '+m.name,finalDetail);playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');setTimeout(()=>death(),combatImpactDuration('kill'));return;}
  if(mt>pt)playSound('heroHurt');
  render();renderCombat();
 }
@@ -595,7 +595,7 @@ function runAway(){
    : 'Escaped combat: take 1 direct damage and return to the previous tile.',
   'combat'
  );
- if(p.health<=0){death();return;}
+ if(p.health<=0){const killer=combat?.tile?.monster?.name||'monster';recordFinalBlow('Killed while escaping the '+killer,'Running away caused 1 direct damage and reduced your Health to 0.');death();return;}
 
  if(!charged){
   const oldX=p.x,oldY=p.y;
@@ -679,6 +679,7 @@ function death(){
    state.itemDiscard.push(acme);
   }
   p.flags.insurance=false;
+  state.lastDeath=null;
   dropDeathItems(p,deathTile,deathKey,true);
   log('ACME Insurance grants you another life and returns you to Start.','heal');
   returnHeroToStart(p);
