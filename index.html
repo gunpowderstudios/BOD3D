@@ -4,7 +4,61 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#000000" />
-<title>Bag of Dungeon 3D v12.39</title>
+<title>Play Bag of Dungeon 3D Free Online | Gunpowder Studios</title>
+<meta name="description" content="Play Bag of Dungeon 3D free online. Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />
+<meta name="author" content="Gunpowder Studios" />
+<meta name="application-name" content="Bag of Dungeon 3D" />
+<link rel="canonical" href="https://gunpowderstudios.github.io/BOD3D/" />
+
+<link rel="icon" type="image/png" sizes="1024x1024" href="https://gunpowderstudios.github.io/BOD3D/assets/ui/app-icon.png" />
+<link rel="apple-touch-icon" sizes="1024x1024" href="https://gunpowderstudios.github.io/BOD3D/assets/ui/app-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BOD3D" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Gunpowder Studios" />
+<meta property="og:title" content="Play Bag of Dungeon 3D Free Online" />
+<meta property="og:description" content="Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />
+<meta property="og:url" content="https://gunpowderstudios.github.io/BOD3D/" />
+<meta property="og:image" content="https://gunpowderstudios.github.io/BOD3D/assets/ui/app-icon.png" />
+<meta property="og:image:width" content="1024" />
+<meta property="og:image:height" content="1024" />
+<meta property="og:image:alt" content="Bag of Dungeon 3D — play free online" />
+
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Play Bag of Dungeon 3D Free Online" />
+<meta name="twitter:description" content="Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />
+<meta name="twitter:image" content="https://gunpowderstudios.github.io/BOD3D/assets/ui/app-icon.png" />
+<meta name="twitter:image:alt" content="Bag of Dungeon 3D — play free online" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Bag of Dungeon 3D",
+  "alternateName": "BOD3D",
+  "url": "https://gunpowderstudios.github.io/BOD3D/",
+  "image": "https://gunpowderstudios.github.io/BOD3D/assets/ui/app-icon.png",
+  "description": "A free solo browser dungeon adventure based on the Bag of Dungeon board game. Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon.",
+  "genre": ["Fantasy", "Dungeon crawler", "Board game"],
+  "gamePlatform": "Web browser",
+  "playMode": "SinglePlayer",
+  "isAccessibleForFree": true,
+  "publisher": {
+    "@type": "Organization",
+    "name": "Gunpowder Studios",
+    "url": "https://www.gunpowderstudios.co.uk/"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "GBP",
+    "availability": "https://schema.org/InStock",
+    "url": "https://gunpowderstudios.github.io/BOD3D/"
+  }
+}
+</script>
 <!--
 8BITBOD
 Version: v3.9
@@ -197,6 +251,7 @@ Changes:
 <!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
 <!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 <!-- v12.39: Witch’s Claw now removes the current monster’s entire Combat bonus for one fight, cannot affect the Red Dragon, and is not consumed on an invalid Dragon attempt. -->
+<!-- v12.40: Added standalone-game SEO, canonical/social metadata, VideoGame structured data, app/favicon and iPhone Home Screen settings; browser title is now stable without the build number. -->
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
@@ -243,7 +298,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.39</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.40</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -251,7 +306,7 @@ Changes:
     <div class="box" id="killTally"></div>
   </aside>
   <main id="main">
-    <button id="fullscreenBtn" class="fullscreenControl" type="button title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
+    <button id="fullscreenBtn" class="fullscreenControl" type="button" title="Full screen — press Esc to exit" aria-label="Enter full screen">⛶</button>
     <div id="topbar">
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
       <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="menuBtn">☰ Menu</button></div>
@@ -353,8 +408,8 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.39"></script>
-<script src="js/game.js?v=12.39"></script>
+<script src="assets/reward-fix.js?v=12.40"></script>
+<script src="js/game.js?v=12.40"></script>
 <script src="js/combat.js?v=12.34"></script>
 
 <script type="module" src="js/scene3d.js?v=12.16"></script>
