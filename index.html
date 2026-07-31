@@ -59,6 +59,9 @@
   }
 }
 </script>
+<!-- TEST-ONLY SEO START: remove this block when promoting index.html to LIVE -->
+<!-- TEST-ONLY SEO END -->
+
 <!--
 8BITBOD
 Version: v3.9
@@ -79,9 +82,9 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.48">
+<link rel="stylesheet" href="css/main.css?v=12.52">
 <link rel="stylesheet" href="css/combat.css">
-<link rel="stylesheet" href="css/mobile.css?v=12.48">
+<link rel="stylesheet" href="css/mobile.css?v=12.52">
 <!--
 8BITBOD
 Version: v3.10
@@ -251,7 +254,7 @@ Changes:
 <!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
 <!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 <!-- v12.39: Witch’s Claw now removes the current monster’s entire Combat bonus for one fight, cannot affect the Red Dragon, and is not consumed on an invalid Dragon attempt. -->
-<!-- v12.48: Restored the original compact single-tile placement window while retaining all other v12.47 improvements. -->
+<!-- v12.52: Guaranteed Ring and Firkin guardians appear; Magic Sword now works from either hand. -->
 <!-- v12.47: Added one-paragraph adventurer advice, a 1-Health escape warning, connected-tile placement comparison, edge-positioned information cards and an optional Quest Log viewer. -->
 <!-- v12.46: Updated the green warning-scroll tip to clarify the Ring guardian and hint at finding Firkin. -->
 <!-- v12.45: Game Over now shows the exact final blow, survival statistics and a separate scrollable Quest Log viewer. -->
@@ -306,7 +309,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.48</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.52</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -416,8 +419,8 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.48"></script>
-<script src="js/game.js?v=12.48"></script>
+<script src="assets/reward-fix.js?v=12.52"></script>
+<script src="js/game.js?v=12.52"></script>
 <script src="js/combat.js?v=12.47"></script>
 
 <script type="module" src="js/scene3d.js?v=12.16"></script>
