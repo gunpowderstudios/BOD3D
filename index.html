@@ -251,6 +251,9 @@ Changes:
 <!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
 <!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 <!-- v12.39: Witch’s Claw now removes the current monster’s entire Combat bonus for one fight, cannot affect the Red Dragon, and is not consumed on an invalid Dragon attempt. -->
+<!-- v12.44: The two-item reward choice now shows each item’s graphic and full effect for comparison. -->
+<!-- v12.43: Monsters with 10+ Health now reveal two items; choose one and return the other to the shuffled item bag. -->
+<!-- v12.42: Removed tile-count protection: all unique items and monsters are fully random; the Ring is carried by a random 10+ Health monster and Firkin by a different 10+ Health monster in the later half of the monster deck. -->
 <!-- v12.41: Added a Loyal Bear discovery popup before he joins the Companions box. -->
 <!-- v12.40: Added standalone-game SEO, canonical/social metadata, VideoGame structured data, app/favicon and iPhone Home Screen settings; browser title is now stable without the build number. -->
 </head>
@@ -299,7 +302,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.41</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.44</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -409,8 +412,8 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.41"></script>
-<script src="js/game.js?v=12.41"></script>
+<script src="assets/reward-fix.js?v=12.44"></script>
+<script src="js/game.js?v=12.44"></script>
 <script src="js/combat.js?v=12.34"></script>
 
 <script type="module" src="js/scene3d.js?v=12.16"></script>
