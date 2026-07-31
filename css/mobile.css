@@ -370,3 +370,37 @@
   .dpadBtn[data-action="move"]{background:#f7e9c1}
   .dpadBtn:disabled{opacity:.32}
 }
+
+
+/* v12.47 — mobile bottom panels keep the dungeon visible */
+@media(max-width:800px){
+  #modal.modalEdge{
+    align-items:flex-end!important;
+    justify-content:center!important;
+    padding:6px max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))!important;
+  }
+  #modal.modalEdge .card{
+    width:100%!important;
+    max-width:none!important;
+    max-height:48dvh!important;
+    margin:0!important;
+    padding:8px!important;
+  }
+  #modal.questLogModal{
+    align-items:flex-end!important;
+    justify-content:center!important;
+    padding:6px!important;
+    background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,.18) 34%,rgba(0,0,0,.82) 100%)!important;
+  }
+  #modal.questLogModal .card{
+    width:100%!important;
+    max-width:none!important;
+    height:64dvh!important;
+    max-height:64dvh!important;
+    margin:0!important;
+    padding:8px!important;
+  }
+  #questLogBtn{display:inline-flex!important}
+}
+
+@media(max-width:800px){#modal{z-index:800!important}}
