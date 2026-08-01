@@ -1124,9 +1124,12 @@ function openAbout(){
   document.getElementById('modalBody').innerHTML=`
     <div style="display:grid;gap:10px;text-align:center;line-height:1.35">
       <div style="font-size:20px;font-weight:bold">Credits</div>
-      <div>Original game design, board game mechanics, 3D models and concept by<br><b>Tim Sharville, Paul Sharville &amp; Russ Law</b></div>
-      <div>Digital adaptation and artwork remain the property of<br><b>Gunpowder Studios</b>. Please feel free to share BOD3D for non-commercial use.</div>
+      <div>Original game design, board game mechanics and concept by<br><b>Tim Sharville, Paul Sharville &amp; Russ Law</b></div>
       <div><b>BOD3D</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</div>
+      <div>Special thanks to <a href="https://freesound.org/" target="_blank" rel="noopener noreferrer">Freesound.org</a> for providing some of the game’s fun sound effects!</div>
+      <div>All 3D models remain the copyright of <b>Gunpowder Studios</b> and were sculpted by <a href="https://www.etsy.com/uk/shop/RussLawModelMaker" target="_blank" rel="noopener noreferrer">Russ Law</a>. You can purchase our models from <a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">Gunpowder Studios</a>, or contact Russ through his Etsy shop to commission your own custom model.</div>
+      <div style="font-size:20px;font-weight:bold">Non-commercial use</div>
+      <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>
       <div>Visit our website to see the full range:<br><a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a></div>
       <div><b>Thanks for playing. Your journey continues over at our website.</b><br>© Gunpowder Studios Ltd. All rights reserved.</div>
     </div>`;
