@@ -59,9 +59,6 @@
   }
 }
 </script>
-<!-- TEST-ONLY SEO START: remove this block when promoting index.html to LIVE -->
-<!-- TEST-ONLY SEO END -->
-
 <!--
 8BITBOD
 Version: v3.9
@@ -82,9 +79,9 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.52">
+<link rel="stylesheet" href="css/main.css?v=12.54">
 <link rel="stylesheet" href="css/combat.css">
-<link rel="stylesheet" href="css/mobile.css?v=12.52">
+<link rel="stylesheet" href="css/mobile.css?v=12.54">
 <!--
 8BITBOD
 Version: v3.10
@@ -145,6 +142,123 @@ Changes:
   }
 }
 </script>
+<script>
+(function(){
+  'use strict';
+  var compatibilityFailed=false;
+
+  function showCompatibilityMessage(detail){
+    if(window.BOD3D||compatibilityFailed)return;
+    compatibilityFailed=true;
+    window.BOD3D_UNSUPPORTED=true;
+
+    function mount(){
+      if(document.getElementById('bodCompatibilityBlocker'))return;
+      var overlay=document.createElement('div');
+      overlay.id='bodCompatibilityBlocker';
+      overlay.setAttribute('role','alertdialog');
+      overlay.setAttribute('aria-modal','true');
+      overlay.setAttribute('aria-labelledby','bodCompatibilityTitle');
+      overlay.innerHTML=
+        '<div class="bodCompatibilityCard">'+
+          '<div id="bodCompatibilityTitle">DEVICE NOT SUPPORTED</div>'+
+          '<p>Bag of Dungeon 3D requires <b>iOS/iPadOS 16.4 or later</b>, or <b>Android 10 or later</b> with the latest version of Chrome.</p>'+
+          '<p>Your device must also support WebGL 2. Please update your device or continue your adventure on a newer one.</p>'+
+          (detail?'<p class="bodCompatibilityDetail">'+detail+'</p>':'')+
+          '<button type="button" onclick="location.reload()">Try Again</button>'+
+        '</div>';
+      document.body.appendChild(overlay);
+    }
+
+    if(document.body)mount();
+    else document.addEventListener('DOMContentLoaded',mount,{once:true});
+  }
+
+  window.BOD3DCompatibilityFail=showCompatibilityMessage;
+
+  var importMapsSupported=Boolean(
+    window.HTMLScriptElement &&
+    typeof HTMLScriptElement.supports==='function' &&
+    HTMLScriptElement.supports('importmap')
+  );
+  var webgl2Supported=false;
+  try{
+    var testCanvas=document.createElement('canvas');
+    var testContext=testCanvas.getContext('webgl2');
+    webgl2Supported=Boolean(testContext);
+    if(testContext){
+      var loseContext=testContext.getExtension('WEBGL_lose_context');
+      if(loseContext)loseContext.loseContext();
+    }
+  }catch(error){
+    webgl2Supported=false;
+  }
+
+  if(!importMapsSupported){
+    showCompatibilityMessage('This browser cannot load the required 3D engine.');
+  }else if(!webgl2Supported){
+    showCompatibilityMessage('WebGL 2 is unavailable on this device.');
+  }
+
+  setTimeout(function(){
+    if(!window.BOD3D&&!window.BOD3D_UNSUPPORTED){
+      showCompatibilityMessage('The 3D engine could not be started on this device.');
+    }
+  },20000);
+})();
+</script>
+<style>
+#bodCompatibilityBlocker{
+  position:fixed;
+  inset:0;
+  z-index:2147483647;
+  display:grid;
+  place-items:center;
+  box-sizing:border-box;
+  padding:24px;
+  overflow:auto;
+  background:#050505;
+  color:#fff;
+  font-family:Georgia,'Times New Roman',serif;
+  text-align:center;
+}
+.bodCompatibilityCard{
+  width:min(560px,100%);
+  box-sizing:border-box;
+  padding:28px 24px;
+  border:4px solid #fff;
+  border-radius:12px;
+  background:#190506;
+  box-shadow:0 0 0 5px #921f24,0 18px 60px #000;
+}
+#bodCompatibilityTitle{
+  margin-bottom:20px;
+  color:#efc52d;
+  font-size:clamp(25px,6vw,40px);
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.bodCompatibilityCard p{
+  margin:12px auto;
+  max-width:470px;
+  font-size:clamp(17px,4vw,21px);
+  line-height:1.4;
+}
+.bodCompatibilityCard .bodCompatibilityDetail{
+  color:#d4d4d4;
+  font-size:14px;
+}
+.bodCompatibilityCard button{
+  margin-top:12px;
+  padding:11px 22px;
+  border:2px solid #fff;
+  border-radius:7px;
+  background:#921f24;
+  color:#fff;
+  font:700 18px/1.1 inherit;
+  cursor:pointer;
+}
+</style>
 <!-- v8.4: The hero now smoothly slides from tile to tile while turning to face the direction travelled. Same-direction travel preserves orientation; left/right turns animate 90 degrees and reversals animate 180 degrees. -->
 <!-- v8.7: Revealed GLB monsters now face the hero while remaining locked to the exact centre of their tile. Rotation is applied to a centred pivot group so models no longer orbit away from the floor tile. -->
 <!-- v8.8: Added Bag of Dungeon 3D branding and automatic Rest at zero AP. Monsters remain centred while facing the hero. Existing renderer, tile paths, GLB paths and movement code are otherwise unchanged. -->
@@ -254,7 +368,7 @@ Changes:
 <!-- v12.37: Removed the stale v12.33 reward-loader override and disabled legacy generated v11.02/v10.92 labels; #visibleBuildVersion is now the only version beneath assets/ui/logo.png. -->
 <!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 <!-- v12.39: Witch’s Claw now removes the current monster’s entire Combat bonus for one fight, cannot affect the Red Dragon, and is not consumed on an invalid Dragon attempt. -->
-<!-- v12.52: Guaranteed Ring and Firkin guardians appear; Magic Sword now works from either hand. -->
+<!-- v12.54: Changed the Start tile to a fixed three-way North, East and West junction with no South opening. -->
 <!-- v12.47: Added one-paragraph adventurer advice, a 1-Health escape warning, connected-tile placement comparison, edge-positioned information cards and an optional Quest Log viewer. -->
 <!-- v12.46: Updated the green warning-scroll tip to clarify the Ring guardian and hint at finding Firkin. -->
 <!-- v12.45: Game Over now shows the exact final blow, survival statistics and a separate scrollable Quest Log viewer. -->
@@ -309,7 +423,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.52</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.54</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -419,11 +533,11 @@ Changes:
 <div id="devPanel"></div>
 
 <script src="assets/assets.js?v=12.07"></script>
-<script src="assets/reward-fix.js?v=12.52"></script>
-<script src="js/game.js?v=12.52"></script>
+<script src="assets/reward-fix.js?v=12.54"></script>
+<script src="js/game.js?v=12.54"></script>
 <script src="js/combat.js?v=12.47"></script>
 
-<script type="module" src="js/scene3d.js?v=12.16"></script>
+<script type="module" src="js/scene3d.js?v=12.54" onerror="window.BOD3DCompatibilityFail&&window.BOD3DCompatibilityFail('The 3D engine could not be loaded.')"></script>
 
 
 <div id="itemTester" aria-hidden="true">
