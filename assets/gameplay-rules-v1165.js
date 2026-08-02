@@ -209,66 +209,34 @@
     window.BODAssignFirkinGuardian = assignFirkinGuardian;
     window.BODAssignRingGuardian=assignRingGuardian;
 
-    // The Exit still appears normally, but it no longer rolls or places the Ring.
+    // The final card is already the EXIT tile. Guard that same tile rather
+    // than appending a second EXIT beside it.
     placeExitAndRing = function (x, y, from) {
       state.exitPlaced = true;
-      let exitKey = null;
-      let placed = false;
+      const exitKey = key(x, y);
+      const exitTile = state.tiles[exitKey] || from;
 
-      for (const dir of dirOrder) {
-        const delta = DIRS[dir];
-        const exitX = x + delta.dx;
-        const exitY = y + delta.dy;
-        if (from.opens[dir] && !getTile(exitX, exitY)) {
-          exitKey = key(exitX, exitY);
-          state.tiles[exitKey] = {
-            kind: 'exit',
-            opens: { ...TILE_BASE.exit },
-            rot: 0,
-            visited: false,
-            monster: {
-              name: 'Red Dragon',
-              dice: 4,
-              mod: 0,
-              maxHealth: 20,
-              health: 20,
-              glyph: '🐉',
-              revealed: true,
-              isDragon: true
-            }
-          };
-          placed = true;
-          break;
-        }
-      }
-
-      if (!placed) {
-        for (const dir of dirOrder) {
-          const delta = DIRS[dir];
-          const exitX = x + delta.dx;
-          const exitY = y + delta.dy;
-          if (!getTile(exitX, exitY)) {
-            exitKey = key(exitX, exitY);
-            state.tiles[exitKey] = {
-              kind: 'exit',
-              opens: { ...TILE_BASE.exit },
-              rot: 0,
-              visited: false,
-              monster: {
-                name: 'Red Dragon',
-                dice: 4,
-                mod: 0,
-                maxHealth: 20,
-                health: 20,
-                glyph: '🐉',
-                revealed: true,
-                isDragon: true
-              }
-            };
-            break;
-          }
-        }
-      }
+      exitTile.kind = 'exit';
+      exitTile.rot = Number(exitTile.rot) || 0;
+      exitTile.opens = openings('exit', exitTile.rot);
+      exitTile.visited = Boolean(exitTile.visited);
+      delete exitTile.monsterMarker;
+      delete exitTile.monsterPending;
+      delete exitTile.mNumber;
+      delete exitTile.itemMarker;
+      delete exitTile.itemPending;
+      delete exitTile.item;
+      exitTile.monster = {
+        name: 'Red Dragon',
+        dice: 4,
+        mod: 0,
+        maxHealth: 20,
+        health: 20,
+        glyph: '🐉',
+        revealed: true,
+        isDragon: true
+      };
+      state.tiles[exitKey] = exitTile;
 
       playSound('dragon');
       playTileEffect(exitKey, 'dragon', 1400);
