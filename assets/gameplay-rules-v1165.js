@@ -1,4 +1,4 @@
-// BOD3D-TEST v12.52 — guaranteed Ring and Firkin guardians
+// BOD3D-TEST v12.61 — Ring after 20 floors and guaranteed guardians
 (function () {
   'use strict';
 
@@ -13,6 +13,12 @@
     ) return false;
 
     window.__bodGameplayRulesV1165Installed = true;
+
+    function laidFloorTileCount() {
+      return Object.values(state?.tiles || {}).filter(tile =>
+        tile && tile.kind !== 'start' && tile.kind !== 'exit'
+      ).length;
+    }
 
     function ringAlreadyAssigned() {
       return Boolean(
@@ -72,7 +78,7 @@
     }
 
     function assignRingGuardian() {
-      if (!state || ringAlreadyAssigned()) return false;
+      if (!state || laidFloorTileCount() < 20 || ringAlreadyAssigned()) return false;
       const candidates = guardianCandidates(false, monster =>
         monster &&
         !monster.isDragon &&
