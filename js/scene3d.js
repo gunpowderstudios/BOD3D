@@ -710,6 +710,18 @@ const HERO_TURN_MS=180;
 const HERO_MOVE_MS=220;
 const TILE=2.05;
 const TILE_THICKNESS=.10;
+const PHYSICAL_TILE_MM=50;
+const DRAGON_BASE_MM=78;
+function modelScaleForBounds(path,size){
+ const modelKey=modelKeyFromPath(path);
+ if(modelKey==='dragon'){
+  const targetFootprint=TILE*(DRAGON_BASE_MM/PHYSICAL_TILE_MM);
+  const footprint=Math.max(size.x,size.z,.001);
+  return targetFootprint/footprint;
+ }
+ const targetHeight=targetSceneHeightForModel(path);
+ return targetHeight/Math.max(size.y,.001);
+}
 const TILE_SIDE_COLOUR=0x4C3D2A;
 
 function tileDistanceFromHero(x,y){
@@ -1002,8 +1014,7 @@ async function addCorpseMiniature(corpse,x,y,token){
 
  const originalBox=new THREE.Box3().setFromObject(model);
  const originalSize=originalBox.getSize(new THREE.Vector3());
- const targetHeight=targetSceneHeightForModel(path);
- model.scale.setScalar(targetHeight/Math.max(originalSize.y,.001));
+ model.scale.setScalar(modelScaleForBounds(path,originalSize));
  model.updateMatrixWorld(true);
 
  const scaledBox=new THREE.Box3().setFromObject(model);
@@ -1434,8 +1445,7 @@ async function addMonsterMiniature(modelPath,pngPath,x,y,type,key,token,rotation
  // Scale first.
  const originalBox=new THREE.Box3().setFromObject(model);
  const originalSize=originalBox.getSize(new THREE.Vector3());
- const targetHeight=targetSceneHeightForModel(modelPath);
- const scale=targetHeight/Math.max(originalSize.y,.001);
+ const scale=modelScaleForBounds(modelPath,originalSize);
  model.scale.setScalar(scale);
  model.updateMatrixWorld(true);
 
@@ -1535,8 +1545,7 @@ async function addMiniature(modelPath,pngPath,x,y,type,key,token,rotationY=0){
   return;
  }
 
- const targetHeight=targetSceneHeightForModel(modelPath);
- const scale=targetHeight/Math.max(size.y,.001);
+ const scale=modelScaleForBounds(modelPath,size);
  model.scale.setScalar(scale);
  model.updateMatrixWorld(true);
  const scaled=new THREE.Box3().setFromObject(model);
