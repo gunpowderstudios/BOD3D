@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.54';
+const VERSION='v12.60';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -142,7 +142,7 @@ function showCharSelect(){
 const TILE=128,GAP=0,STEP=TILE+GAP;
 const DIRS={N:{dx:0,dy:-1,opp:'S'},E:{dx:1,dy:0,opp:'W'},S:{dx:0,dy:1,opp:'N'},W:{dx:-1,dy:0,opp:'E'}};
 const dirOrder=['N','E','S','W'];
-const TILE_BASE={straight:{N:1,S:1,E:0,W:0},corner:{N:1,E:1,S:0,W:0},t:{N:1,E:1,W:1,S:0},cross:{N:1,E:1,S:1,W:1},spike:{N:1,S:1,E:0,W:0},pool:{N:1,E:1,S:1,W:1},exit:{N:1,E:1,S:1,W:1},start:{N:1,E:1,S:0,W:1}};
+const TILE_BASE={straight:{N:1,S:1,E:0,W:0},corner:{N:1,E:1,S:0,W:0},t:{N:1,E:1,W:1,S:0},cross:{N:1,E:1,S:1,W:1},spike:{N:1,S:1,E:0,W:0},pool:{N:1,E:1,S:1,W:1},exit:{N:1,E:0,S:1,W:0},start:{N:1,E:1,S:0,W:1}};
 const TILE_LABEL={straight:'Straight',corner:'Corner',t:'T-Junction',cross:'Crossroad',spike:'Spike Trap',pool:'Healing Pool',exit:'Exit'};
 const TILE_GLYPH={spike:'▲',pool:'💧',exit:'🚪'};
 const MONSTER_MASTER=[
@@ -865,8 +865,10 @@ function placeExitAndRing(x,y,fromTile){
  // Never append another tile beside it: the old fallback could put the
  // Dragon behind a wall when the final floor tile had no free open edge.
  exitTile.kind='exit';
- exitTile.opens={...TILE_BASE.exit};
- exitTile.rot=0;
+ // Preserve the rotation chosen by the player. The uploaded EXIT artwork is
+ // a north-south corridor at rotation 0, matching the Straight tile; quarter turns make it east-west.
+ exitTile.rot=Number(exitTile.rot)||0;
+ exitTile.opens=openings('exit',exitTile.rot);
  exitTile.visited=!!exitTile.visited;
  delete exitTile.monsterMarker;
  delete exitTile.monsterPending;
@@ -930,6 +932,26 @@ function collectRingIfSafe(tileKey){
 }
 function canMove(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir],nt=getTile(p.x+d.dx,p.y+d.dy);return t&&t.opens[dir]&&nt&&nt.opens[d.opp];}
 function canLay(dir){const p=state.player,t=getTile(p.x,p.y),d=DIRS[dir];return t&&t.opens[dir]&&!getTile(p.x+d.dx,p.y+d.dy)&&state.tileDeck.length>0;}
+function showClearedExitMessage(){
+ const p=state?.player;
+ const t=p?getTile(p.x,p.y):null;
+ if(!p||!t||t.kind!=='exit'||(t.monster&&t.monster.health>0))return false;
+ if(p.hasRing){
+  showModal(
+   'THE EXIT',
+   'You have the Ring of Creation. You may now leave the dungeon!',
+   [{text:'Leave the Dungeon',cls:'green',fn:win}]
+  );
+ }else{
+  showModal(
+   'THE EXIT',
+   'You cannot leave without the Ring of Creation. Go back and find it!',
+   [{text:'Go and Find the Ring',fn:closeModal}]
+  );
+ }
+ return true;
+}
+window.BODShowClearedExitMessage=showClearedExitMessage;
 
 function applyReacherSting(){
  const p=state.player,current=getTile(p.x,p.y);
@@ -970,8 +992,12 @@ function move(dir){if(!view3d.enabled){toast('Return to 3D to move');return;}win
   }
   openCombat(t);
  }
- else {const currentKey=key(p.x,p.y);collectRingIfSafe(currentKey);if(typeof window.collectFirkinIfSafe==='function')window.collectFirkinIfSafe(currentKey);}
- if(t.kind==='exit'&&p.hasRing&&!t.monster){win();}
+ else {
+  const currentKey=key(p.x,p.y);
+  collectRingIfSafe(currentKey);
+  if(typeof window.collectFirkinIfSafe==='function')window.collectFirkinIfSafe(currentKey);
+  if(t.kind==='exit')setTimeout(showClearedExitMessage,80);
+ }
  render();centreOnHero(false);}
 function showCloakChoice(tile){
  const m=tile.monster;
@@ -1398,7 +1424,7 @@ function beginDroppedPickup(tileKey,idx){
  },0);
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.hasFirkin)d.innerHTML+=`<span class="firkinMark" aria-label="Firkin is waiting here">${iconHTML('Firkin','F')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start'&&t.kind!=='exit')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.hasFirkin)d.innerHTML+=`<span class="firkinMark" aria-label="Firkin is waiting here">${iconHTML('Firkin','F')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
  const visible=t.droppedItems.slice(0,5);
  d.innerHTML+=`<span class="tileItemStack" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${visible.map((item,i)=>`<span class="tileItemMarker">${iconHTML(item.name,item.icon||'?')}${i===visible.length-1&&t.droppedItems.length>visible.length?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`).join('')}</span>`;
 }if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?monsterBoardHTML(t.monster,rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':'',k):`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);wireBoardModels(d);
@@ -2183,8 +2209,10 @@ function developerBuildCompleteDungeon(withMonsters){
  state.player.facing='S';
  state.player.ap=state.player.maxAp;
 
- // Fresh random bags.
- const deck=createTileDeck();
+ // Fresh random bags. Build the developer stack defensively so it contains
+ // exactly one EXIT card, always at the bottom (drawn and laid last).
+ const generatedDeck=createTileDeck().filter(tile=>tile?.kind!=='exit');
+ const deck=[{kind:'exit'},...generatedDeck];
  state.monsterDeck=expanded(MONSTER_MASTER);
  state.itemDeck=expanded(ITEM_MASTER);
  state.tileDiscard=[];
@@ -2282,6 +2310,13 @@ function developerBuildCompleteDungeon(withMonsters){
  // the guarded Exit and the normal M2-M12 Ring location roll.
  if(lastLaid){
   placeExitAndRing(lastLaid.x,lastLaid.y,lastLaid.tile);
+  const exitTiles=Object.entries(state.tiles).filter(([,tile])=>tile?.kind==='exit');
+  if(exitTiles.length!==1){
+   // Retain only the final guarded EXIT. This should never be needed, but
+   // prevents older/generated state from displaying a second EXIT tile.
+   exitTiles.forEach(([tileKey])=>{if(tileKey!==key(lastLaid.x,lastLaid.y))delete state.tiles[tileKey];});
+   log('[TEST] Corrected duplicate EXIT state; one guarded EXIT remains.','system');
+  }
   if(withMonsters)setTimeout(()=>window.BODAssignRingGuardian?.(),0);
  }else log('[TEST] Could not place the Exit because no dungeon tiles were generated.','combat');
 
