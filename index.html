@@ -59,6 +59,7 @@
   }
 }
 </script>
+
 <!--
 8BITBOD
 Version: v3.9
@@ -369,6 +370,7 @@ Changes:
 <!-- v12.38: Mute and Fullscreen now use matching white SVG outline icons on transparent backgrounds, aligned horizontally at the top-right on opening and game screens. -->
 <!-- v12.39: Witch’s Claw now removes the current monster’s entire Combat bonus for one fight, cannot affect the Red Dragon, and is not consumed on an invalid Dragon attempt. -->
 <!-- v12.55: Expanded About with Freesound credit, 3D model copyright and sculptor links, and clear non-commercial source-use terms. -->
+<!-- v12.56: Added the new rotatable EXIT corridor tile, preserved its chosen placement rotation, and added Ring-dependent escape prompts after the Dragon is defeated. -->
 <!-- v12.54: Changed the Start tile to a fixed three-way North, East and West junction with no South opening. -->
 <!-- v12.47: Added one-paragraph adventurer advice, a 1-Health escape warning, connected-tile placement comparison, edge-positioned information cards and an optional Quest Log viewer. -->
 <!-- v12.46: Updated the green warning-scroll tip to clarify the Ring guardian and hint at finding Firkin. -->
@@ -378,9 +380,14 @@ Changes:
 <!-- v12.42: Removed tile-count protection: all unique items and monsters are fully random; the Ring is carried by a random 10+ Health monster and Firkin by a different 10+ Health monster in the later half of the monster deck. -->
 <!-- v12.41: Added a Loyal Bear discovery popup before he joins the Companions box. -->
 <!-- v12.40: Added standalone-game SEO, canonical/social metadata, VideoGame structured data, app/favicon and iPhone Home Screen settings; browser title is now stable without the build number. -->
-<!-- v12.60: Added the rotatable EXIT corridor, guaranteed one final EXIT in normal/developer dungeons, placed the Red Dragon on that same tile, added Ring-dependent escape prompts, and fixed the legacy loader overriding both EXIT placement and the visible version. -->
-<!-- v12.61: Kept the reserved EXIT last when placement is cancelled and delayed Ring guardian assignment until at least 20 floor tiles are laid. -->
-<!-- v12.63: Sized the Red Dragon’s base footprint to approximately 78 mm across on a 50 mm dungeon tile, 30% larger than the approved 60 mm test. -->
+<!-- v12.57: Removed the duplicate EXIT special-tile overlay in 2D/Map view, leaving one rotatable EXIT tile with the Red Dragon rendered on top. -->
+<!-- v12.58: Aligned the EXIT tile with the Straight tile: north-south at zero rotation, east-west after a quarter turn, with placement allowed only when it connects to the final laid tile. -->
+<!-- v12.59: Hardened the developer dungeon generator so its stack contains exactly one final EXIT card and removes any duplicate EXIT state before rendering the guarded tile. -->
+<!-- v12.65: Corrected Firkin's rescue text and stored description to +1 melee only; he carries no items and gives no ranged bonus. -->
+<!-- v12.60: Fixed the legacy gameplay-rules loader that appended a second EXIT. The final drawn EXIT now keeps its rotation and the Red Dragon sits on that same single tile. Also fixed reward-fix.js overwriting the visible build number with v12.54. -->
+<!-- v12.61: Prevented cancelled placement from shuffling the reserved EXIT into the active stack, keeping it last after 40–50 floors; Ring guardian assignment now waits until at least 20 floor tiles are laid. -->
+<!-- v12.62: Sized the Red Dragon by its horizontal base footprint: 60 mm across on a 50 mm dungeon tile, allowing a deliberate 5 mm overlap on each side without changing other miniatures. -->
+<!-- v12.63: Increased the Red Dragon’s 60 mm base footprint by 30%, to approximately 78 mm across on a 50 mm dungeon tile. -->
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
@@ -427,7 +434,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.63</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.65</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -536,12 +543,12 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=12.63"></script>
-<script src="assets/reward-fix.js?v=12.63"></script>
-<script src="js/game.js?v=12.63"></script>
-<script src="js/combat.js?v=12.63"></script>
+<script src="assets/assets.js?v=12.65"></script>
+<script src="assets/reward-fix.js?v=12.65"></script>
+<script src="js/game.js?v=12.65"></script>
+<script src="js/combat.js?v=12.65"></script>
 
-<script type="module" src="js/scene3d.js?v=12.63" onerror="window.BOD3DCompatibilityFail&&window.BOD3DCompatibilityFail('The 3D engine could not be loaded.')"></script>
+<script type="module" src="js/scene3d.js?v=12.65" onerror="window.BOD3DCompatibilityFail&&window.BOD3DCompatibilityFail('The 3D engine could not be loaded.')"></script>
 
 
 <div id="itemTester" aria-hidden="true">
