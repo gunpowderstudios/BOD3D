@@ -23,7 +23,7 @@
   function loadCombatItemsMenu(){loadScriptOnce('script[data-bod-combat-items-menu]','assets/combat-items-menu.js','bodCombatItemsMenu');}
   function loadCharactersOnly(){loadScriptOnce('script[data-bod-characters-only]','assets/characters-only.js','bodCharactersOnly');}
   function loadAudioLifecycle(){loadScriptOnce('script[data-bod-audio-lifecycle]','assets/audio-lifecycle.js','bodAudioLifecycle');}
-  function loadGameplayRules(){loadScriptOnce('script[data-bod-gameplay-rules-v1165]','assets/gameplay-rules-v1165.js?v=12.52','bodGameplayRulesV1165');}
+  function loadGameplayRules(){loadScriptOnce('script[data-bod-gameplay-rules-v1165]','assets/gameplay-rules-v1165.js?v=12.60','bodGameplayRulesV1165');}
   function loadHealthHud(){loadScriptOnce('script[data-bod-health-hud]','assets/health-hud.js','bodHealthHud');}
   function loadStoryIntro(){loadScriptOnce('script[data-bod-story-intro]','assets/story-intro.js','bodStoryIntro');}
   function loadWarningScrollStyles(){loadStyleOnce('link[data-bod-warning-scroll]','css/warning-scroll.css','bodWarningScroll');}
