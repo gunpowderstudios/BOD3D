@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.60';
+const VERSION='v12.63';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -852,7 +852,7 @@ function maybePopulate(tile){ if(tile.monsterMarker) tile.monsterPending=true; i
 function startPlace(dir){if(!view3d.enabled){toast('Return to 3D to lay tiles');return;}const p=state.player;if(p.ap<1)return;const raw=state.tileDeck.pop();if(!raw){log('No dungeon tiles left.','system');return;}placement={dir,kind:raw.kind,rot:0,raw};showPlacement();}
 function showPlacement(){const need=DIRS[placement.dir].opp;document.getElementById('placeInfo').textContent='Drawn: '+TILE_LABEL[placement.kind]+' — placing to the '+placement.dir+'.';document.getElementById('tilePreview').innerHTML=tileSVG({kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot)});document.getElementById('placeBtn').disabled=!openings(placement.kind,placement.rot)[need];document.getElementById('placement').classList.add('open');}
 document.getElementById('rotBtn').onclick=()=>{placement.rot=(placement.rot+1)%4;showPlacement();};
-document.getElementById('cancelPlace').onclick=()=>{if(placement){state.tileDeck.push(placement.raw);shuffle(state.tileDeck);}placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
+document.getElementById('cancelPlace').onclick=()=>{if(placement){state.tileDeck.push(placement.raw);}placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
 document.getElementById('placeBtn').onclick=()=>{const p=state.player,d=DIRS[placement.dir],nx=p.x+d.dx,ny=p.y+d.dy;const tile={kind:placement.kind,rot:placement.rot,opens:openings(placement.kind,placement.rot),visited:false,monsterMarker:placement.raw.monsterMarker,mNumber:placement.raw.mNumber||null,itemMarker:placement.raw.itemMarker};maybePopulate(tile);state.tiles[key(nx,ny)]=tile;
  p.ap-=1;
  sndTile();log('Placed '+TILE_LABEL[tile.kind]+(tile.itemMarker?' with item marker':'')+' to the '+placement.dir+'.','system');if(state.tileDeck.length===0&&!state.exitPlaced)placeExitAndRing(nx,ny,tile);placement=null;document.getElementById('placement').classList.remove('open');render();setTimeout(()=>centreOnHero(),0);};
