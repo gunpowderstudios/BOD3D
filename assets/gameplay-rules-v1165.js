@@ -178,7 +178,7 @@
       state.player.companionFirkin = {
         name: 'Firkin',
         icon: 'F',
-        desc: '+3 to every melee attack roll. Can fight alongside the Loyal Bear.'
+        desc: '+1 to every melee attack roll. Carries no items and does not affect ranged attacks.'
       };
       state.firkinRescued = true;
       state.firkinGuardianAssigned = true;
@@ -204,9 +204,8 @@
         body.innerHTML =
           '<div style="font-size:84px;line-height:1;margin-bottom:12px">' +
           iconHTML('Firkin', 'F') +
-          '</div><b>A bedraggled halfling crawls from his hiding place.</b>' +
-          '<br><br>It’s Firkin—Rose’s long-lost husband!' +
-          '<br><br><b>Companion:</b> +3 to every melee attack roll. Firkin can fight alongside the Loyal Bear.';
+          '</div><b>It’s Firkin—Rose’s long-lost husband!</b>' +
+          '<br><br>Firkin the halfling: +1 to every melee attack roll.';
       }
       return true;
     }
