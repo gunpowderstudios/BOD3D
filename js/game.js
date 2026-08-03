@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.65';
+const VERSION='v12.76';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -12,13 +12,7 @@ const DEVELOPER_TOOLS_ENABLED=(location.protocol==='file:'||/\/(?:BOD3D-TEST)(?:
 
 const CHARACTERS=[
  {id:'sirrus',name:'Sirrus the Fighter',glyph:'⚔',desc:'Skilled warrior and renowned blade-master.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
- {id:'tamara',name:'Tamara the Fighter',glyph:'⚔',desc:'Experienced sword fighter and ranger.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'},
- {id:'duric',name:'Duric the Dwarf',glyph:'🪓',desc:'Former head of the King\'s Guard.',maxHealth:12,maxAp:4,baseDice:2,baseMod:3,special:'Brace',specialDesc:'Once per game block an attack and take no damage.'},
- {id:'marria',name:'Marria the Dwarf',glyph:'🪓',desc:'Stout-hearted and legendary with an axe.',maxHealth:12,maxAp:4,baseDice:2,baseMod:3,special:'Brace',specialDesc:'Once per game block an attack and take no damage.'},
- {id:'rill',name:'Rill the Healer',glyph:'✋',desc:'Wise in the lore of medicine.',maxHealth:9,maxAp:5,baseDice:2,baseMod:0,special:'Renew',specialDesc:'Spend 3 AP to heal 2 dice of health. Three uses per game.'},
- {id:'tarak',name:'Tarak the Healer',glyph:'✋',desc:'A healer of wounds and woes.',maxHealth:9,maxAp:5,baseDice:2,baseMod:0,special:'Renew',specialDesc:'Spend 3 AP to heal 2 dice of health. Three uses per game.'},
- {id:'alendra',name:'Alendra the Elf',glyph:'🏹',desc:'Fleet-footed and keen-eyed.',maxHealth:9,maxAp:6,baseDice:2,baseMod:1,special:'Dead-eye',specialDesc:'Natural 6 in combat gives an instant kill.'},
- {id:'galhorn',name:'Galhorn the Elf',glyph:'🏹',desc:'Master archer, quick and sharp.',maxHealth:9,maxAp:6,baseDice:2,baseMod:1,special:'Dead-eye',specialDesc:'Natural 6 in combat gives an instant kill.'}
+ {id:'tamara',name:'Tamara the Fighter',glyph:'⚔',desc:'Experienced sword fighter and ranger.',maxHealth:10,maxAp:5,baseDice:2,baseMod:2,special:'Lethal Blow',specialDesc:'Once per game you may double your combat roll result.'}
 ];
 let selectedCharacterIndex=0;
 let heroSelectorBusy=false;
@@ -2763,3 +2757,600 @@ function lose(){state.gameOver=true;sndLose();closeCombat();showGameOverModal();
 const newGameWithoutDiceCleanup=newGame;
 newGame=function(){window.BODDice3D?.clear?.();return newGameWithoutDiceCleanup.apply(this,arguments);};
 renderCharSelect();
+
+// Consolidated in TEST v12.72: exploration movement and tile placement do not consume combat AP.
+// The verified standalone behaviour is retained unchanged; Rest remains hidden outside combat.
+// BOD3D-TEST v11.56 — AP is reserved for combat; exploration Rest is hidden
+(function(){
+  function install(){
+    if(window.__bodCombatOnlyAPInstalled)return true;
+    if(typeof move!=='function'||typeof startPlace!=='function')return false;
+    window.__bodCombatOnlyAPInstalled=true;
+
+    const originalMove=move;
+    move=function(){
+      if(!state?.player)return originalMove.apply(this,arguments);
+      const savedAp=state.player.ap;
+      if(savedAp<1)state.player.ap=1;
+      const result=originalMove.apply(this,arguments);
+      state.player.ap=savedAp;
+      if(typeof render==='function')render();
+      return result;
+    };
+
+    const originalStartPlace=startPlace;
+    startPlace=function(){
+      if(!state?.player)return originalStartPlace.apply(this,arguments);
+      const savedAp=state.player.ap;
+      if(savedAp<1)state.player.ap=1;
+      const result=originalStartPlace.apply(this,arguments);
+      state.player.ap=savedAp;
+      return result;
+    };
+
+    function patchPlaceButton(){
+      const button=document.getElementById('placeBtn');
+      if(!button||button.__bodFreePlacementPatched||typeof button.onclick!=='function')return;
+      const original=button.onclick;
+      button.onclick=function(){
+        const savedAp=state?.player?.ap;
+        const result=original.apply(this,arguments);
+        if(state?.player&&Number.isFinite(savedAp))state.player.ap=savedAp;
+        if(typeof render==='function')render();
+        return result;
+      };
+      button.__bodFreePlacementPatched=true;
+    }
+
+    function hideExplorationRest(){
+      document.querySelectorAll('button').forEach(button=>{
+        const label=((button.id||'')+' '+(button.className||'')+' '+(button.textContent||'')).toLowerCase();
+        if(/\brest\b/.test(label)&&!button.closest('#combat')){
+          button.style.setProperty('display','none','important');
+          button.setAttribute('aria-hidden','true');
+          button.tabIndex=-1;
+        }
+      });
+      patchPlaceButton();
+    }
+
+    hideExplorationRest();
+    new MutationObserver(hideExplorationRest).observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+    return true;
+  }
+
+  function start(){
+    if(install())return;
+    let attempts=0;
+    const timer=setInterval(()=>{if(install()||++attempts>160)clearInterval(timer);},50);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+
+// Consolidated in TEST v12.74: Firkin quest introduction story and ending-scroll guard.
+// Text, timing and behaviour remain identical to the verified standalone patch.
+// BOD3D-TEST v12.07 — Firkin story timing and ending guard
+(function () {
+  'use strict';
+
+  if (window.__bodStoryIntroV1179Installed) return;
+  window.__bodStoryIntroV1179Installed = true;
+
+  const paragraphs = [
+    'Many a tale has been told in the Wasted Wizard Tavern of lost dungeons and the fabled Ring of Creation. Most are nonsense, spun by ale-soaked adventurers—but one night, a conversation catches your attention.',
+    'A bedraggled-looking halfling is trying to sell a map to a drunken dwarf. He eyes her suspiciously, struggling to focus on what she is saying.',
+    '“Away with you!” the dwarf growls. “That map’s a forgery if ever I saw one. Now leave me to my ale, halfling!”',
+    'He stumbles from the table and wanders towards the stables to sleep it off.',
+    'The halfling remains behind. She looks tired, hungry and desperately down on her luck.',
+    '“How much for the map?” you ask.',
+    'She slowly raises her eyes. “A room, a hot meal and a mug of ale—and it’s yours.”',
+    '“You have that much faith in it?”',
+    '“It’s all I have,” she sighs, as though she has run out of options. With that, she passes you the map. The parchment looks old and its markings are convincing, but the finest forgers could manage as much.',
+    '“All right,” you say. “Mary! Put this halfling’s room, meal and ale on my tab.”',
+    '“Settle up before you leave!” Mary calls back.',
+    '“Rose,” says the halfling quietly. “My name is Rose. My husband, Firkin, entered that dungeon many days ago. He never returned. This map is all I have left.”',
+    'Tears gather in her eyes as she pushes it towards you.',
+    '“If you find him, tell him I’m still waiting.”',
+    'The next morning, you follow the map southeast from Dragon Reach. After two nights on the road, you arrive at the marked location—but there is no cave, no doorway and no sign of any dungeon.',
+    'You search until dusk and are about to abandon the whole foolish adventure when a branch cracks behind you.',
+    'You turn just in time to glimpse a club swinging towards your head.',
+    'Lights out.',
+    'You awaken on a cold stone floor. Your weapons and possessions are gone.',
+    'All that remains is your backpack—and somewhere in the darkness, something is moving.'
+  ];
+
+  function appendStory(scroll) {
+    if (!scroll || scroll.classList.contains('endingScroll')) return;
+
+    if (scroll.querySelector('.testerStoryHeading')) return;
+    scroll.classList.add('hasStory');
+
+    const heading = document.createElement('div');
+    heading.className = 'testerStoryHeading';
+    heading.textContent = 'A SHORT STORY…';
+    scroll.appendChild(heading);
+
+    paragraphs.forEach(text => {
+      const paragraph = document.createElement('p');
+      paragraph.className = 'testerStoryParagraph';
+      paragraph.textContent = text;
+      scroll.appendChild(paragraph);
+    });
+    scroll.scrollTop = 0;
+  }
+
+  function findAndAppend() {
+    document.querySelectorAll('.testerWarningScroll').forEach(appendStory);
+  }
+
+  function start() {
+    findAndAppend();
+    new MutationObserver(findAndAppend).observe(document.body, {
+      subtree: true,
+      childList: true
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+})();
+
+// Consolidated in TEST v12.75: verified dungeon generation, Ring, Firkin, Dragon, Exit and related gameplay rules.
+// This block is behaviour-identical to the standalone gameplay-rules patch; no rule logic was rewritten.
+// BOD3D-TEST v12.61 — Ring after 20 floors and guaranteed guardians
+(function () {
+  'use strict';
+
+  function install() {
+    if (window.__bodGameplayRulesV1165Installed) return true;
+    if (
+      typeof drawItem !== 'function' ||
+      typeof placeExitAndRing !== 'function' ||
+      typeof collectRingIfSafe !== 'function' ||
+      typeof rangedKill !== 'function' ||
+      typeof killMonster !== 'function'
+    ) return false;
+
+    window.__bodGameplayRulesV1165Installed = true;
+
+    function laidFloorTileCount() {
+      return Object.values(state?.tiles || {}).filter(tile =>
+        tile && tile.kind !== 'start' && tile.kind !== 'exit'
+      ).length;
+    }
+
+    function ringAlreadyAssigned() {
+      return Boolean(
+        state && (
+          state.player?.hasRing ||
+          state.ringCarrierAssigned ||
+          (state.monsterDeck || []).some(monster => monster?.carriesRing) ||
+          Object.values(state.tiles || {}).some(tile =>
+            tile?.hasRing || tile?.monster?.carriesRing
+          )
+        )
+      );
+    }
+
+    const MONSTERS_DRAWN_PER_DUNGEON = 11;
+
+    function randomFrom(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function guardianBandBounds(laterInDungeon) {
+      const deck = state?.monsterDeck || [];
+      const drawCount = Math.min(MONSTERS_DRAWN_PER_DUNGEON, deck.length);
+      const start = deck.length - drawCount;
+      const split = start + Math.ceil(drawCount / 2);
+      // Monsters are popped from the end: the lower half of this final
+      // draw pool appears later in the dungeon.
+      return laterInDungeon
+        ? { start, end: split }
+        : { start: split, end: deck.length };
+    }
+
+    function guardianCandidates(laterInDungeon, predicate) {
+      const deck = state?.monsterDeck || [];
+      const bounds = guardianBandBounds(laterInDungeon);
+      let candidates = deck.slice(bounds.start, bounds.end).filter(predicate);
+      if (candidates.length) return candidates;
+
+      // Guarantee a suitable guardian will be drawn by swapping one from
+      // outside the required band into an unassigned position inside it.
+      const sourceIndex = deck.findIndex((monster, index) =>
+        (index < bounds.start || index >= bounds.end) && predicate(monster)
+      );
+      const targetIndexes = [];
+      for (let index = bounds.start; index < bounds.end; index += 1) {
+        const monster = deck[index];
+        if (monster && !monster.carriesRing && !monster.guardsFirkin) {
+          targetIndexes.push(index);
+        }
+      }
+      if (sourceIndex >= 0 && targetIndexes.length) {
+        const targetIndex = randomFrom(targetIndexes);
+        [deck[sourceIndex], deck[targetIndex]] = [deck[targetIndex], deck[sourceIndex]];
+        candidates = deck.slice(bounds.start, bounds.end).filter(predicate);
+      }
+      return candidates;
+    }
+
+    function assignRingGuardian() {
+      if (!state || laidFloorTileCount() < 20 || ringAlreadyAssigned()) return false;
+      const candidates = guardianCandidates(false, monster =>
+        monster &&
+        !monster.isDragon &&
+        !monster.carriesRing &&
+        !monster.guardsFirkin &&
+        Number(monster.maxHealth) >= 10
+      );
+      if (!candidates.length) return false;
+
+      const monster = randomFrom(candidates);
+      monster.carriesRing = true;
+      state.ringCarrierAssigned = true;
+      state.ringActivated = true;
+      state.ringKey = null;
+      state.ringNumber = null;
+      state.ringRoll = null;
+      if (typeof log === 'function') {
+        log('A powerful monster somewhere in the dungeon carries the Ring of Creation.', 'loot');
+      }
+      return true;
+    }
+
+    function firkinAlreadyPlacedOrRescued() {
+      return Boolean(
+        state && (
+          state.player?.companionFirkin ||
+          state.firkinRescued ||
+          state.firkinGuardianAssigned ||
+          (state.monsterDeck || []).some(monster => monster?.guardsFirkin) ||
+          Object.values(state.tiles || {}).some(tile =>
+            tile?.hasFirkin || tile?.monster?.guardsFirkin
+          )
+        )
+      );
+    }
+
+    function announceFirkinGuardian() {
+      const monster = combat?.tile?.monster;
+      if (
+        !monster ||
+        !monster.revealed ||
+        !monster.guardsFirkin ||
+        monster.firkinAnnounced
+      ) return false;
+
+      monster.firkinAnnounced = true;
+      log('You hear whimpering nearby…!', 'loot');
+      if (typeof toast === 'function') toast('You hear whimpering nearby…!');
+      return true;
+    }
+
+    function assignFirkinGuardian() {
+      if (!state) return false;
+
+      if (!firkinAlreadyPlacedOrRescued()) {
+        // Firkin is guarded by a different 10+ Health monster in the
+        // later half of the monsters guaranteed to appear in this dungeon.
+        const candidates = guardianCandidates(true, monster =>
+          monster &&
+          !monster.isDragon &&
+          !monster.carriesRing &&
+          !monster.guardsFirkin &&
+          Number(monster.maxHealth) >= 10
+        );
+        if (!candidates.length) return false;
+
+        const monster = randomFrom(candidates);
+        monster.guardsFirkin = true;
+        state.firkinGuardianAssigned = true;
+        state.firkinGuardianKey = null;
+      }
+
+      return announceFirkinGuardian();
+    }
+
+    function placeFirkinOnTile(tile, tileKey, monsterName) {
+      if (!tile || state.player?.companionFirkin) return false;
+      tile.hasFirkin = true;
+      state.firkinGuardianAssigned = true;
+      state.firkinGuardianKey = tileKey;
+      log('The defeated ' + monsterName + ' was guarding someone!', 'loot');
+      return true;
+    }
+
+    function collectFirkinIfSafe(tileKey, afterWelcome) {
+      if (!state || state.player?.companionFirkin || !tileKey) return false;
+      if (key(state.player.x, state.player.y) !== tileKey) return false;
+      const tile = state.tiles?.[tileKey];
+      if (
+        !tile ||
+        !tile.hasFirkin ||
+        tile.monsterPending ||
+        (tile.monster && tile.monster.health > 0)
+      ) return false;
+
+      tile.hasFirkin = false;
+      state.player.companionFirkin = {
+        name: 'Firkin',
+        icon: 'F',
+        desc: '+1 to every melee attack roll. Carries no items and does not affect ranged attacks.'
+      };
+      state.firkinRescued = true;
+      state.firkinGuardianAssigned = true;
+      log('You rescued Firkin. Return him to Rose—if you escape alive.', 'loot');
+      render();
+
+      showModal(
+        'FIRKIN RESCUED',
+        '',
+        [{
+          text: 'Welcome, Firkin',
+          cls: 'green',
+          fn: () => {
+            closeModal();
+            if (typeof afterWelcome === 'function') {
+              setTimeout(afterWelcome, 0);
+            }
+          }
+        }]
+      );
+      const body = document.getElementById('modalBody');
+      if (body) {
+        body.innerHTML =
+          '<div style="font-size:84px;line-height:1;margin-bottom:12px">' +
+          iconHTML('Firkin', 'F') +
+          '</div><b>It’s Firkin—Rose’s long-lost husband!</b>' +
+          '<br><br>Firkin the halfling: +1 to every melee attack roll.';
+      }
+      return true;
+    }
+
+    window.collectFirkinIfSafe = collectFirkinIfSafe;
+    window.BODAssignFirkinGuardian = assignFirkinGuardian;
+    window.BODAssignRingGuardian=assignRingGuardian;
+
+    // The final card is already the EXIT tile. Guard that same tile rather
+    // than appending a second EXIT beside it.
+    placeExitAndRing = function (x, y, from) {
+      state.exitPlaced = true;
+      const exitKey = key(x, y);
+      const exitTile = state.tiles[exitKey] || from;
+
+      exitTile.kind = 'exit';
+      exitTile.rot = Number(exitTile.rot) || 0;
+      exitTile.opens = openings('exit', exitTile.rot);
+      exitTile.visited = Boolean(exitTile.visited);
+      delete exitTile.monsterMarker;
+      delete exitTile.monsterPending;
+      delete exitTile.mNumber;
+      delete exitTile.itemMarker;
+      delete exitTile.itemPending;
+      delete exitTile.item;
+      exitTile.monster = {
+        name: 'Red Dragon',
+        dice: 4,
+        mod: 0,
+        maxHealth: 20,
+        health: 20,
+        glyph: '🐉',
+        revealed: true,
+        isDragon: true
+      };
+      state.tiles[exitKey] = exitTile;
+
+      playSound('dragon');
+      playTileEffect(exitKey, 'dragon', 1400);
+      log('The final dungeon tile is laid. The Exit appears and the Red Dragon guards it.', 'loot');
+      assignRingGuardian();
+    };
+
+    collectRingIfSafe = function (tileKey) {
+      if (
+        !state.ringActivated ||
+        state.player.hasRing ||
+        state.ringKey !== tileKey ||
+        key(state.player.x, state.player.y) !== tileKey
+      ) return false;
+
+      const tile = state.tiles[tileKey];
+      if (
+        !tile ||
+        !tile.hasRing ||
+        tile.monsterPending ||
+        (tile.monster && tile.monster.health > 0)
+      ) return false;
+
+      tile.hasRing = false;
+      state.player.hasRing = true;
+      render();
+      playSound('ring');
+      playTileEffect(tileKey, 'ring', 1200);
+      log('You found the Ring of Creation — now get out!', 'loot');
+      showModal(
+        'THE RING OF CREATION',
+        'You found the Ring of Creation — now get out!',
+        [{ text: 'Get Out!', cls: 'green', fn: closeModal }]
+      );
+      return true;
+    };
+
+    const originalRangedKill = rangedKill;
+    rangedKill = function (tile, tileKey, monster) {
+      const carriesRing = Boolean(monster?.carriesRing);
+      const guardsFirkin = Boolean(monster?.guardsFirkin);
+      const chooseOneReward = !carriesRing && !monster?.isDragon &&
+        Number(monster?.maxHealth) >= 10;
+      if (carriesRing) {
+        // Prevent the original ranged-kill routine awarding normal loot or
+        // collecting the Ring remotely. The Ring remains on the guardian tile.
+        tile.hasRing = true;
+        state.ringActivated = true;
+        state.ringCarrierAssigned = true;
+        state.ringKey = tileKey;
+      }
+      // The original ranged routine awards two separate items to 10+ Health
+      // monsters. Suppress that reward so the choice rule can handle it.
+      if (carriesRing || chooseOneReward) monster.isDragon = true;
+      if (guardsFirkin) placeFirkinOnTile(tile, tileKey, monster.name);
+
+      const result = originalRangedKill.apply(this, arguments);
+
+      if (carriesRing || chooseOneReward) monster.isDragon = false;
+      if (carriesRing) {
+        log(monster.name + ' drops the Ring of Creation!', 'loot');
+      }
+      if (chooseOneReward) {
+        log(monster.name + ' had ' + monster.maxHealth +
+          ' starting Health: draw 2 items and choose 1.', 'loot');
+        setTimeout(() => {
+          if (typeof queueMonsterRewards === 'function') queueMonsterRewards(2);
+        }, 120);
+      }
+      if (guardsFirkin) {
+        log('Firkin is waiting on the fallen monster’s tile. Reach him to complete the rescue.', 'loot');
+      }
+      if (carriesRing || guardsFirkin) render();
+      return result;
+    };
+
+    if (typeof dropMonsterRewardsOnTile === 'function') {
+      const originalDropMonsterRewardsOnTile = dropMonsterRewardsOnTile;
+      dropMonsterRewardsOnTile = function (monster, tile, tileKey) {
+        if (monster?.guardsFirkin) {
+          placeFirkinOnTile(tile, tileKey, monster.name);
+          log('Firkin is waiting on the trap tile. Reach him to complete the rescue.', 'loot');
+        }
+        return originalDropMonsterRewardsOnTile.apply(this, arguments);
+      };
+    }
+
+    killMonster = function () {
+      const monster = combat.tile.monster;
+      const tile = combat.tile;
+      const tileKey = combat.sourceKey || key(state.player.x, state.player.y);
+      const carriesRing = Boolean(monster.carriesRing);
+      const guardsFirkin = Boolean(monster.guardsFirkin);
+      const defeatedDragon = Boolean(
+        monster.isDragon || monster.name === 'Red Dragon'
+      );
+
+      playSound('monsterDie');
+      playTileEffect(tileKey, 'monsterDeath', 1000);
+      log('Defeated ' + monster.name + '.', 'combat');
+      state.player.killed.push(monster.name);
+      state.monsterDiscard.push(monster);
+      recordMonsterCorpse(tile, tileKey, monster);
+      tile.monster = null;
+
+      if (guardsFirkin) {
+        placeFirkinOnTile(tile, tileKey, monster.name);
+      }
+
+      if (carriesRing) {
+        tile.hasRing = true;
+        state.ringActivated = true;
+        state.ringCarrierAssigned = true;
+        state.ringKey = tileKey;
+        log(monster.name + ' drops the Ring of Creation!', 'loot');
+      }
+
+      if (defeatedDragon) {
+        closeCombat();
+        render();
+
+        if (state.player.hasRing) {
+          setTimeout(() => win(), 80);
+        } else {
+          const message =
+            'The Red Dragon is defeated—but your quest is not over. ' +
+            'Find the Ring of Creation and return to the Exit!';
+          log(message, 'loot');
+          setTimeout(() => {
+            showModal(
+              'YOUR QUEST IS NOT OVER',
+              message,
+              [{ text: 'Find the Ring', cls: 'green', fn: closeModal }]
+            );
+          }, 80);
+        }
+        return;
+      }
+
+      // The Ring replaces the guardian's ordinary item reward.
+      const rewardCount = (!defeatedDragon && !carriesRing)
+        ? (monster.maxHealth >= 10 ? 2 : (monster.maxHealth >= 6 ? 1 : 0))
+        : 0;
+
+      if (!defeatedDragon && !carriesRing && !rewardCount) {
+        log(monster.name + ' had ' + monster.maxHealth + ' starting Health: no item reward.', 'system');
+      }
+      if (rewardCount) {
+        log(
+          monster.name + ' had ' + monster.maxHealth + ' starting Health: draw ' +
+          (rewardCount === 2 ? '2 items and choose 1.' : '1 item.'),
+          'loot'
+        );
+      }
+
+      closeCombat();
+      render();
+
+      const awardRewards = () => {
+        if (!rewardCount) return;
+        if (typeof queueMonsterRewards === 'function') {
+          queueMonsterRewards(rewardCount);
+        } else {
+          for (let index = 0; index < rewardCount; index++) awardItem();
+        }
+      };
+
+      if (guardsFirkin) {
+        setTimeout(() => {
+          const collected = collectFirkinIfSafe(
+            tileKey,
+            rewardCount ? awardRewards : null
+          );
+          if (!collected && rewardCount) awardRewards();
+        }, 80);
+      }
+      if (carriesRing) {
+        setTimeout(() => collectRingIfSafe(tileKey), guardsFirkin ? 180 : 80);
+      } else if (rewardCount && !guardsFirkin) {
+        setTimeout(awardRewards, 120);
+      }
+    };
+
+    // Secretly assign both guardians from the shuffled monster deck.
+    assignRingGuardian();
+    assignFirkinGuardian();
+    setInterval(() => {
+      assignRingGuardian();
+      assignFirkinGuardian();
+    }, 250);
+    return true;
+  }
+
+  function start() {
+    if (install()) return;
+    let attempts = 0;
+    const timer = setInterval(() => {
+      if (install() || ++attempts > 240) clearInterval(timer);
+    }, 50);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+})();
+
