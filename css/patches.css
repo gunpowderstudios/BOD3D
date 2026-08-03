@@ -1,0 +1,1305 @@
+/* Bag of Dungeon 3D — consolidated verified interface styles
+   TEST v12.76. Source files retained separately for rollback.
+   Sections remain in their previous dynamic-loader cascade order. */
+
+/* ===== css/warning-scroll.css ===== */
+/* BOD3D-TEST v12.22 — desktop story copy uses 85% of the parchment */
+#modal:has(.testerWarningScroll){
+  padding:clamp(8px,2vw,24px)!important;
+  overflow:auto!important;
+}
+
+#modal .card:has(.testerWarningScroll){
+  box-sizing:border-box!important;
+  width:min(900px,calc(100vw - 40px),calc((100dvh - 36px) * 1.58))!important;
+  max-width:none!important;
+  height:auto!important;
+  max-height:calc(100dvh - 36px)!important;
+  aspect-ratio:1.58 / 1!important;
+  margin:auto!important;
+  /* Leave the curled rolls clear, but use most of the flat parchment. */
+  padding:7.5% 7.5% 6.5% 7.5%!important;
+  border:0!important;
+  background:transparent url('../assets/ui/scroll.png') center / 100% 100% no-repeat!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  display:grid!important;
+  grid-template-rows:minmax(0,1fr) auto!important;
+  gap:clamp(8px,1.2vh,14px)!important;
+  align-items:stretch!important;
+}
+
+#modal .card:has(.testerWarningScroll)>h2{display:none!important}
+
+.testerWarningScroll{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:clamp(4px,.7vh,9px) 0!important;
+  background:none!important;
+  color:#000!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  text-align:center!important;
+  font-family:"Alegreya",Georgia,serif!important;
+  font-size:clamp(16px,1.55vw,21px)!important;
+  font-weight:400!important;
+  line-height:1.27!important;
+  scrollbar-width:none!important;
+}
+.testerWarningScroll::-webkit-scrollbar{display:none!important}
+.testerWarningScroll>*{
+  width:100%!important;
+  max-width:100%!important;
+  margin:.3em 0!important;
+  font-size:inherit!important;
+  line-height:inherit!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+}
+.testerWarningScroll>div:first-child{
+  font-size:clamp(27px,3vw,42px)!important;
+  font-weight:700!important;
+  line-height:1.02!important;
+  margin:0 0 .55em!important;
+}
+.testerWarningScroll b,.testerWarningScroll strong{font-weight:700!important}
+
+#modal .card:has(.testerWarningScroll)>#modalButtons{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0 8%!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  z-index:5!important;
+  pointer-events:auto!important;
+}
+#modal .card:has(.testerWarningScroll)>#modalButtons button{
+  width:min(420px,100%)!important;
+  min-width:0!important;
+  min-height:48px!important;
+  margin:0!important;
+  padding:10px 18px!important;
+  font-size:clamp(15px,1.35vw,19px)!important;
+  line-height:1.1!important;
+}
+
+@media(max-height:760px) and (min-width:901px){
+  #modal:has(.testerWarningScroll){padding:5px 12px!important}
+  #modal .card:has(.testerWarningScroll){
+    width:min(820px,calc(100vw - 28px),calc((100dvh - 12px) * 1.58))!important;
+    max-height:calc(100dvh - 12px)!important;
+    padding:7% 7.5% 5.8% 7.5%!important;
+    gap:5px!important;
+  }
+  .testerWarningScroll{font-size:clamp(14px,1.3vw,18px)!important;line-height:1.18!important;padding-top:2px!important}
+  .testerWarningScroll>div:first-child{font-size:clamp(24px,2.5vw,34px)!important;margin-bottom:.35em!important}
+  #modal .card:has(.testerWarningScroll)>#modalButtons button{min-height:40px!important;padding:7px 14px!important;font-size:14px!important}
+}
+
+@media(max-width:900px){
+  #modal:has(.testerWarningScroll){padding:8px!important;align-items:center!important}
+  #modal .card:has(.testerWarningScroll){
+    width:calc(100vw - 16px)!important;
+    height:min(76dvh,680px)!important;
+    max-height:calc(100dvh - 16px)!important;
+    aspect-ratio:auto!important;
+    padding:8.5% 12.5% 6.5% 14.5%!important;
+    gap:7px!important;
+  }
+  .testerWarningScroll{
+    font-size:clamp(15px,3.8vw,18px)!important;
+    line-height:1.24!important;
+    justify-content:center!important;
+    padding:0 1%!important;
+  }
+  .testerWarningScroll>div:first-child{
+    font-size:clamp(24px,6.3vw,32px)!important;
+    margin-bottom:.48em!important;
+  }
+  #modal .card:has(.testerWarningScroll)>#modalButtons{
+    padding:0 4%!important;
+  }
+  #modal .card:has(.testerWarningScroll)>#modalButtons button{
+    width:min(360px,100%)!important;
+    min-height:50px!important;
+    padding:11px 14px!important;
+    font-size:clamp(16px,4vw,18px)!important;
+  }
+}
+
+@media(max-width:420px) and (max-height:720px){
+  #modal .card:has(.testerWarningScroll){height:calc(100dvh - 12px)!important;padding:8% 12% 5.8% 14%!important;gap:4px!important}
+  .testerWarningScroll{font-size:clamp(13px,3.45vw,15px)!important;line-height:1.18!important}
+  .testerWarningScroll>div:first-child{font-size:clamp(21px,5.6vw,26px)!important;margin-bottom:.28em!important}
+  #modal .card:has(.testerWarningScroll)>#modalButtons button{min-height:44px!important;padding:8px 12px!important;font-size:15px!important}
+}
+
+/* ===== css/desktop-hud.css ===== */
+/* BOD3D-TEST v11.43 — desktop health column and complete controls */
+@media (min-width:901px){
+  /* Ten compact hearts sit fully above the compass. */
+  #livesHud{
+    position:absolute!important;
+    left:auto!important;
+    right:39px!important;
+    top:auto!important;
+    bottom:238px!important;
+    transform:none!important;
+    z-index:67!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:0!important;
+    width:22px!important;
+    max-width:none!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    pointer-events:none!important;
+  }
+  #livesHud .lifeHeart{
+    display:block!important;
+    width:18px!important;
+    height:15px!important;
+    font-size:15px!important;
+    line-height:15px!important;
+    text-align:center!important;
+    color:#ef333b!important;
+    text-shadow:0 1px 4px #000!important;
+  }
+  #livesHud .emptyHeart{color:#4a2022!important;opacity:.7!important}
+
+  /* Restore every desktop camera, sound and fullscreen control. */
+  #zoomOut,#zoomIn,#centreBtn,#viewBtn,#northUpBtn,#menuBtn,
+  #dungeonSoundToggle,#fullscreenBtn{
+    display:flex!important;
+  }
+  #topbar{
+    left:18px!important;
+    right:112px!important;
+    top:18px!important;
+    width:auto!important;
+    gap:14px!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+  }
+  #topbar .cluster,
+  #topbar .cluster:first-child,
+  #topbar .cluster:last-child{
+    display:flex!important;
+    width:auto!important;
+    gap:15px!important;
+    justify-content:flex-start!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+  }
+  #topbar button{
+    display:flex!important;
+    min-width:42px!important;
+    min-height:40px!important;
+    padding:7px 7px!important;
+  }
+  #fullscreenBtn,#dungeonSoundToggle{display:flex!important}
+}
+
+@media (min-width:901px) and (max-height:760px){
+  #livesHud{right:35px!important;bottom:198px!important}
+  #livesHud .lifeHeart{width:16px!important;height:13px!important;font-size:13px!important;line-height:13px!important}
+  #topbar{top:12px!important;gap:9px!important}
+  #topbar .cluster{gap:10px!important}
+  #topbar button{font-size:15px!important;padding:6px 5px!important}
+}
+
+/* ===== css/dark-combat.css ===== */
+/* BOD3D-TEST v11.45 — approved black / white / red interface */
+
+/* ---------- Persistent black HUD / character panel ---------- */
+#side{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#333!important;
+}
+#side .box,
+#side .slotCard,
+#side .equipmentSlot,
+#side .tileItemCard{
+  background:#000!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.55)!important;
+  box-shadow:none!important;
+}
+#side .sectionTitle,
+#side .row,
+#side .statline,
+#side .small,
+#side .slotLabel,
+#side .empty,
+#side b,
+#side strong{
+  color:#fff!important;
+  border-color:rgba(255,255,255,.45)!important;
+}
+#side .hearts,#side .hp{color:#e32636!important}
+#side .itemBtn{
+  background:#080808!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.65)!important;
+  box-shadow:none!important;
+}
+#side .brandLogo{filter:none!important}
+#bodVersionUnderLogo,#topLogoVersion,.version,.buildVersion{color:#fff!important}
+
+/* White, borderless permanent controls. */
+#topbar button,#fullscreenBtn{
+  background:transparent!important;
+  color:#fff!important;
+  border:0!important;
+  box-shadow:none!important;
+  text-shadow:0 1px 4px #000!important;
+}
+
+/* ---------- Full-screen transparent combat layer ---------- */
+body.combatActive #combat{
+  background:transparent!important;
+  padding:0!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  pointer-events:none!important;
+  overflow:hidden!important;
+}
+body.combatActive #combat .combatCard{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:linear-gradient(to bottom,rgba(0,0,0,.02) 0%,rgba(0,0,0,.04) 52%,rgba(0,0,0,.82) 76%,#000 100%)!important;
+  color:#fff!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+}
+body.combatActive #combatTitle{display:none!important}
+body.combatActive .combatWideLayout{display:contents!important}
+body.combatActive .combatGrid{display:contents!important}
+body.combatActive .bigGlyph{display:none!important}
+
+/* Desktop: hero data already lives in the black sidebar. */
+@media(min-width:901px){
+  body.combatActive .fighter:first-child{display:none!important}
+  body.combatActive .fighter:last-child{
+    display:block!important;
+    position:absolute!important;
+    top:112px!important;
+    right:32px!important;
+    width:min(260px,22vw)!important;
+    min-height:0!important;
+    padding:0 0 15px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.35)!important;
+    background:transparent!important;
+    color:#fff!important;
+    text-align:left!important;
+    pointer-events:none!important;
+  }
+  body.combatActive .combatResolution{
+    position:absolute!important;
+    left:50%!important;
+    bottom:26px!important;
+    transform:translateX(-50%)!important;
+    width:min(760px,58vw)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    pointer-events:auto!important;
+  }
+}
+
+body.combatActive #heroCombatName,
+body.combatActive #monsterName{
+  display:block!important;
+  margin:0 0 10px!important;
+  color:#fff!important;
+  font-size:clamp(18px,1.45vw,24px)!important;
+  line-height:1.05!important;
+  text-transform:uppercase!important;
+  letter-spacing:.035em!important;
+}
+body.combatActive #heroCombatStats,
+body.combatActive #monsterCombatStats{
+  color:#fff!important;
+  font-family:"Alegreya Sans",Arial,sans-serif!important;
+  font-size:clamp(14px,1.08vw,18px)!important;
+  line-height:1.42!important;
+}
+body.combatActive #heroCombatStats .hearts,
+body.combatActive #monsterCombatStats .hearts,
+body.combatActive .combatHearts{
+  display:block!important;
+  color:#e32636!important;
+  font-size:clamp(18px,1.45vw,23px)!important;
+  line-height:1.15!important;
+  text-shadow:0 1px 5px #000!important;
+}
+body.combatActive .fighter{
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+
+/* Dice and information remain visually light. */
+body.combatActive .diceTray{
+  min-height:52px!important;
+  width:100%!important;
+  margin:0 0 7px!important;
+  padding:4px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+}
+body.combatActive .die{
+  background:#050505!important;
+  color:#fff!important;
+  border:2px solid #fff!important;
+  box-shadow:none!important;
+}
+body.combatActive .combatLog{
+  width:100%!important;
+  min-height:28px!important;
+  margin:0 0 12px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  font-family:"Alegreya Sans",Arial,sans-serif!important;
+  font-size:clamp(14px,1vw,17px)!important;
+  line-height:1.25!important;
+  text-align:center!important;
+}
+
+/* Red actions + separate Lethal Blow icon. */
+body.combatActive #combatBtns{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:12px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+body.combatActive #combatBtns button:not(.lethalIconBtn){
+  flex:1 1 230px!important;
+  max-width:320px!important;
+  min-height:64px!important;
+  padding:13px 20px!important;
+  border:1px solid #ff737d!important;
+  border-radius:5px!important;
+  background:linear-gradient(#c81725,#9d0c17)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-family:"Alegreya Sans",Arial,sans-serif!important;
+  font-size:clamp(18px,1.35vw,23px)!important;
+  font-weight:800!important;
+  text-transform:uppercase!important;
+}
+body.combatActive #combatBtns button:not(.lethalIconBtn):hover:not(:disabled){background:linear-gradient(#e12836,#b81320)!important}
+body.combatActive #combatBtns button:disabled{opacity:.35!important}
+body.combatActive #combatBtns .lethalIconBtn{
+  flex:0 0 64px!important;
+  width:64px!important;
+  min-width:64px!important;
+  max-width:64px!important;
+  min-height:64px!important;
+  padding:0!important;
+  border:2px solid #e6c66e!important;
+  border-radius:50%!important;
+  background:#050505!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  font-size:31px!important;
+}
+body.combatActive #combatBtns .lethalIconBtn.armed{
+  background:#a70e1a!important;
+  border-color:#ff6974!important;
+  box-shadow:0 0 22px rgba(227,38,54,.9)!important;
+}
+body.combatActive #combatBtns .lethalIconBtn.used{opacity:.22!important}
+body.combatActive .lethalBlowStatus{
+  flex:1 0 100%!important;
+  width:100%!important;
+  color:#e8cf86!important;
+  font-family:"Alegreya Sans",Arial,sans-serif!important;
+  font-size:14px!important;
+  text-align:center!important;
+  order:10!important;
+}
+
+/* Vertical health stays clear of compass during combat. */
+@media(min-width:901px){
+  body.combatActive #livesHud{bottom:190px!important;right:47px!important}
+}
+
+/* ---------- Responsive mobile combat ---------- */
+@media(max-width:900px){
+  body.combatActive #side{display:none!important}
+  body.combatActive #combat{overflow:auto!important;background:rgba(0,0,0,.18)!important}
+  body.combatActive #combat .combatCard{
+    position:relative!important;
+    min-height:100dvh!important;
+    padding:max(54px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom))!important;
+    background:linear-gradient(to bottom,rgba(0,0,0,.02) 0%,rgba(0,0,0,.2) 40%,#000 68%)!important;
+    overflow:auto!important;
+    pointer-events:auto!important;
+  }
+  body.combatActive .combatWideLayout{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:auto 1fr auto!important;
+    gap:10px 14px!important;
+    min-height:calc(100dvh - 72px)!important;
+    align-items:start!important;
+  }
+  body.combatActive .combatGrid{display:contents!important}
+  body.combatActive .fighter:first-child{grid-column:1;grid-row:1;text-align:left!important;padding:0!important}
+  body.combatActive .fighter:last-child{grid-column:2;grid-row:1;text-align:left!important;padding:0!important}
+  body.combatActive .combatResolution{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    align-self:end!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    width:100%!important;
+  }
+  body.combatActive #heroCombatName,body.combatActive #monsterName{font-size:17px!important}
+  body.combatActive #heroCombatStats,body.combatActive #monsterCombatStats{font-size:14px!important;line-height:1.3!important}
+  body.combatActive .combatLog{font-size:14px!important}
+  body.combatActive #combatBtns{display:grid!important;grid-template-columns:1fr 1fr auto!important;gap:8px!important}
+  body.combatActive #combatBtns button:not(.lethalIconBtn){width:100%!important;max-width:none!important;min-width:0!important;min-height:56px!important;font-size:17px!important}
+  body.combatActive #combatBtns .lethalIconBtn{width:56px!important;min-width:56px!important;max-width:56px!important;min-height:56px!important;font-size:27px!important}
+  body.combatActive .lethalBlowStatus{grid-column:1/-1!important}
+}
+
+@media(max-width:560px) and (orientation:portrait){
+  body.combatActive #combat .combatCard{padding-left:10px!important;padding-right:10px!important}
+  body.combatActive .combatWideLayout{gap:8px!important}
+  body.combatActive #heroCombatName,body.combatActive #monsterName{font-size:15px!important}
+  body.combatActive #heroCombatStats,body.combatActive #monsterCombatStats{font-size:12px!important}
+  body.combatActive #combatBtns{grid-template-columns:1fr!important}
+  body.combatActive #combatBtns button:not(.lethalIconBtn){min-height:58px!important}
+  body.combatActive #combatBtns .lethalIconBtn{justify-self:center!important}
+  body.combatActive .lethalBlowStatus{grid-column:1!important}
+}
+
+@media(max-width:900px) and (orientation:landscape){
+  body.combatActive #combat .combatCard{padding-top:42px!important}
+  body.combatActive .combatWideLayout{
+    grid-template-columns:minmax(145px,1fr) minmax(300px,1.75fr) minmax(145px,1fr)!important;
+    grid-template-rows:1fr!important;
+    align-items:end!important;
+  }
+  body.combatActive .fighter:first-child{grid-column:1;grid-row:1}
+  body.combatActive .fighter:last-child{grid-column:3;grid-row:1}
+  body.combatActive .combatResolution{grid-column:2!important;grid-row:1!important}
+  body.combatActive #combatBtns{grid-template-columns:1fr 1fr auto!important}
+}
+
+/* ===== css/dark-hud.css ===== */
+/* BOD3D-TEST v11.46 — full black / white / red in-game HUD */
+:root{
+  --hud-black:#050505;
+  --hud-panel:#090909;
+  --hud-line:#8f8f8f;
+  --hud-line-soft:#5f5f5f;
+  --hud-white:#f4f4f4;
+  --hud-muted:#c9c9c9;
+  --hud-red:#ef2f3e;
+}
+
+/* Entire in-game character/status rail */
+#side{
+  background:var(--hud-black)!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+}
+#side,
+#side *{box-sizing:border-box}
+#side .box,
+#side #stats,
+#side #character,
+#side #inventory,
+#side #killTally,
+#side #log,
+#side [class*="panel"],
+#side [class*="Panel"]{
+  background:var(--hud-panel)!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side .box{
+  border-width:2px!important;
+  border-style:solid!important;
+}
+#side .sectionTitle,
+#side h1,#side h2,#side h3,#side h4,
+#side strong,#side b,
+#side .titlefont{
+  color:var(--hud-white)!important;
+}
+#side .sectionTitle,
+#side h2,#side h3,#side h4{
+  border-color:var(--hud-line)!important;
+}
+#side p,#side span,#side div,#side small,#side .small{
+  color:inherit;
+}
+#side .small,#side small,#side .desc{
+  color:var(--hud-muted)!important;
+}
+#side .hp,#side .hearts,#side .combatHearts,
+#side [class*="heart"],#side [class*="Heart"]{
+  color:var(--hud-red)!important;
+}
+#side .ap{color:var(--hud-white)!important}
+#side .ringStatus{color:#e8cf86!important}
+
+/* Logo block expects the new white PNG with the same filename. */
+#brandHeader{
+  background:var(--hud-black)!important;
+  color:var(--hud-white)!important;
+  border:2px solid var(--hud-line)!important;
+  padding:10px 8px!important;
+}
+#brandHeader .brandLogo,
+#brandHeader img{
+  filter:none!important;
+  width:100%!important;
+  max-width:250px!important;
+  margin-inline:auto!important;
+}
+#visibleBuildVersion,#bodVersionUnderLogo,#topLogoVersion,.version,.buildVersion{
+  color:var(--hud-muted)!important;
+}
+
+/* Equipment, hand, attire and inventory cards */
+#side .slot,
+#side .equipSlot,
+#side .handSlot,
+#side .attireSlot,
+#side .inventorySlot,
+#side .itemBtn,
+#side .tileItemCard,
+#side [class*="slot"],
+#side [class*="Slot"]{
+  background:#070707!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side .itemBtn{
+  border:1px solid var(--hud-line)!important;
+}
+#side .itemBtn:hover:not(:disabled),
+#side .itemBtn.active{
+  background:#151515!important;
+  outline-color:var(--hud-white)!important;
+}
+#side .itemBtn.equipped{
+  outline-color:var(--hud-red)!important;
+}
+#side .itemBtn .count,
+#side .itemBtn .equipMark{
+  background:var(--hud-red)!important;
+  color:#fff!important;
+}
+#side .spriteWrap,
+#side .spriteIcon,
+#side img{
+  background:transparent!important;
+}
+#side button{
+  background:#080808!important;
+  color:var(--hud-white)!important;
+  border-color:var(--hud-line)!important;
+  box-shadow:none!important;
+}
+#side button:hover:not(:disabled){background:#171717!important}
+
+/* Scroll bars remain subtle but usable. */
+#side{scrollbar-color:#777 #090909;scrollbar-width:thin}
+#side::-webkit-scrollbar{width:10px}
+#side::-webkit-scrollbar-track{background:#090909}
+#side::-webkit-scrollbar-thumb{background:#777;border:2px solid #090909;border-radius:8px}
+
+/* Mobile character drawer uses the same theme. */
+@media(max-width:800px){
+  #side{
+    background:var(--hud-black)!important;
+    border-top-color:var(--hud-line)!important;
+    box-shadow:0 -8px 22px rgba(0,0,0,.8)!important;
+  }
+  #mobileSheetToggle,
+  #mobileStatus{
+    background:#080808!important;
+    color:var(--hud-white)!important;
+    border-color:var(--hud-line)!important;
+    box-shadow:none!important;
+  }
+  #mobileSheetToggle::before{background:var(--hud-line)!important}
+  #mobileStatus *{color:var(--hud-white)!important}
+}
+
+/* Keep narrative and warning cards parchment-coloured. */
+#modal .card:not(:has(.testerWarningScroll)),
+#placement .card{
+  color:var(--ink)!important;
+}
+
+/* ===== css/mobile-action-fix.css ===== */
+/* BOD3D-TEST v11.97 — ranged actions clear of the NSEW pad */
+
+@media (max-width:800px){
+  /* Bow, Ice Staff and cancel-ranged actions sit low-left beside the D-pad. */
+  #controls{
+    position:absolute!important;
+    left:14px!important;
+    right:auto!important;
+    bottom:53px!important;
+    width:clamp(118px,31vw,152px)!important;
+    max-width:calc(50% - 76px)!important;
+    z-index:190!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:5px!important;
+    justify-content:flex-end!important;
+    pointer-events:none!important;
+  }
+
+  #controls button{
+    position:relative!important;
+    z-index:191!important;
+    pointer-events:auto!important;
+    width:100%!important;
+    min-height:52px!important;
+    margin:0!important;
+    padding:7px 8px!important;
+    border:2px solid #ef6670!important;
+    border-radius:6px!important;
+    background:linear-gradient(180deg,#d20d28,#a9081c)!important;
+    color:#fff!important;
+    box-shadow:0 4px 0 #260004,0 7px 14px rgba(0,0,0,.55)!important;
+    font-size:12px!important;
+    font-weight:900!important;
+    line-height:1.12!important;
+    text-align:center!important;
+    white-space:normal!important;
+  }
+
+  #controls button:disabled{
+    opacity:.42!important;
+  }
+
+  #mobileDpad{
+    z-index:72!important;
+  }
+}
+
+@media (max-width:360px){
+  #controls{
+    left:8px!important;
+    width:112px!important;
+    max-width:112px!important;
+  }
+  #controls button{
+    min-height:48px!important;
+    padding:5px 6px!important;
+    font-size:11px!important;
+  }
+}
+
+
+@media (min-width:801px){
+  /* Keep desktop ranged actions low-left, clear of the centred D-pad. */
+  #controls{
+    left:18px!important;
+    right:auto!important;
+    bottom:18px!important;
+    width:min(340px,calc(50% - 120px))!important;
+    max-width:340px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-end!important;
+    gap:7px!important;
+  }
+  #controls button{
+    width:100%!important;
+    min-height:48px!important;
+    margin:0!important;
+    white-space:normal!important;
+  }
+}
+
+/* ===== css/combat-items-menu.css ===== */
+/* BOD3D-TEST v11.85 — combat equipment and Items drawer */
+#combatBtns{
+  position:relative!important;
+  overflow:visible!important;
+}
+#combatBtns>.combatItemsToggle{
+  order:3;
+}
+#combatItemsDrawer{
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 10px);
+  transform:translateX(-50%);
+  z-index:1200;
+  width:min(360px,86vw);
+  max-height:min(42vh,360px);
+  overflow:auto;
+  padding:8px;
+  display:grid;
+  gap:6px;
+  background:rgba(0,0,0,.97);
+  border:1px solid #aaa;
+  box-shadow:0 10px 28px rgba(0,0,0,.7);
+}
+#combatItemsDrawer .combatItemsHeading{
+  color:#fff;
+  font-weight:800;
+  font-size:16px;
+  text-align:center;
+  padding:2px 4px 7px;
+  border-bottom:1px solid #777;
+}
+#combatItemsDrawer .combatItemRow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+  padding:7px;
+  background:#111;
+  border:1px solid #666;
+}
+#combatItemsDrawer .combatItemInfo{
+  min-width:0;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+#combatItemsDrawer .combatItemInfo strong{
+  color:#fff;
+  font-size:15px;
+  line-height:1.1;
+}
+#combatItemsDrawer .combatItemInfo small{
+  color:#bbb;
+  font-size:11px;
+}
+#combatItemsDrawer .combatItemActions{
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:4px;
+}
+#combatItemsDrawer .combatItemAction{
+  width:auto!important;
+  min-width:48px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:6px 8px!important;
+  background:#8f171b!important;
+  color:#fff!important;
+  border:1px solid #ef6670!important;
+  box-shadow:none!important;
+  font-size:12px!important;
+  font-weight:800!important;
+}
+#combatItemsDrawer .combatItemAction:disabled{
+  opacity:.42!important;
+}
+#combatItemsDrawer .combatItemPack{
+  background:#333!important;
+  border-color:#777!important;
+}
+#combatItemsDrawer .combatItemUse{
+  background:#a91d24!important;
+}
+#combatItemsDrawer .combatItemChoice{
+  width:100%!important;
+  min-height:42px!important;
+  margin:0!important;
+  padding:9px 12px!important;
+  background:#111!important;
+  color:#fff!important;
+  border:1px solid #777!important;
+  box-shadow:none!important;
+  text-align:left!important;
+  font-size:16px!important;
+}
+#combatItemsDrawer .combatItemChoice:hover,
+#combatItemsDrawer .combatItemChoice:focus-visible{
+  background:#b4201a!important;
+  border-color:#fff!important;
+}
+#combatItemsDrawer .combatItemsClose{
+  text-align:center!important;
+  color:#bbb!important;
+}
+
+@media(max-width:800px){
+  #combatBtns{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+  }
+  #combatBtns>button{
+    width:100%!important;
+    min-height:48px!important;
+  }
+  #combatItemsDrawer{
+    position:fixed!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(env(safe-area-inset-bottom) + 172px)!important;
+    transform:none!important;
+    width:auto!important;
+    max-height:38vh!important;
+  }
+}
+
+@media(max-width:800px) and (orientation:landscape){
+  #combatBtns{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #combatItemsDrawer{
+    bottom:calc(env(safe-area-inset-bottom) + 72px)!important;
+    left:50%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
+    width:min(420px,72vw)!important;
+    max-height:52vh!important;
+  }
+}
+
+/* ===== css/ui-fixes-v1168.css ===== */
+/* BOD3D-TEST v11.70 — streamlined camera controls and mobile top-bar spacing */
+
+/* Remove only the thick outer divider identified on the right of the sidebar. */
+#side{
+  border-right:0!important;
+}
+
+/* Zoom remains available by gesture/wheel; remove the unused button pair. */
+#zoomOut,
+#zoomIn{
+  display:none!important;
+}
+
+/* Keep the sound control present independently of older responsive rules. */
+#dungeonSoundToggle{
+  position:fixed!important;
+  top:12px!important;
+  right:58px!important;
+  z-index:5000!important;
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  text-shadow:0 1px 4px #000!important;
+  font:700 22px/1 "Alegreya Sans",Arial,sans-serif!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+
+@media(max-width:900px){
+  /* Mobile health sits vertically on the left, clear of controls and drawer. */
+  #livesHud{
+    position:fixed!important;
+    left:max(8px,env(safe-area-inset-left))!important;
+    right:auto!important;
+    top:50%!important;
+    bottom:auto!important;
+    transform:translateY(-50%)!important;
+    z-index:67!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:0!important;
+    width:22px!important;
+    max-width:none!important;
+    padding:0!important;
+    margin:0!important;
+    background:transparent!important;
+    pointer-events:none!important;
+  }
+  #livesHud .lifeHeart{
+    display:block!important;
+    width:18px!important;
+    height:15px!important;
+    font-size:15px!important;
+    line-height:15px!important;
+    text-align:center!important;
+    color:#ef333b!important;
+    text-shadow:0 1px 4px #000!important;
+  }
+  #livesHud .emptyHeart{color:#4a2022!important;opacity:.7!important}
+
+  /* Compact two-row mobile combat dock:
+     Fight | Run Away
+     Items | Lethal Blow */
+  body.combatActive #combatBtns{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-rows:auto auto auto!important;
+    gap:8px!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    align-items:center!important;
+  }
+  body.combatActive #combatBtns>button:nth-of-type(1){
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+  body.combatActive #combatBtns>button:nth-of-type(2){
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+  body.combatActive #combatBtns>.combatItemsToggle{
+    grid-column:1!important;
+    grid-row:2!important;
+    order:initial!important;
+  }
+  body.combatActive #combatBtns>.lethalIconBtn{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:center!important;
+    align-self:center!important;
+  }
+  body.combatActive #combatBtns>button:not(.lethalIconBtn){
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    min-height:52px!important;
+    height:52px!important;
+    padding:8px 10px!important;
+    margin:0!important;
+    font-size:clamp(14px,4vw,18px)!important;
+    line-height:1.05!important;
+  }
+  body.combatActive #combatBtns>.lethalIconBtn{
+    width:52px!important;
+    min-width:52px!important;
+    max-width:52px!important;
+    min-height:52px!important;
+    height:52px!important;
+    padding:0!important;
+    margin:0!important;
+    font-size:25px!important;
+  }
+  body.combatActive #combatBtns>.lethalBlowStatus{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:12px!important;
+    line-height:1.15!important;
+    text-align:center!important;
+    order:initial!important;
+  }
+  body.combatActive #combatBtns:not(:has(.combatItemsToggle))>.lethalIconBtn{
+    grid-column:1/-1!important;
+  }
+
+  /* Hide the compass during mobile combat while leaving the 3D canvas
+     available for drag, rotate and pinch-zoom inspection. */
+  body.combatActive #compass{
+    display:none!important;
+  }
+  body.combatActive #viewport,
+  body.combatActive #threeBoard{
+    pointer-events:auto!important;
+    touch-action:none!important;
+  }
+
+  /* Let table gestures pass through the transparent combat UI and stats.
+     Only actual controls retain pointer input. */
+  body.combatActive #combat .combatCard,
+  body.combatActive #combat .combatWideLayout,
+  body.combatActive #combat .combatGrid,
+  body.combatActive #combat .fighter,
+  body.combatActive #combat .combatResolution,
+  body.combatActive #combatBtns{
+    pointer-events:none!important;
+  }
+  body.combatActive #combatBtns>button,
+  body.combatActive #combatItemsDrawer,
+  body.combatActive #combatItemsDrawer *{
+    pointer-events:auto!important;
+  }
+
+  /* Reserve a clear lane for Mute and Full Screen; the Map/View control moves left. */
+  #topbar{
+    right:142px!important;
+  }
+  #dungeonSoundToggle{
+    top:12px!important;
+    right:58px!important;
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    min-height:38px!important;
+  }
+}
+
+
+/* v12.07 — Firkin rescue token */
+.firkinMark{
+ position:absolute;
+ left:7px;
+ bottom:7px;
+ z-index:12;
+ display:block;
+ width:44px;
+ height:44px;
+ filter:drop-shadow(0 3px 3px rgba(0,0,0,.8));
+}
+.firkinMark .spriteWrap,
+.firkinMark .spriteIcon{
+ display:block;
+ width:100%;
+ height:100%;
+ object-fit:contain;
+}
+.endingScroll .endingStatsHeading{
+ margin-top:28px;
+}
+.endingScroll .endingStats{
+ text-align:center;
+}
+.endingScroll .endingTheEnd{
+ margin:32px 0 10px;
+}
+
+/* ===== css/quest-log-colours.css ===== */
+/* v11.82 — restore combat feedback colours in the Quest Log. */
+#side #log .logline.combat {
+  color: #ef2f3e !important;
+  font-weight: 700;
+}
+
+/* ===== css/warning-scroll-v1177.css ===== */
+/* BOD3D-TEST v11.80 — bold warning copy with increased top spacing */
+.testerWarningScroll.hasStory{
+  justify-content:flex-start!important;
+}
+.testerWarningScroll>.testerStoryHeading{
+  font-size:clamp(27px,3vw,42px)!important;
+  font-weight:700!important;
+  line-height:1.02!important;
+  margin:1.1em 0 .55em!important;
+}
+.testerWarningScroll>.testerStoryParagraph{
+  margin:.48em 0!important;
+}
+
+@media(max-width:900px){
+  #modal .card:has(.testerWarningScroll){
+    height:min(68dvh,600px)!important;
+  }
+  .testerWarningScroll{
+    font-size:18px!important;
+    font-weight:700!important;
+    line-height:1.24!important;
+    padding-top:24px!important;
+  }
+  .testerWarningScroll>div:first-child{
+    font-size:22px!important;
+    line-height:1.02!important;
+  }
+  .testerWarningScroll>.testerStoryHeading{
+    font-size:22px!important;
+    margin:1em 0 .55em!important;
+  }
+  .testerWarningScroll>.testerStoryParagraph{
+    font-size:18px!important;
+    line-height:1.24!important;
+  }
+  /* The warning copy contains two BRs after the red Dragon warning.
+     Hide the second so Good luck follows with one clear line space. */
+  .testerWarningScroll>span+br+br{
+    display:none!important;
+  }
+}
+
+@media(max-width:420px) and (max-height:720px){
+  #modal .card:has(.testerWarningScroll){
+    height:min(68dvh,520px)!important;
+  }
+  .testerWarningScroll{
+    font-size:18px!important;
+    font-weight:700!important;
+    line-height:1.2!important;
+    padding-top:18px!important;
+  }
+  .testerWarningScroll>div:first-child{
+    font-size:22px!important;
+  }
+  .testerWarningScroll>.testerStoryHeading{
+    font-size:22px!important;
+  }
+  .testerWarningScroll>.testerStoryParagraph{
+    font-size:18px!important;
+    line-height:1.2!important;
+  }
+}
+
+/* ===== css/carried-ring-hud.css ===== */
+/* BOD3D-TEST v11.95 — carried Ring HUD */
+#carriedRingHud{
+ position:absolute;
+ left:14px;
+ top:72px;
+ z-index:58;
+ width:52px;
+ height:52px;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ pointer-events:none;
+ filter:drop-shadow(0 3px 5px rgba(0,0,0,.8)) drop-shadow(0 0 8px rgba(255,216,77,.7));
+ animation:carriedRingFloat 2.4s ease-in-out infinite;
+}
+#carriedRingHud.visible{display:flex}
+#carriedRingHud img{display:block;width:100%;height:100%;object-fit:contain}
+@keyframes carriedRingFloat{
+ 0%,100%{transform:translateY(0) rotate(-2deg)}
+ 50%{transform:translateY(-7px) rotate(2deg)}
+}
+@media(max-width:800px){
+ #carriedRingHud{left:12px;top:68px;width:44px;height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ #carriedRingHud{animation:none}
+}
+
+/* ===== css/buy-bod.css ===== */
+/* BOD3D-TEST v12.03 — mobile logo clearance below top tags */
+#buyBodButton{
+ position:fixed;
+ left:0;
+ right:auto;
+ top:0;
+ transform:none;
+ z-index:570;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ width:88px;
+ min-height:36px;
+ padding:6px 8px;
+ border:0;
+ border-right:2px solid #67adff;
+ border-bottom:2px solid #67adff;
+ border-radius:0 0 7px 0;
+ background:#0966cc;
+ color:#fff;
+ box-shadow:
+  inset -2px -2px 0 rgba(0,35,85,.45),
+  inset 1px 1px 0 rgba(255,255,255,.18),
+  3px 4px 0 #031a36,
+  5px 7px 13px rgba(0,0,0,.42);
+ font:900 12px/1.05 "Alegreya Sans",Arial,sans-serif;
+ letter-spacing:.045em;
+ text-align:center;
+ text-decoration:none;
+ text-shadow:0 1px 1px rgba(0,0,0,.55);
+ pointer-events:auto;
+ transition:filter .14s ease,transform .14s ease;
+}
+#buyBodButton:hover,
+#buyBodButton:focus-visible{
+ filter:brightness(1.14);
+ outline:2px solid #fff;
+ outline-offset:2px;
+}
+#buyBodButton:active{
+ transform:translateY(3px);
+ box-shadow:
+  inset -2px -2px 0 rgba(0,35,85,.45),
+  inset 1px 1px 0 rgba(255,255,255,.18),
+  2px 1px 0 #031a36,
+  3px 4px 9px rgba(0,0,0,.4);
+}
+@media(max-width:800px){
+ #buyBodButton{
+  width:74px;
+  min-height:34px;
+  padding:5px 7px;
+  font-size:11px;
+ }
+ /* The Centre circle is the first visible mobile top-bar control.
+    Move it just beyond the tag while preserving the rest of the row. */
+ #centreBtn{margin-left:78px!important}
+ /* Keep the opening-screen logo below the BUY BOD and mute controls. */
+ .heroSelectLogo{top:56px!important}
+}
+
+/* ===== css/enter-button-fix.css ===== */
+/* BOD3D-TEST v11.59 — warning-scroll Enter button always uses black text */
+#modal:has(.testerWarningScroll) #modalButtons button,
+#modal:has(.testerWarningScroll) #modalButtons button.green,
+#modal:has(.testerWarningScroll) #modalButtons button:hover,
+#modal:has(.testerWarningScroll) #modalButtons button:focus,
+#modal:has(.testerWarningScroll) #modalButtons button:focus-visible,
+#modal:has(.testerWarningScroll) #modalButtons button:active,
+#modal:has(.testerWarningScroll) #modalButtons button *,
+#modal:has(.testerWarningScroll) #modalButtons button:hover *,
+#modal:has(.testerWarningScroll) #modalButtons button:focus *,
+#modal:has(.testerWarningScroll) #modalButtons button:active *{
+  color:#000000!important;
+  -webkit-text-fill-color:#000000!important;
+  text-shadow:none!important;
+}
