@@ -82,9 +82,9 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.77">
-<link rel="stylesheet" href="css/combat.css?v=12.77">
-<link rel="stylesheet" href="css/mobile.css?v=12.77">
+<link rel="stylesheet" href="css/main.css?v=12.78">
+<link rel="stylesheet" href="css/combat.css?v=12.78">
+<link rel="stylesheet" href="css/mobile.css?v=12.78">
 <!--
 8BITBOD
 Version: v3.10
@@ -388,6 +388,7 @@ Changes:
 <!-- v12.65: Corrected Firkin's rescue text and stored description to +1 melee only; he carries no items and gives no ranged bonus. -->
 <!-- v12.66: Moved the Sirrus-and-Tamara-only rule into core game data and retired the late-loading characters-only patch. -->
 <!-- v12.67: Consolidated home, dungeon and end-game background audio plus page lifecycle handling into js/audio.js with fixed loading order. -->
+<!-- v12.78: Corrected the punctuation in the About bug-report note. -->
 <!-- v12.77: Added a small clickable bug-report email note to the bottom of About. -->
 <!-- v12.76: Consolidated the twelve verified late-loaded interface styles into css/patches.css in the same cascade order; removed obsolete dynamic loader machinery and completed the TEST cleanup audit. -->
 <!-- v12.75: Moved the verified dungeon-generation, Ring, Firkin, Dragon and Exit gameplay-rules patch into js/game.js; retired its late dynamic loader without rewriting rules. -->
@@ -402,7 +403,7 @@ Changes:
 <!-- v12.61: Prevented cancelled placement from shuffling the reserved EXIT into the active stack, keeping it last after 40–50 floors; Ring guardian assignment now waits until at least 20 floor tiles are laid. -->
 <!-- v12.62: Sized the Red Dragon by its horizontal base footprint: 60 mm across on a 50 mm dungeon tile, allowing a deliberate 5 mm overlap on each side without changing other miniatures. -->
 <!-- v12.63: Increased the Red Dragon’s 60 mm base footprint by 30%, to approximately 78 mm across on a 50 mm dungeon tile. -->
-<link rel="stylesheet" href="css/patches.css?v=12.77">
+<link rel="stylesheet" href="css/patches.css?v=12.78">
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
@@ -449,7 +450,7 @@ Changes:
     <div id="mobileStatus"></div>
     <div id="brandHeader">
       <img class="brandLogo" src="assets/ui/logo.png" alt="Gunpowder Studios" onerror="this.style.display='none'">
-      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.77</div>
+      <div id="visibleBuildVersion" style="font-size:12px;line-height:1.2;text-align:center;letter-spacing:.08em;opacity:.72;margin-top:4px;">v12.78</div>
     </div>
     <div class="box" id="stats"></div>
     <div class="box" id="inventory"></div>
@@ -558,12 +559,12 @@ Changes:
 <div id="toast"></div>
 <div id="devPanel"></div>
 
-<script src="assets/assets.js?v=12.77"></script>
-<script src="assets/reward-fix.js?v=12.77"></script>
-<script src="js/game.js?v=12.77"></script>
-<script src="js/combat.js?v=12.77"></script>
+<script src="assets/assets.js?v=12.78"></script>
+<script src="assets/reward-fix.js?v=12.78"></script>
+<script src="js/game.js?v=12.78"></script>
+<script src="js/combat.js?v=12.78"></script>
 
-<script type="module" src="js/scene3d.js?v=12.77" onerror="window.BOD3DCompatibilityFail&&window.BOD3DCompatibilityFail('The 3D engine could not be loaded.')"></script>
+<script type="module" src="js/scene3d.js?v=12.78" onerror="window.BOD3DCompatibilityFail&&window.BOD3DCompatibilityFail('The 3D engine could not be loaded.')"></script>
 
 
 <div id="itemTester" aria-hidden="true">
@@ -686,8 +687,8 @@ Changes:
 </div>
 
 
-<script src="js/patches.js?v=12.77"></script>
-<script src="js/audio.js?v=12.77"></script>
-<script src="js/ui.js?v=12.77"></script>
+<script src="js/patches.js?v=12.78"></script>
+<script src="js/audio.js?v=12.78"></script>
+<script src="js/ui.js?v=12.78"></script>
 </body>
 </html>
