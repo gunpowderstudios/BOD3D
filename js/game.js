@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.76';
+const VERSION='v12.77';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -1152,6 +1152,7 @@ function openAbout(){
       <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>
       <div>Visit our website to see the full range:<br><a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a></div>
       <div><b>Thanks for playing. Your journey continues over at our website.</b><br>© Gunpowder Studios Ltd. All rights reserved.</div>
+      <div style="font-size:12px;opacity:.72">Our tech wizards are always learning, so if you see any bugs please email us at <a href="mailto:info@gunpowderstudios.co.uk">info@gunpowderstudios.co.uk</a>.</div>
     </div>`;
 }
 function openMenu(){
