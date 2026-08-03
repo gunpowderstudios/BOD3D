@@ -30,13 +30,14 @@
           fn:()=>choose(item,items[index===0?1:0])
         }))
       );
-      const body=document.getElementById('modalBody');
+      document.getElementById('modal')?.classList.add('rewardChoiceModal');
+  const body=document.getElementById('modalBody');
       if(body){
         body.innerHTML=
           '<div style="margin-bottom:14px">This powerful monster carried two items. Choose one—the other goes back in the bag.</div>'+
           '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch">'+
           items.map(item=>
-            '<div style="border:3px solid #1b1208;border-radius:8px;padding:10px 8px;background:rgba(255,255,255,.18);min-width:0">'+
+            '<div class="rewardChoiceCard">'+
               '<div style="font-size:42px;line-height:1;margin-bottom:7px">'+iconHTML(item.name,item.icon||'?')+'</div>'+
               '<div style="font-size:17px;font-weight:bold;line-height:1.15;margin-bottom:7px">'+item.name+'</div>'+
               '<div style="font-size:14px;line-height:1.25">'+(item.desc||'No special effect.')+'</div>'+
