@@ -633,3 +633,28 @@ body.threeMode.lightingOn #viewport::after{
 }
 #modal.questLogModal #modalBody{min-height:0;flex:1;overflow:hidden}
 #questLogBtn{font-weight:bold}
+
+
+/* v12.79 — high-contrast monster reward choice */
+#modal.rewardChoiceModal .card{
+  background:#050505;
+  color:#fff;
+  border-color:#fff;
+  box-shadow:6px 6px 0 rgba(255,255,255,.22);
+}
+#modal.rewardChoiceModal #modalTitle,
+#modal.rewardChoiceModal #modalBody{color:#fff}
+#modal.rewardChoiceModal .rewardChoiceCard{
+  border:3px solid #fff;
+  border-radius:8px;
+  padding:10px 8px;
+  background:#141414;
+  color:#fff;
+  min-width:0;
+}
+#modal.rewardChoiceModal #modalButtons button{
+  background:#050505;
+  color:#fff;
+  border-color:#fff;
+  box-shadow:3px 3px 0 rgba(255,255,255,.35);
+}
