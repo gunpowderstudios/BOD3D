@@ -745,3 +745,330 @@ function showMonsterStats(tileKey,event){if(event){event.preventDefault();event.
 // wrapper must also be installed here after the function exists.
 const deathWithoutDiceCleanup=death;
 death=function(){window.BODDice3D?.clear?.();return deathWithoutDiceCleanup.apply(this,arguments);};
+
+// Consolidated in TEST v12.69: Sirrus and Tamara's once-per-game Lethal Blow.
+// Kept behaviour-identical to the previously verified standalone patch.
+// BOD3D-TEST v11.44 — Sirrus and Tamara Lethal Blow as a simple armed icon
+(function installLethalBlow(){
+  function ready(){return typeof fightRound==='function'&&typeof resolveFightRound==='function'&&typeof renderCombat==='function';}
+  function install(){
+    if(window.__bodLethalBlowInstalled)return true;
+    if(!ready())return false;
+    window.__bodLethalBlowInstalled=true;
+    const originalRenderCombat=renderCombat;
+    const originalResolveFightRound=resolveFightRound;
+    function fighterHasLethal(){return !!(state?.player&&state.player.flags?.special==='Lethal Blow');}
+    function lethalReady(){return fighterHasLethal()&&!state.player.flags.usedSpecial;}
+    window.toggleLethalBlow=function(){
+      if(!combat||!lethalReady()||combat.rolling)return;
+      combat.lethalBlowArmed=!combat.lethalBlowArmed;
+      if(typeof playSound==='function')playSound('click');
+      renderCombat();
+    };
+    fightRound=function(){
+      if(!combat||combat.rolling)return;
+      const p=state.player,m=combat.tile.monster;
+      m.meleeStarted=true;combat.rolling=true;
+      const useLethal=!!(combat.lethalBlowArmed&&lethalReady());
+      const pr=roll(pDice()),mr=roll(m.dice);
+      if(useLethal){
+        const critical=isCritical(pr.rolls);
+        const normalDice=critical?pr.total*2:pr.total;
+        const modifier=pCombatMod();
+        const normalTotal=normalDice+modifier;
+        const doubledTotal=normalTotal*2;
+        pr.total=(doubledTotal-modifier)/(critical?2:1);
+        state.player.flags.usedSpecial=true;
+        combat.lethalBlowArmed=false;
+        playSound('critical');playCurrentTileEffect?.('critical',1000);
+        log((state.charDef?.name||'The fighter')+' uses LETHAL BLOW! Combat total doubled from '+normalTotal+' to '+doubledTotal+'.','combat');
+      }
+      combat.pendingDiceRoll={pr,mr};
+      window.BOD3D?.combatPulse?.();
+      showDice(Array.from({length:pDice()},()=>'?'),Array.from({length:m.dice},()=>'?'),true);
+      document.getElementById('combatLog').textContent=useLethal?'LETHAL BLOW! Rolling doubled attack...':'Rolling dice...';
+      playSound('dice');window.BODDice3D?.rollCombat?.(pr.rolls,mr.rolls);renderCombat();
+      setTimeout(()=>{if(!combat)return;originalResolveFightRound();},1050);
+    };
+    renderCombat=function(){
+      originalRenderCombat();
+      if(!combat||!fighterHasLethal())return;
+      const buttons=document.getElementById('combatBtns');if(!buttons)return;
+      const icon=document.createElement('button');
+      icon.type='button';icon.className='lethalIconBtn';icon.textContent='☠';
+      icon.title='Lethal Blow — arm before rolling to double your total combat roll once per game';
+      icon.setAttribute('aria-label',icon.title);
+      if(state.player.flags.usedSpecial){icon.disabled=true;icon.classList.add('used');}
+      else{icon.onclick=window.toggleLethalBlow;if(combat.lethalBlowArmed)icon.classList.add('armed');}
+      buttons.appendChild(icon);
+      const note=document.createElement('div');note.className='small lethalBlowStatus';
+      note.textContent=state.player.flags.usedSpecial?'Lethal Blow used':(combat.lethalBlowArmed?'Lethal Blow armed — your next roll will be doubled':'Tap the skull to arm Lethal Blow before rolling');
+      buttons.appendChild(note);
+    };
+    return true;
+  }
+  function start(){if(install())return;let tries=0;const timer=setInterval(()=>{if(install()||++tries>160)clearInterval(timer);},50);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+
+// Consolidated in TEST v12.70: free equipment swapping in the combat Items drawer.
+// Behaviour remains identical to the previously verified standalone patch.
+// BOD3D-TEST v11.85 — free equipment swapping in the combat Items drawer
+(function(){
+  let drawerOpen=false;
+  let activeCombat=null;
+
+  function carriedEntries(){
+    if(typeof allCarriedItems!=='function')return [];
+    return allCarriedItems()
+      .map((item,index)=>({item,index}))
+      .filter(({item})=>item&&(
+        (item.use&&item.use!=='teleport') ||
+        item.type==='equipment' ||
+        (typeof isHandItem==='function'&&isHandItem(item)) ||
+        (typeof isArmour==='function'&&isArmour(item)) ||
+        (typeof isBoots==='function'&&isBoots(item)) ||
+        (typeof isCloak==='function'&&isCloak(item))
+      ));
+  }
+
+  function makeButton(text,className,onClick,disabled=false){
+    const button=document.createElement('button');
+    button.type='button';
+    button.className=className;
+    button.textContent=text;
+    button.disabled=disabled;
+    button.addEventListener('click',onClick);
+    return button;
+  }
+
+  function refreshCombat(){
+    if(typeof render==='function')render();
+    if(typeof renderCombat==='function')renderCombat();
+  }
+
+  function equipmentAction(item,slot){
+    if(combat?.rolling)return;
+    if(equipToSlot(item,slot))refreshCombat();
+  }
+
+  function packItem(item){
+    if(combat?.rolling)return;
+    if(unequipItem(item)){
+      if(typeof playSound==='function')playSound('unequip');
+      if(typeof toast==='function')toast(item.name+' moved to backpack');
+      refreshCombat();
+    }
+  }
+
+  function addItemRow(drawer,item,index){
+    const row=document.createElement('div');
+    row.className='combatItemRow';
+
+    const info=document.createElement('div');
+    info.className='combatItemInfo';
+    const name=document.createElement('strong');
+    name.textContent=(item.icon?item.icon+' ':'')+item.name;
+    info.appendChild(name);
+
+    const equipped=typeof equippedSlotFor==='function'?equippedSlotFor(item):null;
+    const status=document.createElement('small');
+    status.textContent=equipped?'Equipped: '+equipped:'Backpack';
+    info.appendChild(status);
+    row.appendChild(info);
+
+    const actions=document.createElement('div');
+    actions.className='combatItemActions';
+    const locked=!!combat?.rolling;
+
+    const handItem=typeof isHandItem==='function'&&isHandItem(item);
+    const twoHanded=handItem&&typeof isTwoHanded==='function'&&isTwoHanded(item);
+    if(handItem){
+      if(twoHanded){
+        actions.appendChild(makeButton('Equip','combatItemAction',()=>equipmentAction(item,'left'),locked||equipped==='both hands'));
+      }else{
+        actions.appendChild(makeButton('Left','combatItemAction',()=>equipmentAction(item,'left'),locked||equipped==='left hand'));
+        actions.appendChild(makeButton('Right','combatItemAction',()=>equipmentAction(item,'right'),locked||equipped==='right hand'));
+      }
+    }else if(typeof isArmour==='function'&&isArmour(item)){
+      actions.appendChild(makeButton('Wear','combatItemAction',()=>equipmentAction(item,'armour'),locked||equipped==='armour'));
+    }else if(typeof isBoots==='function'&&isBoots(item)){
+      actions.appendChild(makeButton('Wear','combatItemAction',()=>equipmentAction(item,'boots'),locked||equipped==='boots'));
+    }else if(typeof isCloak==='function'&&isCloak(item)){
+      actions.appendChild(makeButton('Wear','combatItemAction',()=>equipmentAction(item,'cloak'),locked||equipped==='attire'));
+    }
+
+    if(item.use&&item.use!=='teleport'){
+      actions.appendChild(makeButton('Use','combatItemAction combatItemUse',()=>{
+        if(combat?.rolling)return;
+        drawerOpen=false;
+        useInventoryIndex(index);
+      },locked));
+    }
+
+    if(equipped&&equipped!=='companion'){
+      actions.appendChild(makeButton('Pack','combatItemAction combatItemPack',()=>packItem(item),locked));
+    }
+
+    row.appendChild(actions);
+    drawer.appendChild(row);
+  }
+
+  function install(){
+    if(window.__bodCombatItemsMenuInstalled)return true;
+    if(
+      typeof combatItemButtons!=='function' ||
+      typeof useInventoryIndex!=='function' ||
+      typeof renderCombat!=='function' ||
+      typeof equipToSlot!=='function' ||
+      typeof unequipItem!=='function'
+    )return false;
+
+    window.__bodCombatItemsMenuInstalled=true;
+
+    combatItemButtons=function(wrap){
+      if(!wrap)return;
+
+      if(activeCombat!==combat){
+        activeCombat=combat;
+        drawerOpen=false;
+      }
+
+      const entries=carriedEntries();
+      if(!entries.length)return;
+
+      const toggle=makeButton(
+        drawerOpen?'Items ▴':'Items ▾',
+        'red combatItemsToggle',
+        ()=>{
+          drawerOpen=!drawerOpen;
+          renderCombat();
+        },
+        !!combat?.rolling
+      );
+      toggle.setAttribute('aria-expanded',drawerOpen?'true':'false');
+      wrap.appendChild(toggle);
+
+      if(!drawerOpen)return;
+
+      const drawer=document.createElement('div');
+      drawer.id='combatItemsDrawer';
+      drawer.className='combatItemsDrawer';
+
+      const heading=document.createElement('div');
+      heading.className='combatItemsHeading';
+      heading.textContent='Equipment & Backpack';
+      drawer.appendChild(heading);
+
+      entries.forEach(({item,index})=>addItemRow(drawer,item,index));
+
+      drawer.appendChild(makeButton('Close','combatItemChoice combatItemsClose',()=>{
+        drawerOpen=false;
+        renderCombat();
+      }));
+
+      wrap.appendChild(drawer);
+    };
+
+    return true;
+  }
+
+  function start(){
+    if(install())return;
+    let attempts=0;
+    const timer=setInterval(()=>{
+      if(install()||++attempts>200)clearInterval(timer);
+    },50);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
+
+// Consolidated in TEST v12.71: verified combat placeholder and border cleanup.
+// Behaviour and styling remain identical to the standalone patch.
+// BOD3D-TEST v11.67 — remove combat placeholders without blocking controls
+(function () {
+  'use strict';
+
+  if (window.__bodCombatCleanupV1166Installed) return;
+  window.__bodCombatCleanupV1166Installed = true;
+
+  const DICE_PLACEHOLDERS = new Set([
+    'Dice will appear here.'
+  ]);
+  const LOG_PLACEHOLDERS = new Set([
+    'Ready to fight!',
+    'A monster blocks your path.'
+  ]);
+
+  function cleanCombatPlaceholders() {
+    const dice = document.getElementById('diceTray');
+    if (dice && DICE_PLACEHOLDERS.has(dice.textContent.trim())) {
+      dice.textContent = '';
+      dice.classList.add('combatTrayEmpty');
+    } else if (dice && dice.textContent.trim() && dice.classList.contains('combatTrayEmpty')) {
+      dice.classList.remove('combatTrayEmpty');
+    }
+
+    const log = document.getElementById('combatLog');
+    if (log && LOG_PLACEHOLDERS.has(log.textContent.trim())) {
+      log.textContent = '';
+      log.classList.add('combatLogEmpty');
+    } else if (log && log.textContent.trim() && log.classList.contains('combatLogEmpty')) {
+      log.classList.remove('combatLogEmpty');
+    }
+  }
+
+  function installStyles() {
+    if (document.getElementById('bodCombatCleanupStylesV1166')) return;
+    const style = document.createElement('style');
+    style.id = 'bodCombatCleanupStylesV1166';
+    style.textContent = `
+      body.combatActive #side{
+        border-right:0!important;
+        box-shadow:none!important;
+      }
+      body.combatActive #combat,
+      body.combatActive #combat .combatCard,
+      body.combatActive .combatWideLayout,
+      body.combatActive .combatGrid,
+      body.combatActive .combatResolution,
+      body.combatActive .diceTray,
+      body.combatActive .combatLog{
+        border-left:0!important;
+        box-shadow:none!important;
+      }
+      body.combatActive .diceTray.combatTrayEmpty,
+      body.combatActive .combatLog.combatLogEmpty{
+        min-height:0!important;
+        height:0!important;
+        margin:0!important;
+        padding:0!important;
+        border:0!important;
+        overflow:hidden!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function start() {
+    installStyles();
+    cleanCombatPlaceholders();
+
+    const combat = document.getElementById('combat');
+    if (!combat) return;
+    new MutationObserver(cleanCombatPlaceholders).observe(combat, {
+      subtree: true,
+      childList: true,
+      characterData: true
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+})();
+
