@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.79';
+const VERSION='v12.85';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -753,7 +753,8 @@ function createTileDeck(){
   return [{kind:'exit'},...shuffle(deck)];
 }
 function showTesterWarning(){
- showModal('A WARNING FROM THE DUNGEON','',[{text:'Begin your quest…',cls:'green',fn:closeModal}]);
+ showModal('A WARNING FROM THE DUNGEON','',[{text:'Enter the Dungeon',cls:'green',fn:closeModal}]);
+ document.getElementById('modal')?.classList.add('introScrollModal');
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=`<div class="testerWarningScroll"><div style="font-size:28px;font-weight:700;margin-bottom:28px;">A WARNING FROM THE DUNGEON</div>You have <b>ONE LIFE!</b> If your hero falls, the dungeon claims you and the game ends.<br><br>Your quest: Get in, get the Ring, and try to get out alive.<br><br><span style="color:#246B2F;font-weight:bold;">Advice for new adventurers! Hmm, advice? Well, we can’t offer you much—this is your journey, but you’re braver than you look! Anyway, nobody has ever returned from these dungeons. Not that we want to worry you! The rumours say that the Ring may be hidden on one of the large monsters; the Red Dragon may fry you without warning (look out for her at the Exit); and, finally, if you’re brave enough, you might just meet a friend! See the story below…</span><br>Good luck, brave adventurer. You’ll need it.</div>`;
 }
@@ -1168,7 +1169,7 @@ function openMenu(){
   ]);
 }
 
-function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
+function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
@@ -2349,6 +2350,7 @@ function developerPreviewEnding(rescuedFirkin){
   '',
   [{text:'Return to Game',cls:'green',fn:()=>{window.stopEndGameMusic?.();closeModal();}}]
  );
+ document.getElementById('modal')?.classList.add('endingScrollModal');
  const body=document.getElementById('modalBody');
  if(body){
   body.innerHTML=endingScrollHTML(rescuedFirkin);
@@ -2698,6 +2700,7 @@ function win(){
  window.startEndGameMusic?.();
  const rescuedFirkin=!!state.player.companionFirkin;
  showModal('YOU ESCAPED!','',[{text:'New Game',cls:'green',fn:()=>{window.stopEndGameMusic?.();showCharSelect();}}]);
+ document.getElementById('modal')?.classList.add('endingScrollModal');
  const body=document.getElementById('modalBody');
  if(body)body.innerHTML=endingScrollHTML(rescuedFirkin);
 }
