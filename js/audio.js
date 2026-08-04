@@ -113,7 +113,7 @@
     if (!dungeonAmbienceAudio) {
       dungeonAmbienceAudio = new Audio(DUNGEON_MUSIC_PLAYLIST[dungeonMusicIndex]);
       dungeonAmbienceAudio.loop = false;
-      dungeonAmbienceAudio.volume = 0.32;
+      dungeonAmbienceAudio.volume = 0.12;
       dungeonAmbienceAudio.preload = 'auto';
       dungeonAmbienceAudio.addEventListener('ended', () => {
         dungeonMusicIndex = (dungeonMusicIndex + 1) % DUNGEON_MUSIC_PLAYLIST.length;
@@ -189,11 +189,13 @@
 
   const MUTE_KEY = 'bod3dAmbienceMuted';
   const MUSIC_KEY = 'bod3dMusicEnabled';
+  const MUSIC_VOLUME_KEY = 'bod3dMusicVolume';
   const EFFECTS_KEY = 'bod3dEffectsEnabled';
   const trackedMedia = new Set();
   const originalPlay = HTMLMediaElement.prototype.play;
   let muted = false;
   let musicEnabled = true;
+  let musicVolume = 0.15;
   let effectsEnabled = true;
   let pageActive = !document.hidden;
   let endingActive = false;
@@ -201,17 +203,21 @@
 
   try {
     muted = localStorage.getItem(MUTE_KEY) === 'true';
+    const savedMusicVolume = localStorage.getItem(MUSIC_VOLUME_KEY);
     musicEnabled = localStorage.getItem(MUSIC_KEY) !== 'false';
+    musicVolume = savedMusicVolume === null ? (musicEnabled ? 0.15 : 0) : Math.max(0, Math.min(1, Number(savedMusicVolume)));
+    musicEnabled = musicVolume > 0;
     effectsEnabled = localStorage.getItem(EFFECTS_KEY) !== 'false';
   } catch (_) {}
   window.__BOD_MASTER_MUTED__ = muted;
   window.__BOD_MUSIC_ENABLED__ = musicEnabled;
+  window.__BOD_MUSIC_VOLUME__ = musicVolume;
   window.__BOD_EFFECTS_ENABLED__ = effectsEnabled;
 
   function isAmbience(media) {
     const src = String(media.currentSrc || media.src || '');
     return media.loop ||
-      /(?:dungeon-sounds|distant-monsters|end-game-music)\.(?:mp3|ogg|wav)(?:\?|$)/i.test(src);
+      /(?:dungeon-sounds|distant-monsters|end-game-music|rock-track\d+)\.(?:mp3|ogg|wav)(?:\?|$)/i.test(src);
   }
 
   function rememberMedia() {
@@ -287,7 +293,7 @@
     if (!endGameAudio) {
       endGameAudio = new Audio('./assets/sounds/end-game-music.mp3');
       endGameAudio.loop = true;
-      endGameAudio.volume = 0.32;
+      endGameAudio.volume = musicVolume * 0.8;
       endGameAudio.preload = 'auto';
       trackedMedia.add(endGameAudio);
     }
@@ -344,14 +350,31 @@
     return true;
   }
 
-  function setMusicEnabled(next) {
-    musicEnabled = Boolean(next);
+  function applyMusicVolume() {
+    const playbackVolume = Math.max(0, Math.min(0.8, musicVolume * 0.8));
+    trackedMedia.forEach(media => {
+      try { media.volume = playbackVolume; } catch (_) {}
+    });
+    if (endGameAudio) endGameAudio.volume = playbackVolume;
+  }
+
+  function setMusicVolume(next) {
+    musicVolume = Math.max(0, Math.min(1, Number(next) / 100));
+    musicEnabled = musicVolume > 0;
     window.__BOD_MUSIC_ENABLED__ = musicEnabled;
-    try { localStorage.setItem(MUSIC_KEY, String(musicEnabled)); } catch (_) {}
+    window.__BOD_MUSIC_VOLUME__ = musicVolume;
+    try {
+      localStorage.setItem(MUSIC_KEY, String(musicEnabled));
+      localStorage.setItem(MUSIC_VOLUME_KEY, String(musicVolume));
+    } catch (_) {}
+    applyMusicVolume();
     updateMusicButton();
+    const value = document.getElementById('musicVolumeValue');
+    if (value) value.textContent = musicEnabled ? Math.round(musicVolume * 100) + '%' : 'OFF';
     if (musicEnabled && !muted) restoreCorrectAmbience();
     else stopBothAmbiences();
   }
+  window.BODSetMusicVolume = setMusicVolume;
 
   function setEffectsEnabled(next) {
     effectsEnabled = Boolean(next);
@@ -364,13 +387,24 @@
     if (typeof window.showModal !== 'function') return;
     window.showModal(
       'AUDIO',
-      'Choose music, sound effects, or both. The speaker button still mutes everything.',
+      '',
       [
         {text:'Sound Effects: ' + (effectsEnabled ? 'ON' : 'OFF'),fn:()=>{setEffectsEnabled(!effectsEnabled);openAudioOptions();}},
-        {text:'Music: ' + (musicEnabled ? 'ON' : 'OFF'),fn:()=>{setMusicEnabled(!musicEnabled);openAudioOptions();}},
         {text:'Close',fn:window.closeModal}
       ]
     );
+    const body = document.getElementById('modalBody');
+    if (body) body.innerHTML =
+      '<div class="audioMixer">' +
+       '<label for="musicVolumeSlider"><b>Music volume</b><span id="musicVolumeValue">' +
+        (musicEnabled ? Math.round(musicVolume * 100) + '%' : 'OFF') +
+       '</span></label>' +
+       '<input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="' +
+        Math.round(musicVolume * 100) +
+       '" oninput="BODSetMusicVolume(this.value)">' +
+       '<div class="audioMixerScale"><span>OFF</span><span>100%</span></div>' +
+       '<p>The speaker icon still mutes everything.</p>' +
+      '</div>';
   }
 
   function installMusicButton() {
@@ -451,10 +485,12 @@
   function start() {
     window.__BOD_MASTER_MUTED__ = muted;
     window.__BOD_MUSIC_ENABLED__ = musicEnabled;
+    window.__BOD_MUSIC_VOLUME__ = musicVolume;
     window.__BOD_EFFECTS_ENABLED__ = effectsEnabled;
     window.__BOD_DUNGEON_AMBIENCE_MUTED__ = muted;
     window.__BOD_ALL_AMBIENCE_MUTED__ = muted;
     installMusicButton();
+    applyMusicVolume();
     if (!installMuteButton()) {
       let attempts = 0;
       const timer = setInterval(() => {
