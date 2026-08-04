@@ -1287,19 +1287,39 @@ body.combatActive .lethalBlowStatus{
  .heroSelectLogo{top:56px!important}
 }
 
-/* ===== css/enter-button-fix.css ===== */
-/* BOD3D-TEST v11.59 — warning-scroll Enter button always uses black text */
-#modal:has(.testerWarningScroll) #modalButtons button,
-#modal:has(.testerWarningScroll) #modalButtons button.green,
-#modal:has(.testerWarningScroll) #modalButtons button:hover,
-#modal:has(.testerWarningScroll) #modalButtons button:focus,
-#modal:has(.testerWarningScroll) #modalButtons button:focus-visible,
-#modal:has(.testerWarningScroll) #modalButtons button:active,
-#modal:has(.testerWarningScroll) #modalButtons button *,
-#modal:has(.testerWarningScroll) #modalButtons button:hover *,
-#modal:has(.testerWarningScroll) #modalButtons button:focus *,
-#modal:has(.testerWarningScroll) #modalButtons button:active *{
-  color:#000000!important;
-  -webkit-text-fill-color:#000000!important;
+/* ===== Unified parchment-scroll button v12.85 ===== */
+#modal.introScrollModal #modalButtons,
+#modal.endingScrollModal #modalButtons{
+  margin-top:30px!important;
+}
+#modal.introScrollModal #modalButtons button,
+#modal.endingScrollModal #modalButtons button{
+  background:#8B1F22!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  border:3px solid #fff!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.65)!important;
   text-shadow:none!important;
+}
+#modal.introScrollModal #modalButtons button *,
+#modal.endingScrollModal #modalButtons button *{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+#modal.introScrollModal #modalButtons button:hover,
+#modal.introScrollModal #modalButtons button:focus,
+#modal.introScrollModal #modalButtons button:focus-visible,
+#modal.endingScrollModal #modalButtons button:hover,
+#modal.endingScrollModal #modalButtons button:focus,
+#modal.endingScrollModal #modalButtons button:focus-visible{
+  background:#050505!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+#modal.introScrollModal #modalButtons button:hover *,
+#modal.introScrollModal #modalButtons button:focus *,
+#modal.endingScrollModal #modalButtons button:hover *,
+#modal.endingScrollModal #modalButtons button:focus *{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
 }
