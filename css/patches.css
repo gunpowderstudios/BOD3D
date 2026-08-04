@@ -1395,3 +1395,25 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
 @media(max-width:800px){
   body.combatActive #combatBtns button:not(.lethalIconBtn){font-size:13px!important}
 }
+
+/* v12.88 — fit red combat controls to their labels without clipping. */
+body.combatActive #combatBtns button:not(.lethalIconBtn){
+  flex:0 0 auto!important;
+  width:max-content!important;
+  min-width:160px!important;
+  max-width:280px!important;
+  padding-left:18px!important;
+  padding-right:18px!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+}
+@media(max-width:800px){
+  body.combatActive #combatBtns button:not(.lethalIconBtn){
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+}
