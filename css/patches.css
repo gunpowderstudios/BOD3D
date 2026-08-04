@@ -1470,3 +1470,38 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
 @media (max-width:900px){
  #topbar{right:188px!important}
 }
+
+
+/* v12.93 — compact remembered music-volume slider */
+.audioMixer{
+ width:min(520px,100%);
+ margin:4px auto 2px;
+ color:#fff;
+ text-align:left;
+}
+.audioMixer label{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:18px;
+ margin-bottom:12px;
+ font-size:1.15em;
+}
+.audioMixer input[type="range"]{
+ width:100%;
+ accent-color:#8B1F22;
+ cursor:pointer;
+}
+.audioMixerScale{
+ display:flex;
+ justify-content:space-between;
+ margin-top:5px;
+ color:#fff;
+ font-size:.82em;
+}
+.audioMixer p{
+ margin:16px 0 0;
+ color:#fff;
+ text-align:center;
+ font-size:.88em;
+}
