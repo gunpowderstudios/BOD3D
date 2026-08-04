@@ -658,3 +658,93 @@ body.threeMode.lightingOn #viewport::after{
   border-color:#fff;
   box-shadow:3px 3px 0 rgba(255,255,255,.35);
 }
+
+/* v12.81 — high-contrast standard game popups only.
+   Intro and narrative ending scrolls retain their parchment treatment. */
+#modal:not(.introScrollModal):not(.endingScrollModal) .card{
+  background:#050505;
+  color:#fff;
+  border-color:#fff;
+  box-shadow:6px 6px 0 rgba(255,255,255,.22);
+}
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalTitle,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalBody,
+#modal:not(.introScrollModal):not(.endingScrollModal) .desc{color:#fff}
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button.green,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button.blue,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button.gold,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button.red{
+  background:#050505;
+  color:#fff;
+  border-color:#fff;
+  box-shadow:3px 3px 0 rgba(255,255,255,.35);
+}
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button:hover,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button:focus{
+  background:#222;
+  color:#fff;
+}
+
+/* v12.83 — simple monochrome character panel and universal controls. */
+.heroInfoPanel{
+  color:#fff;
+  background:#050505;
+  border:2px solid #fff;
+  box-shadow:0 10px 32px rgba(0,0,0,.72);
+  clip-path:none;
+}
+.heroInfoPanel h1,
+.selectedHeroDesc,
+.heroStat strong,
+.heroStat small,
+.heroSpecialBlock small,
+.heroSpecialBlock strong,
+.heroSpecialBlock span{
+  color:#fff;
+  -webkit-text-fill-color:#fff;
+}
+.heroStatRow{
+  border-top-color:#fff;
+  border-bottom-color:#fff;
+}
+
+.chooseHeroBtn,
+#modal.introScrollModal #modalButtons button,
+#modal.endingScrollModal #modalButtons button{
+  width:min(365px,82vw);
+  min-height:52px;
+  margin-top:2px;
+  padding:8px 22px;
+  border:2px solid #fff;
+  border-radius:2px;
+  background:#050505;
+  color:#fff;
+  -webkit-text-fill-color:#fff;
+  box-shadow:0 3px 8px #000;
+  font-size:17px;
+  letter-spacing:.03em;
+}
+.chooseHeroBtn:hover,
+.chooseHeroBtn:focus,
+#chooseHeroBtn:hover:not(:disabled),
+#chooseHeroBtn:focus:not(:disabled),
+#modal.introScrollModal #modalButtons button:hover,
+#modal.introScrollModal #modalButtons button:focus,
+#modal.endingScrollModal #modalButtons button:hover,
+#modal.endingScrollModal #modalButtons button:focus{
+  background:#fff!important;
+  color:#000!important;
+  -webkit-text-fill-color:#000!important;
+  border-color:#fff;
+  text-shadow:none;
+}
+#modal.introScrollModal #modalTitle{display:none}
+
+/* Standard popup buttons use the same reversible control. */
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button:hover,
+#modal:not(.introScrollModal):not(.endingScrollModal) #modalButtons button:focus{
+  background:#fff;
+  color:#000;
+  -webkit-text-fill-color:#000;
+}
