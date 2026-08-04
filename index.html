@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Google Analytics 4 — BOD3D traffic tracking -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4Q15YZXP83"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-4Q15YZXP83');
+</script>
+
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#000000" />
@@ -408,6 +417,7 @@ Changes:
 <!-- v12.85: Standard popups use black/white styling; character stats use a simple black/white panel; parchment scrolls retain their artwork with red #8B1F22 buttons, white text, 20px extra spacing and black rollover. No new files added. -->
 <!-- v12.87: Enlarged combat and standard-popup copy, reduced combat action-button dimensions, then reduced their white labels by 30% and kept Fight/Run Away on one line. Existing cleaned files only. -->
 <!-- v12.88: Red combat actions now size to their full labels within compact limits, preventing Run Away (-1 HP) from clipping while keeping the skull control separate. -->
+<!-- v12.89: Added GA4 traffic and gameplay-event tracking for starts, character choice, combat, monster and Dragon defeats, death, Ring and Firkin milestones, completed games and BUY BOD clicks. -->
 </head>
 <body class="lightingOn">
 <a id="buyBodButton" href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer" aria-label="Buy Bag of Dungeon from Gunpowder Studios">BUY BOD</a>
@@ -694,5 +704,6 @@ Changes:
 <script src="js/patches.js?v=12.78"></script>
 <script src="js/audio.js?v=12.78"></script>
 <script src="js/ui.js?v=12.78"></script>
+<script src="js/analytics.js?v=12.89"></script>
 </body>
 </html>
