@@ -1324,6 +1324,7 @@ body.combatActive .lethalBlowStatus{
   -webkit-text-fill-color:#fff!important;
 }
 
+
 /* v12.86 — larger action text with compact controls. */
 /* Combat copy is 30% larger; the two red action buttons are 30% smaller. */
 body.combatActive .combatLog{
@@ -1396,6 +1397,7 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
   body.combatActive #combatBtns button:not(.lethalIconBtn){font-size:13px!important}
 }
 
+
 /* v12.88 — fit red combat controls to their labels without clipping. */
 body.combatActive #combatBtns button:not(.lethalIconBtn){
   flex:0 0 auto!important;
@@ -1416,4 +1418,55 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
     padding-left:7px!important;
     padding-right:7px!important;
   }
+}
+
+
+/* v12.90 — independent music and sound-effect controls */
+#dungeonMusicOptions{
+ position:fixed!important;
+ top:12px!important;
+ right:104px!important;
+ z-index:5000!important;
+ display:flex!important;
+ visibility:visible!important;
+ opacity:1!important;
+ align-items:center!important;
+ justify-content:center!important;
+ width:38px!important;
+ height:38px!important;
+ min-width:38px!important;
+ min-height:38px!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+ color:#fff!important;
+ box-shadow:none!important;
+ text-shadow:0 1px 4px #000!important;
+ cursor:pointer!important;
+ pointer-events:auto!important;
+}
+#dungeonMusicOptions .controlIcon{
+ width:27px!important;
+ height:27px!important;
+ fill:none!important;
+ stroke:currentColor!important;
+ stroke-width:2!important;
+ stroke-linecap:round!important;
+ stroke-linejoin:round!important;
+}
+#dungeonMusicOptions.audioOptionOff{opacity:.48!important}
+@media (max-width:900px){
+ #topbar{right:188px!important}
+ #dungeonMusicOptions{top:12px!important;right:104px!important}
+}
+
+
+/* v12.91 — reserve separate desktop/mobile lanes for Menu, music, mute and fullscreen */
+@media (min-width:901px){
+ #topbar{right:158px!important}
+}
+@media (max-width:900px){
+ #topbar{right:188px!important}
 }
