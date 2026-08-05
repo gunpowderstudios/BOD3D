@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.95';
+const VERSION='v12.96';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -1143,6 +1143,7 @@ function openAbout(){
   showModal('About Bag of Dungeon 3D','',[
     {text:'Close',fn:closeModal}
   ]);
+  document.getElementById('modal')?.classList.add('aboutModal');
   document.getElementById('modalBody').innerHTML=`
     <div style="display:grid;gap:10px;text-align:center;line-height:1.35">
       <div style="font-size:20px;font-weight:bold">Credits</div>
@@ -1170,7 +1171,7 @@ function openMenu(){
   ]);
 }
 
-function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
+function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal','aboutModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
