@@ -1534,3 +1534,16 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
  accent-color:#8B1F22;
  cursor:pointer;
 }
+
+
+/* v12.96 — accessible About-popup links on black */
+#modal.aboutModal #modalBody a,
+#modal.aboutModal #modalBody a:visited{
+ color:#E9BB00!important;
+ -webkit-text-fill-color:#E9BB00!important;
+}
+#modal.aboutModal #modalBody a:hover,
+#modal.aboutModal #modalBody a:focus{
+ color:#ffd84a!important;
+ -webkit-text-fill-color:#ffd84a!important;
+}
