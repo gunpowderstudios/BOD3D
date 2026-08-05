@@ -1505,3 +1505,32 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
  text-align:center;
  font-size:.88em;
 }
+
+
+/* v12.95 — one speaker button and three independent audio sliders */
+#dungeonMusicOptions{display:none!important}
+@media (min-width:901px){
+ #topbar{right:112px!important}
+}
+@media (max-width:900px){
+ #topbar{right:142px!important}
+}
+.audioMixerRow{
+ padding:10px 0 18px;
+ border-bottom:1px solid #555;
+}
+.audioMixerRow:last-of-type{border-bottom:0}
+.audioMixerRow label{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:18px;
+ margin-bottom:10px;
+ color:#fff;
+ font-size:1.08em;
+}
+.audioMixerRow input[type="range"]{
+ width:100%;
+ accent-color:#8B1F22;
+ cursor:pointer;
+}
