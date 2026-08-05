@@ -1,7 +1,7 @@
 // Bag of Dungeon 3D — core game logic (characters, decks, tiles, movement, inventory, items, saving)
 // Split out of index.html for easier editing. Loads before combat.js and scene3d.js.
 
-const VERSION='v12.94';
+const VERSION='v12.95';
 const visibleBuildVersion=document.getElementById('visibleBuildVersion');
 if(visibleBuildVersion)visibleBuildVersion.textContent=VERSION;
 document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
@@ -408,10 +408,10 @@ const SOUND_DEFS=[
  ...MONSTER_MASTER.map(m=>[monsterLandSoundKey(m.name),m.name+' lands'])
 ];
 let USER_SOUNDS={},soundVolume=.8;
-function loadSounds(){try{USER_SOUNDS=JSON.parse(localStorage.getItem('bodDigitalSoundsV45')||'{}')}catch(e){USER_SOUNDS={}};soundVolume=Number(localStorage.getItem('bodDigitalSoundVolume')||'.8');soundOn=localStorage.getItem('bodDigitalSoundOn')!=='false';}
+function loadSounds(){try{USER_SOUNDS=JSON.parse(localStorage.getItem('bodDigitalSoundsV45')||'{}')}catch(e){USER_SOUNDS={}};soundVolume=Number(window.__BOD_EFFECTS_VOLUME__??'.30');soundOn=true;}
 function saveSounds(){try{localStorage.setItem('bodDigitalSoundsV45',JSON.stringify(USER_SOUNDS));localStorage.setItem('bodDigitalSoundVolume',String(soundVolume));localStorage.setItem('bodDigitalSoundOn',String(soundOn));}catch(e){alert('This sound is too large for browser storage. Use a shorter/compressed MP3 or add it to assets/sounds on GitHub.');}}
 function audio(){ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();} if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx;}
-function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ if(!soundOn||window.__BOD_MASTER_MUTED__||window.__BOD_EFFECTS_ENABLED__===false)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*soundVolume,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
+function beep(freq=440,dur=.08,type='square',vol=.09,delay=0){ const effectsLevel=Number(window.__BOD_EFFECTS_VOLUME__??soundVolume); if(!soundOn||effectsLevel<=0)return; const c=audio(); const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,c.currentTime+delay); g.gain.setValueAtTime(vol*effectsLevel,c.currentTime+delay); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+delay+dur); o.connect(g).connect(c.destination); o.start(c.currentTime+delay); o.stop(c.currentTime+delay+dur);}
 function fallbackSound(key){const f={move:()=>beep(160,.05,'square',.07),reacherSting:()=>{beep(820,.06,'sawtooth',.13);beep(150,.16,'square',.12,.04)},tilePlace:()=>{beep(220,.06,'square',.08);beep(330,.07,'square',.07,.05)},pickup:()=>{beep(740,.08,'triangle',.12);beep(980,.1,'triangle',.1,.07)},equip:()=>{beep(420,.06,'square',.08);beep(650,.08,'triangle',.09,.05)},unequip:()=>beep(300,.08,'triangle',.08),drop:()=>beep(180,.09,'square',.08),dice:()=>{[180,260,210,320].forEach((x,i)=>beep(x,.045,'square',.05,i*.035))},hit:()=>{beep(120,.08,'sawtooth',.11);beep(90,.05,'square',.08,.05)},sword:()=>{beep(210,.045,'sawtooth',.09);beep(125,.08,'triangle',.07,.035)},critical:()=>{[440,660,880].forEach((x,i)=>beep(x,.1,'square',.12,i*.06))},bow:()=>{beep(650,.04,'triangle',.08);beep(220,.1,'sawtooth',.05,.03)},arrowHit:()=>beep(150,.08,'square',.08),spell:()=>{beep(540,.07,'triangle',.11);beep(820,.09,'triangle',.1,.06)},fireball:()=>{beep(180,.18,'sawtooth',.12);beep(90,.22,'sawtooth',.1,.05)},ice:()=>{beep(900,.08,'triangle',.08);beep(1200,.12,'triangle',.06,.06)},heal:()=>{[520,660,780].forEach((x,i)=>beep(x,.1,'sine',.08,i*.07))},teleport:()=>{[300,500,800,1100].forEach((x,i)=>beep(x,.08,'triangle',.07,i*.05))},trap:()=>{beep(110,.18,'square',.12);beep(70,.15,'sawtooth',.1,.08)},monsterReveal:()=>{beep(100,.18,'sawtooth',.12);beep(75,.2,'sawtooth',.1,.08)},monsterDie:()=>{beep(180,.1,'sawtooth',.1);beep(90,.18,'sawtooth',.08,.07)},heroHurt:()=>beep(120,.12,'sawtooth',.1),run:()=>{beep(260,.05,'square',.07);beep(190,.07,'square',.06,.05)},ring:()=>{[660,880,1100].forEach((x,i)=>beep(x,.12,'triangle',.1,i*.08))},dragon:()=>{beep(65,.35,'sawtooth',.14);beep(48,.4,'sawtooth',.11,.1)},win:()=>{[523,659,784,1047].forEach((x,i)=>beep(x,.16,'triangle',.12,i*.1))},lose:()=>{[330,260,210,150].forEach((x,i)=>beep(x,.18,'sawtooth',.1,i*.12))},click:()=>beep(360,.035,'square',.035)}; (f[key]||f.click)();}
 // v10.90: Default monster reveal/drop sound. Individual monster sounds can override this later.
 window.SOUND_PATHS=window.SOUND_PATHS||{};
@@ -513,7 +513,8 @@ async function activeSoundSource(key){
 }
 
 async function playSound(key){
- if(!soundOn||window.__BOD_MASTER_MUTED__||window.__BOD_EFFECTS_ENABLED__===false)return;
+ const effectsLevel=Number(window.__BOD_EFFECTS_VOLUME__??soundVolume);
+ if(!soundOn||effectsLevel<=0)return;
 
  const source=await activeSoundSource(key);
  if(!source.src){
@@ -522,7 +523,7 @@ async function playSound(key){
  }
 
  const player=new Audio(source.src);
- player.volume=soundVolume;
+ player.volume=effectsLevel;
 
  try{
   await player.play();
