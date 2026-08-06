@@ -32,14 +32,38 @@
 
   const START_AMBIENCE_PATH='./assets/sounds/distant-monsters.mp3';
   const DUNGEON_AMBIENCE_PATH='./assets/sounds/dungeon-sounds.mp3';
-  const DUNGEON_MUSIC_PLAYLIST=['./assets/sounds/rock-track1.mp3'];
+  const RADIO_TRACK_KEY='bod3dRadioTrack';
+  const RADIO_CANDIDATES=[
+    {
+      number:1,
+      file:'./assets/radio/01-rock-track1.mp3',
+      title:'Rock Track 1',
+      artist:'',
+      artistUrl:'',
+      licence:'',
+      licenceUrl:''
+    },
+    {
+      number:2,
+      file:'./assets/radio/02-burn-the-world-waltz.mp3',
+      title:'Burn The World Waltz',
+      artist:'Kevin MacLeod',
+      artistUrl:'https://incompetech.com/',
+      licence:'Creative Commons Attribution 4.0',
+      licenceUrl:'https://creativecommons.org/licenses/by/4.0/'
+    }
+  ];
   const END_MUSIC_PATH='./assets/sounds/end-game-music.mp3';
 
   let distantAudio=null;
   let rockAudio=null;
   let dungeonAudio=null;
   let endAudio=null;
+  let availableRadioTracks=[RADIO_CANDIDATES[0]];
+  let radioDiscoveryPromise=null;
   let rockIndex=0;
+  let radioPaused=false;
+  let radioListOpen=false;
   let dungeonWanted=false;
   let endingActive=false;
   let pageActive=!document.hidden;
@@ -74,18 +98,66 @@
     distantAudio.currentTime=0;
   }
 
+  function currentRadioTrack(){
+    return availableRadioTracks[rockIndex]||availableRadioTracks[0]||null;
+  }
+
+  function rememberRadioTrack(){
+    const track=currentRadioTrack();
+    if(!track)return;
+    try{localStorage.setItem(RADIO_TRACK_KEY,track.file);}catch(_){}
+  }
+
+  async function discoverRadioTracks(force=false){
+    if(radioDiscoveryPromise&&!force)return radioDiscoveryPromise;
+    radioDiscoveryPromise=Promise.all(RADIO_CANDIDATES.map(async track=>{
+      try{
+        const response=await fetch(track.file+'?radio-check=13.02',{method:'HEAD',cache:'no-store'});
+        return response.ok?track:null;
+      }catch(_){return null;}
+    })).then(results=>{
+      const found=results.filter(Boolean);
+      if(found.length)availableRadioTracks=found;
+      let preferred='';
+      try{preferred=localStorage.getItem(RADIO_TRACK_KEY)||'';}catch(_){}
+      const activeFile=rockAudio?String(rockAudio.src||'').split(location.origin).pop():'';
+      const preferredIndex=availableRadioTracks.findIndex(track=>
+        track.file===preferred||activeFile.endsWith(track.file.replace('./','/'))
+      );
+      rockIndex=preferredIndex>=0?preferredIndex:Math.min(rockIndex,availableRadioTracks.length-1);
+      refreshRadioPanel();
+      return availableRadioTracks;
+    });
+    return radioDiscoveryPromise;
+  }
+
+  function loadRadioTrack(index,play=true){
+    if(!availableRadioTracks.length)return;
+    rockIndex=(index+availableRadioTracks.length)%availableRadioTracks.length;
+    const track=currentRadioTrack();
+    if(!track)return;
+    const player=ensureRock();
+    player.pause();
+    player.src=track.file;
+    player.currentTime=0;
+    player.volume=musicVolume;
+    rememberRadioTrack();
+    if(play&&dungeonWanted&&musicVolume>0&&!radioPaused&&pageActive&&!document.hidden&&!endingActive){
+      player.play().catch(()=>{});
+    }
+    refreshRadioPanel();
+  }
+
   function ensureRock(){
+    const track=currentRadioTrack();
+    if(!track)return null;
     if(!rockAudio){
-      rockAudio=new Audio(DUNGEON_MUSIC_PLAYLIST[rockIndex]);
+      rockAudio=new Audio(track.file);
       rockAudio.loop=false;
       rockAudio.preload='auto';
       rockAudio.addEventListener('ended',()=>{
-        rockIndex=(rockIndex+1)%DUNGEON_MUSIC_PLAYLIST.length;
-        rockAudio.src=DUNGEON_MUSIC_PLAYLIST[rockIndex];
-        rockAudio.volume=musicVolume;
-        if(dungeonWanted&&musicVolume>0&&pageActive&&!document.hidden&&!endingActive){
-          rockAudio.play().catch(()=>{});
-        }
+        if(radioPaused)return;
+        loadRadioTrack(rockIndex+1,true);
       });
     }
     rockAudio.volume=musicVolume;
@@ -106,7 +178,7 @@
     dungeonWanted=true;
     stopDistantMonstersAmbience();
     if(!pageActive||document.hidden||endingActive)return;
-    if(musicVolume>0)ensureRock().play().catch(()=>{});
+    if(musicVolume>0&&!radioPaused)ensureRock()?.play().catch(()=>{});
     if(dungeonVolume>0)ensureDungeonSound().play().catch(()=>{});
   }
 
@@ -142,7 +214,7 @@
     }
 
     if(dungeonWanted){
-      if(musicVolume>0)ensureRock().play().catch(()=>{});
+      if(musicVolume>0&&!radioPaused)ensureRock()?.play().catch(()=>{});
       else rockAudio?.pause();
       if(dungeonVolume>0)ensureDungeonSound().play().catch(()=>{});
       else dungeonAudio?.pause();
@@ -232,7 +304,63 @@
   window.stopEndGameMusic=stopEndGameMusic;
   window.BODApplyBackgroundVolumes=applyBackgroundVolumes;
 
-  function sliderRow(id,label,value,handler){
+  function radioPrevious(){loadRadioTrack(rockIndex-1,true);}
+  function radioNext(){loadRadioTrack(rockIndex+1,true);}
+  function radioTogglePlay(){
+    radioPaused=!radioPaused;
+    if(radioPaused)rockAudio?.pause();
+    else if(dungeonWanted&&musicVolume>0&&!endingActive)ensureRock()?.play().catch(()=>{});
+    refreshRadioPanel();
+  }
+  function radioSelect(index){
+    radioPaused=false;
+    loadRadioTrack(Number(index),true);
+  }
+  function radioToggleList(){
+    radioListOpen=!radioListOpen;
+    refreshRadioPanel();
+  }
+
+  window.BODRadioPrevious=radioPrevious;
+  window.BODRadioNext=radioNext;
+  window.BODRadioTogglePlay=radioTogglePlay;
+  window.BODRadioSelect=radioSelect;
+  window.BODRadioToggleList=radioToggleList;
+
+  function radioPanelHTML(){
+    const track=currentRadioTrack();
+    const list=availableRadioTracks.map((item,index)=>{
+      const artist=item.artist?' <span class="radioTrackArtist">— '+item.artist+'</span>':'';
+      return '<button type="button" class="radioTrackButton '+(index===rockIndex?'active':'')+
+        '" onclick="BODRadioSelect('+index+')"><span>'+item.title+'</span>'+artist+'</button>';
+    }).join('');
+    const artistLine=track&&track.artist
+      ? '<div class="radioArtist">by <a href="'+track.artistUrl+'" target="_blank" rel="noopener noreferrer">'+track.artist+'</a></div>'
+      : '';
+    const licenceLine=track&&track.licence
+      ? '<div class="radioLicence"><a href="'+track.licenceUrl+'" target="_blank" rel="license noopener noreferrer">'+track.licence+'</a></div>'
+      : '';
+    return '<section class="dungeonRadio" aria-label="Dungeon Radio">'+
+      '<div class="dungeonRadioTitle">DUNGEON RADIO</div>'+
+      '<div class="radioNowPlaying"><span>Now playing</span><b>'+(track?track.title:'No tracks uploaded')+'</b></div>'+
+      artistLine+licenceLine+
+      '<div class="radioTransport">'+
+       '<button type="button" onclick="BODRadioPrevious()" aria-label="Previous track">◀</button>'+
+       '<button type="button" onclick="BODRadioTogglePlay()">'+(radioPaused?'PLAY':'PAUSE')+'</button>'+
+       '<button type="button" onclick="BODRadioNext()" aria-label="Next track">▶</button>'+
+      '</div>'+
+      '<button type="button" class="radioChoose" onclick="BODRadioToggleList()">Choose Track ('+
+       availableRadioTracks.length+') '+(radioListOpen?'▲':'▼')+'</button>'+
+      '<div class="radioTrackList '+(radioListOpen?'open':'')+'">'+list+'</div>'+
+     '</section>';
+  }
+
+  function refreshRadioPanel(){
+    const panel=document.getElementById('dungeonRadioMount');
+    if(panel)panel.innerHTML=radioPanelHTML();
+  }
+
+    function sliderRow(id,label,value,handler){
     const percent=Math.round(value*100);
     return '<div class="audioMixerRow">'+
       '<label for="'+id+'"><b>'+label+'</b><span id="'+id.replace('Slider','Value')+'">'+
@@ -255,7 +383,9 @@
       sliderRow('dungeonVolumeSlider','Dungeon sounds',dungeonVolume,'BODSetDungeonVolume')+
       sliderRow('effectsVolumeSlider','Sound effects',effectsVolume,'BODSetEffectsVolume')+
       '<p>Move any slider fully left to turn that sound off.</p>'+
+      '<div id="dungeonRadioMount">'+radioPanelHTML()+'</div>'+
      '</div>';
+    discoverRadioTracks();
   }
 
   function updateSoundButton(){
@@ -320,6 +450,7 @@
   }
 
   function start(){
+    discoverRadioTracks();
     installSoundButton();
     const charSelect=document.getElementById('charSelect');
     if(charSelect){
