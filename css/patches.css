@@ -1547,3 +1547,147 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
  color:#ffd84a!important;
  -webkit-text-fill-color:#ffd84a!important;
 }
+
+
+/* v12.97 — mobile right-side order: Sound, Fullscreen, Menu */
+@media (max-width:900px){
+ #topbar{right:142px!important}
+ #dungeonSoundToggle{
+  right:104px!important;
+ }
+ #fullscreenBtn{
+  position:fixed!important;
+  top:12px!important;
+  right:58px!important;
+  z-index:5000!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+ }
+ #menuBtn{
+  position:fixed!important;
+  top:12px!important;
+  right:12px!important;
+  left:auto!important;
+  z-index:5000!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+ }
+}
+
+
+/* v12.98 — compact mobile North Up control left of Sound */
+@media (max-width:900px){
+ #topbar{right:188px!important}
+ #northUpBtn{
+  position:fixed!important;
+  top:12px!important;
+  right:150px!important;
+  left:auto!important;
+  z-index:5000!important;
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  box-shadow:none!important;
+  text-shadow:0 1px 4px #000!important;
+  font-size:0!important;
+  cursor:pointer!important;
+ }
+ #northUpBtn::after{
+  content:"N";
+  color:#fff;
+  font:700 20px/1 "Alegreya Sans",Arial,sans-serif;
+ }
+}
+
+
+/* v12.99 — fullscreen is desktop-only; close mobile control gaps */
+@media (max-width:900px){
+ #homeFullscreenBtn,
+ #fullscreenBtn{
+  display:none!important;
+  visibility:hidden!important;
+ }
+ #topbar{right:142px!important}
+ #menuBtn{right:12px!important}
+ #dungeonSoundToggle{right:58px!important}
+ #northUpBtn{right:104px!important}
+}
+
+
+/* v13.00 — polished mobile top controls and brighter combat table */
+@media (max-width:900px){
+ #topbar{
+  right:142px!important;
+ }
+ #northUpBtn,
+ #dungeonSoundToggle,
+ #menuBtn{
+  position:fixed!important;
+  top:12px!important;
+  left:auto!important;
+  z-index:5002!important;
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  box-shadow:none!important;
+  text-shadow:0 1px 4px #000!important;
+ }
+ #menuBtn{right:12px!important}
+ #dungeonSoundToggle{right:58px!important}
+ #northUpBtn{right:104px!important}
+
+ /* The combat overlay previously sat above the two controls housed in topbar. */
+ body.combatActive #topbar{
+  z-index:5001!important;
+  opacity:1!important;
+ }
+ body.combatActive #topbar #centreBtn,
+ body.combatActive #topbar #viewBtn,
+ body.combatActive #topbar #questLogBtn{
+  opacity:.18!important;
+ }
+
+ /* Brighten the 3D table only; combat text and buttons keep their approved colours. */
+ body.combatActive #threeBoard{
+  filter:brightness(1.38) contrast(1.06) saturate(1.04)!important;
+ }
+
+ /* Character/loading screen has only Sound, so anchor it at the far right. */
+ body:has(#charSelect:not(.hidden)) #dungeonSoundToggle{
+  right:12px!important;
+ }
+}
