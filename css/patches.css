@@ -1691,3 +1691,97 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
   right:12px!important;
  }
 }
+
+
+/* v13.01 — compact Dungeon Radio inside the existing Sound popup */
+.dungeonRadio{
+ margin-top:18px;
+ padding-top:16px;
+ border-top:2px solid #555;
+ color:#fff;
+ text-align:center;
+}
+.dungeonRadioTitle{
+ color:#E9BB00;
+ font-weight:900;
+ letter-spacing:.08em;
+ font-size:1.15em;
+}
+.radioNowPlaying{
+ margin:8px 0 12px;
+ color:#fff;
+}
+.radioTransport{
+ display:grid;
+ grid-template-columns:54px minmax(100px,1fr) 54px;
+ gap:8px;
+ width:min(300px,100%);
+ margin:0 auto 10px;
+}
+.radioTransport button,
+.radioChoose,
+.radioTrackButton{
+ min-height:42px;
+ padding:8px 10px;
+ border:2px solid #fff;
+ background:#050505;
+ color:#fff;
+ font-weight:800;
+ cursor:pointer;
+}
+.radioTransport button:hover,
+.radioChoose:hover,
+.radioTrackButton:hover,
+.radioTrackButton.active{
+ background:#8B1F22;
+ color:#fff;
+}
+.radioChoose{
+ width:min(300px,100%);
+}
+.radioTrackList{
+ display:none;
+ grid-template-columns:1fr;
+ gap:6px;
+ width:min(360px,100%);
+ max-height:240px;
+ margin:10px auto 0;
+ overflow:auto;
+}
+.radioTrackList.open{display:grid}
+.radioTrackButton{
+ width:100%;
+ text-align:left;
+}
+.radioTrackButton.active{
+ color:#E9BB00;
+ border-color:#E9BB00;
+}
+
+.radioNowPlaying span{
+ display:block;
+ margin-bottom:2px;
+ font-size:.82em;
+ opacity:.72;
+ text-transform:uppercase;
+ letter-spacing:.06em;
+}
+.radioNowPlaying b{
+ display:block;
+ color:#fff;
+ font-size:1.08em;
+}
+.radioArtist,
+.radioLicence{
+ margin:-7px 0 10px;
+ font-size:.9em;
+}
+.radioLicence{margin-top:-7px}
+.dungeonRadio a{
+ color:#E9BB00;
+ text-decoration:underline;
+}
+.radioTrackArtist{
+ font-weight:500;
+ opacity:.82;
+}
