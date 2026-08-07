@@ -1,0 +1,20 @@
+name: Bump LIVE to v13.24
+on:
+  push:
+    paths:
+      - '.github/workflows/bump-live-v13-24.yml'
+permissions:
+  contents: write
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update build version
+        run: |
+          sed -i 's/data-build-version="v13.23"/data-build-version="v13.24"/' index.html
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add index.html
+          git commit -m "Set LIVE build version to v13.24"
+          git push
