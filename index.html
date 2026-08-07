@@ -1,6 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" data-build-version="v13.13">
+<html lang="en" data-build-version="v13.14">
 <head>
+<script>
+// v13.14: retire legacy BOD3D PWA/service-worker caches that can pin old builds.
+(function(){
+  const appName=(location.pathname.split('/').filter(Boolean)[0]||'BOD3D');
+  const scopeToken='/'+appName+'/';
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.getRegistrations().then(function(registrations){
+        registrations.forEach(function(reg){
+          if((reg.scope||'').includes(scopeToken)) reg.unregister();
+        });
+      }).catch(function(){});
+    },{once:true});
+  }
+  if('caches' in window){
+    caches.keys().then(function(keys){
+      keys.forEach(function(key){
+        if(/bod|dungeon|pwa/i.test(key)) caches.delete(key);
+      });
+    }).catch(function(){});
+  }
+})();
+</script>
 <!-- Google Analytics 4 — BOD3D traffic tracking -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4Q15YZXP83"></script>
 <script>
