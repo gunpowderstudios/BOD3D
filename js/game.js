@@ -1206,8 +1206,6 @@ function openAbout(){
       <div>Original game design, board game mechanics and concept by<br><b>Tim Sharville, Paul Sharville &amp; Russ Law</b></div>
       <div><b>BOD3D</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</div>
       <div>Special thanks to <a href="https://freesound.org/" target="_blank" rel="noopener noreferrer">Freesound.org</a> for providing some of the game’s fun sound effects!</div>
-      <div style="font-size:20px;font-weight:bold">Music Credits</div>
-      <div><b>“Burn The World Waltz”</b> — <a href="https://incompetech.com/" target="_blank" rel="noopener noreferrer">Kevin MacLeod (incompetech.com)</a><br>Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">Creative Commons Attribution 4.0</a>.</div>
       <div>All 3D models remain the copyright of <b>Gunpowder Studios</b> and were sculpted by <a href="https://www.etsy.com/uk/shop/RussLawModelMaker" target="_blank" rel="noopener noreferrer">Russ Law</a>. You can purchase our models from <a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">Gunpowder Studios</a>, or contact Russ through his Etsy shop to commission your own custom model.</div>
       <div style="font-size:20px;font-weight:bold">Non-commercial use</div>
       <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>
