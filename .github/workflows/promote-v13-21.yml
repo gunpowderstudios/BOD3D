@@ -1,0 +1,54 @@
+name: Promote tested fixes to live v13.21
+on:
+  push:
+    paths:
+      - '.github/workflows/promote-v13-21.yml'
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply tested v13.20-v13.21 changes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          # Dungeon Radio rollover: reverse black/white instead of cream/red hover.
+          p=Path('css/patches.css')
+          s=p.read_text()
+          old='''.radioTransport button:hover,\n.radioChoose:hover,\n.radioTrackButton:hover,\n.radioTrackButton.active{\n background:#8B1F22;\n color:#fff;\n}\n'''
+          new='''.radioTransport button:hover,\n.radioChoose:hover,\n.radioTrackButton:hover{\n background:#fff;\n color:#050505;\n -webkit-text-fill-color:#050505;\n}\n.radioTrackButton.active{\n background:#8B1F22;\n color:#E9BB00;\n}\n.radioTrackButton:hover .radioTrackArtist{\n color:#050505;\n -webkit-text-fill-color:#050505;\n opacity:1;\n}\n'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Expected Dungeon Radio hover block not found')
+          p.write_text(s)
+
+          # Run Away warning now distinguishes losing a life from final game over.
+          p=Path('js/combat.js')
+          s=p.read_text()
+          old='''function requestRunAway(){\n if(!combat)return;\n if(state.player.health>1){runAway();return;}\n showModal(\n  'RUNNING AWAY WILL KILL YOU!',\n  'Escaping costs 1 Health. You only have 1 Health remaining. Are you sure?',\n  [\n   {text:'Keep Fighting',fn:closeModal},\n   {text:'Run Anyway',cls:'red',fn:()=>{closeModal();runAway();}}\n  ]\n );\n}\n'''
+          new='''function requestRunAway(){\n if(!combat)return;\n const p=state.player;\n if(p.health>1){runAway();return;}\n const finalLife=(p.lives||1)<=1;\n showModal(\n  finalLife?'RUNNING AWAY WILL END YOUR GAME!':'RUNNING AWAY WILL COST YOU A LIFE!',\n  finalLife\n   ?'Escaping costs 1 Health. You only have 1 Health remaining and this is your final life. Running away will end the game. Are you sure?'\n   :'Escaping costs 1 Health. You only have 1 Health remaining, so running away will cost you a life and return you to Start. Lives remaining after escape: '+Math.max(0,p.lives-1)+'. Are you sure?',\n  [\n   {text:'Keep Fighting',fn:closeModal},\n   {text:'Run Anyway',cls:'red',fn:()=>{closeModal();runAway();}}\n  ]\n );\n}\n'''
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Expected Run Away warning block not found')
+          p.write_text(s)
+
+          # Bump visible build and force fresh CSS/combat JS.
+          p=Path('index.html')
+          s=p.read_text()
+          import re
+          s=re.sub(r'data-build-version="v13\.\d+"','data-build-version="v13.21"',s,count=1)
+          s=re.sub(r'css/patches\.css\?v=[^"\']+','css/patches.css?v=13.21',s,count=1)
+          s=re.sub(r'js/combat\.js\?[^"\']+','js/combat.js?cache=20260807-run-warning-v1321',s,count=1)
+          p.write_text(s)
+      - name: Commit live promotion
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add index.html css/patches.css js/combat.js
+          git commit -m "Promote radio rollover and Run Away warning fixes v13.21"
+          git push
