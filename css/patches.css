@@ -1731,10 +1731,19 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
 }
 .radioTransport button:hover,
 .radioChoose:hover,
-.radioTrackButton:hover,
+.radioTrackButton:hover{
+ background:#fff;
+ color:#050505;
+ -webkit-text-fill-color:#050505;
+}
 .radioTrackButton.active{
  background:#8B1F22;
- color:#fff;
+ color:#E9BB00;
+}
+.radioTrackButton:hover .radioTrackArtist{
+ color:#050505;
+ -webkit-text-fill-color:#050505;
+ opacity:1;
 }
 .radioChoose{
  width:min(300px,100%);

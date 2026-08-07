@@ -441,10 +441,14 @@ async function fireRangedAt(tileKey,event){
 }
 function requestRunAway(){
  if(!combat)return;
- if(state.player.health>1){runAway();return;}
+ const p=state.player;
+ if(p.health>1){runAway();return;}
+ const finalLife=(p.lives||1)<=1;
  showModal(
-  'RUNNING AWAY WILL KILL YOU!',
-  'Escaping costs 1 Health. You only have 1 Health remaining. Are you sure?',
+  finalLife?'RUNNING AWAY WILL END YOUR GAME!':'RUNNING AWAY WILL COST YOU A LIFE!',
+  finalLife
+   ?'Escaping costs 1 Health. You only have 1 Health remaining and this is your final life. Running away will end the game. Are you sure?'
+   :'Escaping costs 1 Health. You only have 1 Health remaining, so running away will cost you a life and return you to Start. Lives remaining after escape: '+Math.max(0,p.lives-1)+'. Are you sure?',
   [
    {text:'Keep Fighting',fn:closeModal},
    {text:'Run Anyway',cls:'red',fn:()=>{closeModal();runAway();}}
