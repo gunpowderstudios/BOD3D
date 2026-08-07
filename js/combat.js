@@ -577,6 +577,7 @@ function resolveFightRound(){
  else{text+='Both miss.';}
  combat.rolling=false;
  combat.mustFightRound=false;
+ refreshPlayerStatsPanel();
  document.getElementById('combatLog').textContent=text;
  log(text,'combat');
  const attackOutcome=damageToMonster>0?'hero':(mt>pt?'monster':'both');

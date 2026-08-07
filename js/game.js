@@ -1280,9 +1280,14 @@ function renderCarriedRingHud(){
  hud.classList.toggle('visible',!!(state?.player?.hasRing&&inGame));
 }
 
+function refreshPlayerStatsPanel(){
+ if(!state?.player)return;
+ const stats=document.getElementById('stats');
+ if(stats)stats.innerHTML=`<div class="sectionTitle">${state.charDef?state.charDef.name:'Adventurer'}</div><div class="row"><span>Health</span><b class="hp">${state.player.health}/${state.player.maxHealth}</b></div><div class="hearts">${heartLine(state.player.health,state.player.maxHealth)}</div><div class="row"><span>AP</span><b class="ap">${state.player.ap}/${state.player.maxAp}</b></div><div class="statline">Combat: ${pDice()}d6+${pCombatMod()} &nbsp; Armour: -${pDamageReduction()}</div><div class="statline">Lives: ${state.player.lives} &nbsp; Ring: ${state.player.hasRing?`<span class="ringStatus">${iconHTML('Ring','◎')}<b>YES</b></span>`:'no'}</div>`;
+}
 function render(){
  if(!state)return;
- document.getElementById('stats').innerHTML=`<div class="sectionTitle">${state.charDef?state.charDef.name:'Adventurer'}</div><div class="row"><span>Health</span><b class="hp">${state.player.health}/${state.player.maxHealth}</b></div><div class="hearts">${heartLine(state.player.health,state.player.maxHealth)}</div><div class="row"><span>AP</span><b class="ap">${state.player.ap}/${state.player.maxAp}</b></div><div class="statline">Combat: ${pDice()}d6+${pCombatMod()} &nbsp; Armour: -${pDamageReduction()}</div><div class="statline">Lives: ${state.player.lives} &nbsp; Ring: ${state.player.hasRing?`<span class="ringStatus">${iconHTML('Ring','◎')}<b>YES</b></span>`:'no'}</div>`;
+ refreshPlayerStatsPanel();
  renderInventory();
  renderKillTally();
  renderWorld();
