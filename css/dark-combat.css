@@ -65,7 +65,7 @@ body.combatActive #combat .combatCard{
   border:0!important;
   border-radius:0!important;
   box-shadow:none!important;
-  background:linear-gradient(to bottom,rgba(0,0,0,.02) 0%,rgba(0,0,0,.04) 52%,rgba(0,0,0,.82) 76%,#000 100%)!important;
+  background:transparent!important;
   color:#fff!important;
   overflow:hidden!important;
   pointer-events:none!important;
