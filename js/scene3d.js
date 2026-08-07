@@ -2865,7 +2865,6 @@ function animate(now){
 
   if(hero.parent===boardGroup&&monster.parent===boardGroup){
    let pulseProgress=0;
-   let swipeAngle=0;
    let heroLunge=0;
    let monsterLunge=0;
    const pulseType=combatScene.attackPulseType||'hero';
@@ -2886,18 +2885,6 @@ function animate(now){
      if(pulseType==='monster'||pulseType==='both'){
       monsterLunge=lungeWave*(combatScene.monsterLungeDistance||.24);
      }
-     const fullSwipe=THREE.MathUtils.degToRad(45);
-     if(pulseProgress<.3){
-      const turnT=pulseProgress/.3;
-      const easedTurn=turnT*turnT*(3-2*turnT);
-      swipeAngle=fullSwipe*easedTurn;
-     }else if(pulseProgress<.6){
-      swipeAngle=fullSwipe;
-     }else{
-      const returnT=(pulseProgress-.6)/.4;
-      const easedReturn=returnT*returnT*(3-2*returnT);
-      swipeAngle=fullSwipe*(1-easedReturn);
-     }
     }
    }
 
@@ -2917,13 +2904,10 @@ function animate(now){
     monster.position.copy(monsterBase).addScaledVector(monsterAttackDirection,monsterLunge);
     monster.position.y=TILE_THICKNESS;
    }
-
-   const heroSwiping=(pulseType==='hero'||pulseType==='both')&&pulseProgress>0;
-   const monsterSwiping=(pulseType==='monster'||pulseType==='both')&&pulseProgress>0;
-   hero.rotation.y=yawTowards(hero.position,monster.position)+(heroSwiping?swipeAngle:0);
-   // Monster faces the hero from the opposite direction, so mirror the swipe
-   // angle to make its 45-degree attack read as the same visible strike.
-   monster.rotation.y=yawTowards(monster.position,hero.position)-(monsterSwiping?swipeAngle:0);
+   // Combat attack animation is now a pure tabletop lunge: both miniatures
+   // stay facing one another while moving forward and back, with no swing rotation.
+   hero.rotation.y=yawTowards(hero.position,monster.position);
+   monster.rotation.y=yawTowards(monster.position,hero.position);
    heroRotationCurrent=hero.rotation.y;
    heroPositionCurrent={
     x:hero.position.x,
