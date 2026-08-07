@@ -1,0 +1,35 @@
+name: Promote About cleanup to live v13.18
+on:
+  push:
+    paths:
+      - '.github/workflows/promote-about-v13-18.yml'
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove duplicate About music credits and bump version
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('js/game.js')
+          s = p.read_text()
+          old = '''      <div style="font-size:20px;font-weight:bold">Music Credits</div>\n      <div><b>“Burn The World Waltz”</b> — <a href="https://incompetech.com/" target="_blank" rel="noopener noreferrer">Kevin MacLeod (incompetech.com)</a><br>Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer">Creative Commons Attribution 4.0</a>.</div>\n'''
+          if old not in s:
+              raise SystemExit('Expected About music credit block not found')
+          p.write_text(s.replace(old, '', 1))
+          i = Path('index.html')
+          h = i.read_text()
+          oldv = 'data-build-version="v13.16"'
+          if oldv not in h:
+              raise SystemExit('Expected live version v13.16 not found')
+          i.write_text(h.replace(oldv, 'data-build-version="v13.18"', 1))
+      - name: Commit live promotion
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add index.html js/game.js
+          git commit -m "Remove duplicate music credits from About v13.18"
+          git push
