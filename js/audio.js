@@ -51,6 +51,24 @@
       artistUrl:'https://incompetech.com/',
       licence:'Creative Commons Attribution 4.0',
       licenceUrl:'https://creativecommons.org/licenses/by/4.0/'
+    },
+    {
+      number:3,
+      file:'./assets/radio/03-gearhead.mp3',
+      title:'Gearhead',
+      artist:'Kevin MacLeod',
+      artistUrl:'https://incompetech.com/',
+      licence:'Creative Commons Attribution 4.0',
+      licenceUrl:'https://creativecommons.org/licenses/by/4.0/'
+    },
+    {
+      number:4,
+      file:'./assets/radio/04-exhilarate.mp3',
+      title:'Exhilarate',
+      artist:'Kevin MacLeod',
+      artistUrl:'https://incompetech.com/',
+      licence:'Creative Commons Attribution 4.0',
+      licenceUrl:'https://creativecommons.org/licenses/by/4.0/'
     }
   ];
   const END_MUSIC_PATH='./assets/sounds/end-game-music.mp3';
@@ -112,7 +130,7 @@
     if(radioDiscoveryPromise&&!force)return radioDiscoveryPromise;
     radioDiscoveryPromise=Promise.all(RADIO_CANDIDATES.map(async track=>{
       try{
-        const response=await fetch(track.file+'?radio-check=13.02',{method:'HEAD',cache:'no-store'});
+        const response=await fetch(track.file+'?radio-check=13.19',{method:'HEAD',cache:'no-store'});
         return response.ok?track:null;
       }catch(_){return null;}
     })).then(results=>{
