@@ -1,0 +1,34 @@
+name: Fix single version source v13.23
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-single-version-v13-23.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove stale reward-fix version override
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('assets/reward-fix.js')
+          s=p.read_text()
+          old="""  const BUILD=(document.currentScript&&new URL(document.currentScript.src,location.href).searchParams.get('v'))||'12.76';\n  const VERSION='v'+BUILD;\n  window.BOD3D_BUILD_VERSION=VERSION;\n"""
+          new="""  const VERSION=document.documentElement.dataset.buildVersion||'development';\n  window.BOD3D_BUILD_VERSION=VERSION;\n"""
+          if old not in s: raise SystemExit('stale reward-fix version block not found')
+          p.write_text(s.replace(old,new,1))
+          i=Path('index.html')
+          h=i.read_text()
+          h=h.replace('data-build-version="v13.22"','data-build-version="v13.23"',1)
+          h=h.replace('assets/reward-fix.js?cache=20260806-single-version','assets/reward-fix.js?cache=20260807-single-version-v1323',1)
+          i.write_text(h)
+      - name: Commit
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add assets/reward-fix.js index.html
+          git commit -m "Use index build version as only visible version source v13.23"
+          git push
