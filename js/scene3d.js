@@ -2921,7 +2921,9 @@ function animate(now){
    const heroSwiping=(pulseType==='hero'||pulseType==='both')&&pulseProgress>0;
    const monsterSwiping=(pulseType==='monster'||pulseType==='both')&&pulseProgress>0;
    hero.rotation.y=yawTowards(hero.position,monster.position)+(heroSwiping?swipeAngle:0);
-   monster.rotation.y=yawTowards(monster.position,hero.position)+(monsterSwiping?swipeAngle:0);
+   // Monster faces the hero from the opposite direction, so mirror the swipe
+   // angle to make its 45-degree attack read as the same visible strike.
+   monster.rotation.y=yawTowards(monster.position,hero.position)-(monsterSwiping?swipeAngle:0);
    heroRotationCurrent=hero.rotation.y;
    heroPositionCurrent={
     x:hero.position.x,

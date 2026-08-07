@@ -598,7 +598,9 @@ function resolveFightRound(){
  if(m.health<=0){log('KILLING BLOW: your total of '+pt+' defeats the '+m.name+' (monster total '+mt+').','combat');setTimeout(()=>killMonster(),combatImpactDuration('kill'));return;}
  if(p.health<=0){const rawDamage=Math.max(0,mt-pt);const blocked=Math.max(0,rawDamage-damageToHero);const finalDetail=text+(blocked?' Your armour blocked '+blocked+' damage.':'')+' Final damage: '+damageToHero+'.';recordFinalBlow('Slain by the '+m.name,finalDetail);playSound('heroHurt');log('FATAL BLOW: '+m.name+' scores '+mt+' against your '+pt+' and defeats you.','combat');setTimeout(()=>death(),combatImpactDuration('kill'));return;}
  if(mt>pt)playSound('heroHurt');
- render();renderCombat();
+ // Keep the staged 3D hero/monster objects alive for the full 0.5-second attack pulse.
+ // A full board render here replaces the monster pivot and cancels both animations.
+ renderCombat();
 }
 function recordMonsterCorpse(tile,tileKey,monster){
  if(!tile||!monster)return;
