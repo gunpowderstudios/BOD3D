@@ -712,6 +712,33 @@ const TILE=2.05;
 const TILE_THICKNESS=.10;
 const PHYSICAL_TILE_MM=50;
 const DRAGON_BASE_MM=78;
+const TILE_DROP_HEIGHT=TILE*(10/PHYSICAL_TILE_MM);
+const TILE_DROP_MS=400;
+let pendingTileDropKey=null;
+function queueTileDrop(tileKey){pendingTileDropKey=String(tileKey||'');}
+function animateTileDrop(tileKey,tileBody,topMesh,sideMaterial,topMaterial){
+ if(pendingTileDropKey!==tileKey)return;
+ pendingTileDropKey=null;
+ const bodyRestY=tileBody.position.y;
+ const topRestY=topMesh.position.y;
+ tileBody.position.y=bodyRestY+TILE_DROP_HEIGHT;
+ topMesh.position.y=topRestY+TILE_DROP_HEIGHT;
+ [sideMaterial,topMaterial].forEach(material=>{material.transparent=true;material.opacity=0;material.depthWrite=false;material.needsUpdate=true;});
+ const started=performance.now();
+ const frame=now=>{
+  const t=Math.min(1,(now-started)/TILE_DROP_MS);
+  const fall=1-Math.pow(1-t,3);
+  const fade=Math.min(1,t/.72);
+  tileBody.position.y=THREE.MathUtils.lerp(bodyRestY+TILE_DROP_HEIGHT,bodyRestY,fall);
+  topMesh.position.y=THREE.MathUtils.lerp(topRestY+TILE_DROP_HEIGHT,topRestY,fall);
+  sideMaterial.opacity=fade;topMaterial.opacity=fade;
+  if(t<1){requestAnimationFrame(frame);return;}
+  tileBody.position.y=bodyRestY;topMesh.position.y=topRestY;
+  [sideMaterial,topMaterial].forEach(material=>{material.opacity=1;material.transparent=false;material.depthWrite=true;material.needsUpdate=true;});
+  if(typeof sndTile==='function')sndTile();else if(typeof playSound==='function')playSound('tile');
+ };
+ requestAnimationFrame(frame);
+}
 function modelScaleForBounds(path,size){
  const modelKey=modelKeyFromPath(path);
  if(modelKey==='dragon'){
@@ -1145,6 +1172,7 @@ async function addTile(key,t,token){
  mesh.receiveShadow=true;
  markClickable(mesh,'tile',key);
  boardGroup.add(mesh);
+ animateTileDrop(key,tileBody,mesh,sideMaterial,topMaterial);
 
  const darkness=darknessForTile(x,y);
  if(darkness>0){
@@ -2865,6 +2893,7 @@ function animate(now){
 
   if(hero.parent===boardGroup&&monster.parent===boardGroup){
    let pulseProgress=0;
+   let swipeAngle=0;
    let heroLunge=0;
    let monsterLunge=0;
    const pulseType=combatScene.attackPulseType||'hero';
@@ -2885,6 +2914,18 @@ function animate(now){
      if(pulseType==='monster'||pulseType==='both'){
       monsterLunge=lungeWave*(combatScene.monsterLungeDistance||.24);
      }
+     const fullSwipe=THREE.MathUtils.degToRad(45);
+     if(pulseProgress<.3){
+      const turnT=pulseProgress/.3;
+      const easedTurn=turnT*turnT*(3-2*turnT);
+      swipeAngle=fullSwipe*easedTurn;
+     }else if(pulseProgress<.6){
+      swipeAngle=fullSwipe;
+     }else{
+      const returnT=(pulseProgress-.6)/.4;
+      const easedReturn=returnT*returnT*(3-2*returnT);
+      swipeAngle=fullSwipe*(1-easedReturn);
+     }
     }
    }
 
@@ -2904,6 +2945,7 @@ function animate(now){
     monster.position.copy(monsterBase).addScaledVector(monsterAttackDirection,monsterLunge);
     monster.position.y=TILE_THICKNESS;
    }
+
    // Combat attack animation is now a pure tabletop lunge: both miniatures
    // stay facing one another while moving forward and back, with no swing rotation.
    hero.rotation.y=yawTowards(hero.position,monster.position);
@@ -3012,6 +3054,7 @@ resize();
 window.BOD3D={
  render:renderBoard,
  clearDice3D,
+ queueTileDrop,
  setEnabled(value){enabled=!!value;controls.enabled=enabled;resize();},
  resetCamera,
  centreOnHero:centreCameraOnHero,
