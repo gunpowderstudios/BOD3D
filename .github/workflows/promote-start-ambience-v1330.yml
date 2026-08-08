@@ -1,0 +1,40 @@
+name: Promote opening ambience fix v13.30
+on:
+  push:
+    paths:
+      - '.github/workflows/promote-start-ambience-v1330.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply opening ambience fix
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('js/audio.js')
+          s=p.read_text()
+          if "const START_AMBIENCE_VOLUME=0.22;" not in s:
+              s=s.replace("const START_AMBIENCE_PATH='./assets/sounds/distant-monsters.mp3';", "const START_AMBIENCE_PATH='./assets/sounds/distant-monsters.mp3';\n  const START_AMBIENCE_VOLUME=0.22;", 1)
+          s=s.replace('distantAudio.volume=dungeonVolume;', 'distantAudio.volume=START_AMBIENCE_VOLUME;')
+          s=s.replace('if(!pageActive||document.hidden||endingActive||dungeonVolume<=0)return;', 'if(!pageActive||document.hidden||endingActive)return;', 1)
+          s=s.replace('if(distantAudio)distantAudio.volume=dungeonVolume;', 'if(distantAudio)distantAudio.volume=START_AMBIENCE_VOLUME;')
+          s=s.replace("if(startScreenVisible()){\n      if(dungeonVolume>0)startDistantMonstersAmbience();\n      else stopDistantMonstersAmbience();\n      return;\n    }", "if(startScreenVisible()){\n      startDistantMonstersAmbience();\n      return;\n    }")
+          s=s.replace("if(startScreenVisible()){\n      stopDungeonAmbience();\n      if(dungeonVolume>0)startDistantMonstersAmbience();\n    }else{", "if(startScreenVisible()){\n      stopDungeonAmbience();\n      startDistantMonstersAmbience();\n    }else{")
+          p.write_text(s)
+
+          h=Path('index.html')
+          text=h.read_text()
+          text=re.sub(r'data-build-version="v[0-9.]+"','data-build-version="v13.30"',text,count=1)
+          text=re.sub(r'js/audio\.js\?cache=[^"\']+','js/audio.js?cache=20260808-start-ambience-v1330',text,count=1)
+          h.write_text(text)
+      - name: Commit live v13.30
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add js/audio.js index.html
+          git commit -m "Restore hero screen distant monster ambience v13.30"
+          git push
