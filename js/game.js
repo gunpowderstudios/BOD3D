@@ -1483,10 +1483,33 @@ function beginDroppedPickup(tileKey,idx){
  },0);
 }
 window.pickupDroppedFromTile=function(tileKey,idx){beginDroppedPickup(tileKey,idx);};
-function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start'&&t.kind!=='exit')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.hasFirkin)d.innerHTML+=`<span class="firkinMark" aria-label="Firkin is waiting here">${iconHTML('Firkin','F')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.droppedItems&&t.droppedItems.length){
+
+function remainsText(tileKey,corpseIndex=0){
+ const tile=state?.tiles?.[tileKey];
+ const corpse=tile?.corpses?.[Number(corpseIndex)||0];
+ if(!corpse)return '';
+ const hero=corpse.slainBy||state.charDef?.name||'the hero';
+ return 'The remains of a '+corpse.name+', slain by '+hero+'!';
+}
+function showRemains(tileKey,corpseIndex=0,event){
+ if(event){event.preventDefault();event.stopPropagation();}
+ const text=remainsText(tileKey,corpseIndex);
+ if(!text)return;
+ playSound('click');
+ showModal('BATTLE REMAINS',text,[{text:'Close',fn:closeModal}]);
+}
+
+function renderWorld(){const world=document.getElementById('world');world.innerHTML='';for(const k in state.tiles){const [x,y]=k.split(',').map(Number),t=state.tiles[k];const d=document.createElement('div');d.className='tile'+(teleportItem?' teleportTarget':'');d.dataset.tileKey=k;d.style.left=(x*STEP)+'px';d.style.top=(y*STEP)+'px';d.innerHTML=tileSVG(t);if(t.ringReveal)d.classList.add('ringReveal');if(TILE_GLYPH[t.kind]&&t.kind!=='start'&&t.kind!=='exit')d.innerHTML+=`<span class="tileOverlay">${iconHTML(TILE_LABEL[t.kind]||t.kind,TILE_GLYPH[t.kind])}</span>`;if(t.hasRing)d.innerHTML+=`<span class="ringMark">${iconHTML('Ring','💍')}</span>`;if(t.hasFirkin)d.innerHTML+=`<span class="firkinMark" aria-label="Firkin is waiting here">${iconHTML('Firkin','F')}</span>`;if(t.itemPending&&!t.itemUsed)d.innerHTML+=`<span class="itemLocationMarker">${iconHTML('Item Marker','Item')}</span>`;if(t.corpses&&t.corpses.length){
+ d.innerHTML+=t.corpses.map((corpse,i)=>{const seed=Number(corpse.bloodSeed)||1;const left=44+(((seed>>3)%17)-8)*.7;const top=44+(((seed>>7)%17)-8)*.7;const rot=seed%360;return `<button type="button" class="bloodRemains2d" data-corpse-index="${i}" aria-label="View battle remains" title="Click to inspect the remains" style="position:absolute;left:${left}%;top:${top}%;transform:translate(-50%,-50%) rotate(${rot}deg);width:42px;height:42px;padding:0;border:0;background:transparent;z-index:2;cursor:pointer"><svg viewBox="0 0 42 42" width="42" height="42" aria-hidden="true"><g fill="#981f1f"><circle cx="19" cy="21" r="10"/><circle cx="27" cy="18" r="7"/><circle cx="14" cy="14" r="5"/><circle cx="34" cy="29" r="2.5"/><circle cx="7" cy="30" r="2"/><circle cx="31" cy="8" r="1.8"/></g></svg></button>`;}).join('');
+}if(t.droppedItems&&t.droppedItems.length){
  const visible=t.droppedItems.slice(0,5);
  d.innerHTML+=`<span class="tileItemStack" role="button" tabindex="0" data-item-key="${k}" aria-label="View ${t.droppedItems.length} item${t.droppedItems.length===1?'':'s'} on this tile" title="Click to view items on this tile">${visible.map((item,i)=>`<span class="tileItemMarker">${iconHTML(item.name,item.icon||'?')}${i===visible.length-1&&t.droppedItems.length>visible.length?`<span class="tileItemCount">${t.droppedItems.length}</span>`:''}</span>`).join('')}</span>`;
 }if((t.monsterPending)||(t.monster&&t.monster.health>0)){d.innerHTML+=(t.monster&&(t.monster.revealed||t.monster.peeked))?monsterBoardHTML(t.monster,rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':'',k):`<span class="hiddenMonster${rangedMode&&rangedMode.targetKeys.has(k)?' rangedTarget':''}" role="button" tabindex="0" data-ranged-key="${k}">${iconHTML('Hidden Monster','M')}</span>`;}world.appendChild(d);wireBoardModels(d);
+ d.querySelectorAll('.bloodRemains2d').forEach(button=>{
+  button.addEventListener('click',event=>showRemains(k,button.dataset.corpseIndex,event));
+  button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showRemains(k,button.dataset.corpseIndex,event);}});
+ });
+
  const monsterButton=d.querySelector('.monsterGlyph');
  if(monsterButton){
   monsterButton.addEventListener('click',e=>rangedMode?fireRangedAt(monsterButton.dataset.monsterKey,e):showMonsterStats(monsterButton.dataset.monsterKey,e));
@@ -1503,6 +1526,11 @@ function renderWorld(){const world=document.getElementById('world');world.innerH
 }const h=document.createElement('div');h.className='hero';h.innerHTML=state.charDef?iconHTML(state.charDef.name,state.charDef.glyph):iconHTML('Hero','🧑');const heroSize=TILE;const heroOffset=0;h.style.left=(state.player.x*STEP+heroOffset)+'px';h.style.top=(state.player.y*STEP+heroOffset)+'px';world.appendChild(h);wireBoardModels(h);applyPan();applyView3D();if(window.BOD3D&&view3d.enabled)window.BOD3D.render(state);}
 window.BOD3DAction=function(type,tileKey){
  if(!state||boardInteractionLocked())return;
+ if(type==='blood'){
+  const parts=String(tileKey||'').split('|');
+  showRemains(parts[0],Number(parts[1])||0);
+  return;
+ }
  if(type==='monster'){
   if(rangedMode)fireRangedAt(tileKey);
   else showMonsterStats(tileKey);

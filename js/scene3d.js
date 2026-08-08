@@ -890,7 +890,7 @@ function seededFraction(seed,index){
  return x-Math.floor(x);
 }
 
-function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
+function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0,tileKey=null,corpseIndex=0){
  const group=new THREE.Group();
 
  // Keep the main pool slightly off-centre so corner loot remains visible.
@@ -961,6 +961,7 @@ function addBloodStain(x,y,seed=1,offsetX=0,offsetZ=0){
   group.add(drop);
  }
 
+ if(tileKey!==null)markClickable(group,'blood',String(tileKey)+'|'+String(corpseIndex));
  boardGroup.add(group);
  return group;
 }
@@ -1355,16 +1356,18 @@ async function addTile(key,t,token){
   }
  }
  if(t.corpses&&t.corpses.length){
-  // Keep the persistent blood history, but do not draw tipped-over corpse models.
-  for(const corpse of t.corpses){
+  // Keep the persistent blood history, and make each splat inspectable.
+  t.corpses.forEach((corpse,corpseIndex)=>{
    addBloodStain(
     x,
     y,
     corpse.bloodSeed||1,
     corpse.offsetX||0,
-    corpse.offsetZ||0
+    corpse.offsetZ||0,
+    key,
+    corpseIndex
    );
-  }
+  });
  }
 
  if((t.monsterPending)||(t.monster&&t.monster.health>0)){

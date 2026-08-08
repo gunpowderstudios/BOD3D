@@ -618,6 +618,7 @@ function recordMonsterCorpse(tile,tileKey,monster){
  tile.corpses=tile.corpses||[];
  tile.corpses.push({
   name:monster.name,
+  slainBy:state.charDef?.name||'the hero',
   rotationY:(seed%628)/100,
   fallSide:seed%2===0?1:-1,
   offsetX:(((seed>>3)%31)-15)/100,
