@@ -1,0 +1,31 @@
+name: Promote remaining tested changes v13.31
+on:
+  push:
+    paths:
+      - '.github/workflows/promote-blood-splats-v1331.yml'
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Promote tested game files while preserving LIVE audio fix
+        shell: python
+        run: |
+          from pathlib import Path
+          import urllib.request,re
+          base='https://raw.githubusercontent.com/gunpowderstudios/BOD3D-TEST/main/'
+          for path in ['js/game.js','js/combat.js','js/scene3d.js']:
+              Path(path).write_text(urllib.request.urlopen(base+path).read().decode('utf-8'))
+          h=Path('index.html')
+          s=h.read_text()
+          s=re.sub(r'data-build-version="v[0-9.]+"','data-build-version="v13.31"',s,count=1)
+          h.write_text(s)
+      - name: Commit LIVE v13.31
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add js/game.js js/combat.js js/scene3d.js index.html
+          git commit -m "Promote clickable blood splats and recent tested changes v13.31"
+          git push
