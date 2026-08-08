@@ -31,6 +31,7 @@
   window.__BOD_EFFECTS_VOLUME__=effectsVolume;
 
   const START_AMBIENCE_PATH='./assets/sounds/distant-monsters.mp3';
+  const START_AMBIENCE_VOLUME=0.22;
   const DUNGEON_AMBIENCE_PATH='./assets/sounds/dungeon-sounds.mp3';
   const RADIO_TRACK_KEY='bod3dRadioTrack';
   const RADIO_CANDIDATES=[
@@ -100,12 +101,12 @@
       distantAudio.loop=true;
       distantAudio.preload='auto';
     }
-    distantAudio.volume=dungeonVolume;
+    distantAudio.volume=START_AMBIENCE_VOLUME;
     return distantAudio;
   }
 
   function startDistantMonstersAmbience(){
-    if(!pageActive||document.hidden||endingActive||dungeonVolume<=0)return;
+    if(!pageActive||document.hidden||endingActive)return;
     stopDungeonAmbience();
     ensureDistant().play().catch(()=>{});
   }
@@ -216,7 +217,7 @@
   function applyBackgroundVolumes(){
     if(rockAudio)rockAudio.volume=musicVolume;
     if(dungeonAudio)dungeonAudio.volume=dungeonVolume;
-    if(distantAudio)distantAudio.volume=dungeonVolume;
+    if(distantAudio)distantAudio.volume=START_AMBIENCE_VOLUME;
     if(endAudio)endAudio.volume=musicVolume;
 
     if(endingActive){
@@ -226,8 +227,7 @@
     }
 
     if(startScreenVisible()){
-      if(dungeonVolume>0)startDistantMonstersAmbience();
-      else stopDistantMonstersAmbience();
+      startDistantMonstersAmbience();
       return;
     }
 
@@ -444,7 +444,7 @@
     if(endingActive)return;
     if(startScreenVisible()){
       stopDungeonAmbience();
-      if(dungeonVolume>0)startDistantMonstersAmbience();
+      startDistantMonstersAmbience();
     }else{
       stopDistantMonstersAmbience();
       startDungeonAmbience();
