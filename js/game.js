@@ -885,7 +885,21 @@ function applyEquipmentStats(item){
  return values[item.name]||0;
 }
 function drawMonster(){let m=state.monsterDeck.pop();if(!m)return null;if(m.name==='Mirror Monster'){m.maxHealth=state.player.health;m.health=state.player.health;m.dice=pDice();m.mod=pCombatMod();} else m.health=m.maxHealth; m.revealed=false; return m;}
-function drawItem(){const it=state.itemDeck.pop();if(!it)return null;return {...it};}
+const LATE_ITEM_TILE_THRESHOLD=20;
+const LATE_DRAW_ITEMS=new Set(['Ice Staff','Large Steel Axe']);
+function laidDungeonTileCount(){
+ return Object.values(state?.tiles||{}).filter(tile=>tile&&tile.kind!=='start').length;
+}
+function drawItem(){
+ if(!state?.itemDeck?.length)return null;
+ let index=state.itemDeck.length-1;
+ if(laidDungeonTileCount()<LATE_ITEM_TILE_THRESHOLD){
+  while(index>=0&&LATE_DRAW_ITEMS.has(state.itemDeck[index]?.name))index--;
+  if(index<0)return null;
+ }
+ const [it]=state.itemDeck.splice(index,1);
+ return it?{...it}:null;
+}
 function awardItem(item=drawItem()){
  if(!item)return log('No items left in the item deck.','system');
  const tile=getTile(state.player.x,state.player.y);
