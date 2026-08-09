@@ -1794,3 +1794,15 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
  font-weight:500;
  opacity:.82;
 }
+
+
+/* v13.32 — mobile hearts aligned with compass */
+@media(max-width:800px){
+  #livesHud{
+    left:14px!important;
+    right:auto!important;
+    top:58px!important;
+    bottom:auto!important;
+    transform:none!important;
+  }
+}
