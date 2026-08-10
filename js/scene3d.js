@@ -2020,6 +2020,14 @@ function stageCombatScene(tileKey){
  // combined hero + monster bounds, so very large monsters such as the Reacher
  // automatically pull the camera farther back instead of clipping off-screen.
  const encounterSphere=encounterBounds.getBoundingSphere(new THREE.Sphere());
+ // Desktop combat uses the real free centre between the left character sheet and
+ // the right monster-info panel. A small camera-target bias makes the miniatures
+ // appear centred in that usable space rather than centred in the whole canvas.
+ const framingTarget=encounterTarget.clone();
+ if(!mobileCombat){
+  const desktopInfoBias=THREE.MathUtils.clamp(encounterSphere.radius*.38,.35,.85);
+  framingTarget.addScaledVector(right,desktopInfoBias);
+ }
  const vFov=THREE.MathUtils.degToRad(camera.fov||50);
  const canvasAspect=Math.max(.45,(canvas.clientWidth||window.innerWidth)/Math.max(1,(canvas.clientHeight||window.innerHeight)));
  // The combat tray occupies the lower part of the screen, effectively reducing
@@ -2029,23 +2037,23 @@ function stageCombatScene(tileKey){
  const hFov=2*Math.atan(Math.tan(vFov/2)*effectiveAspect);
  const limitingFov=Math.min(vFov,hFov);
  const sphereFitDistance=encounterSphere.radius/Math.max(.12,Math.sin(limitingFov/2));
- const fitMargin=mobileCombat?1.55:1.42;
+ const fitMargin=mobileCombat?1.55:1.24;
 
  const cameraDistance=Math.max(
-  mobileCombat?7.6:6.2,
-  encounterSize.x*(mobileCombat?2.9:2.45),
-  encounterSize.z*(mobileCombat?2.9:2.45),
-  encounterSize.y*(mobileCombat?2.45:2.05),
+  mobileCombat?7.6:5.2,
+  encounterSize.x*(mobileCombat?2.9:2.15),
+  encounterSize.z*(mobileCombat?2.9:2.15),
+  encounterSize.y*(mobileCombat?2.45:1.82),
   sphereFitDistance*fitMargin
  );
  const baseCameraHeight=Math.max(
-  mobileCombat?5.5:4.2,
-  encounterSize.y*(mobileCombat?1.5:1.25)+(mobileCombat?2.6:2.15),
-  encounterSphere.radius*(mobileCombat?1.55:1.35)+2.0
+  mobileCombat?5.5:3.8,
+  encounterSize.y*(mobileCombat?1.5:1.15)+(mobileCombat?2.6:1.9),
+  encounterSphere.radius*(mobileCombat?1.55:1.2)+(mobileCombat?2.0:1.8)
  );
  // Tilt combat 20 degrees farther overhead so the tabletop and dice faces
  // remain readable, while retaining the same camera-to-encounter distance.
- const heightAboveTarget=Math.max(.1,baseCameraHeight-encounterTarget.y);
+ const heightAboveTarget=Math.max(.1,baseCameraHeight-framingTarget.y);
  const baseElevation=Math.atan2(heightAboveTarget,cameraDistance);
  const combatElevation=Math.min(
   THREE.MathUtils.degToRad(78),
@@ -2054,9 +2062,9 @@ function stageCombatScene(tileKey){
  const combatViewDistance=Math.hypot(cameraDistance,heightAboveTarget);
  const combatHorizontalDistance=Math.cos(combatElevation)*combatViewDistance;
  const combatVerticalDistance=Math.sin(combatElevation)*combatViewDistance;
- const cinematicPosition=encounterTarget.clone()
+ const cinematicPosition=framingTarget.clone()
   .addScaledVector(forward.clone().negate(),combatHorizontalDistance);
- cinematicPosition.y=encounterTarget.y+combatVerticalDistance;
+ cinematicPosition.y=framingTarget.y+combatVerticalDistance;
 
  heroTurn=null;
  heroMove=null;
@@ -2077,7 +2085,7 @@ function stageCombatScene(tileKey){
  };
  cameraLockedToHero=false;
  lastCameraHeroPosition=null;
- startCameraTween(cinematicPosition,encounterTarget,620);
+ startCameraTween(cinematicPosition,framingTarget,620);
  return true;
 }
 function triggerCombatPulse(attacker='hero'){
