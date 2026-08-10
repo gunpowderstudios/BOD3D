@@ -1806,3 +1806,29 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
     transform:none!important;
   }
 }
+
+
+/* v13.36 — active desktop combat commentary colours */
+@media(min-width:901px){
+ body.combatActive .combatLatestCommentary{
+  margin-top:13px;
+  padding-top:11px;
+  border-top:1px solid rgba(255,255,255,.26);
+  color:#f3f3f3;
+  font-family:"Alegreya Sans",Arial,sans-serif;
+  font-size:15px;
+  font-weight:600;
+  line-height:1.25;
+  text-align:left;
+  text-shadow:0 1px 4px #000;
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:none;
+ }
+ body.combatActive .combatLatestCommentary.commentaryIn{animation:combatCommentaryIn .32s ease-out}
+ body.combatActive .combatLatestCommentary.heroHitComment{color:#58d26f!important}
+ body.combatActive .combatLatestCommentary.monsterHitComment{color:#ef4050!important}
+ body.combatActive .combatLatestCommentary.standOffComment{color:#b8b8b8!important}
+ @keyframes combatCommentaryIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+}
+@media(max-width:900px){.combatLatestCommentary{display:none!important}}
