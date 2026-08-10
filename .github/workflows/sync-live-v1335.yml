@@ -1,0 +1,37 @@
+name: Sync LIVE v13.35 and clean workflows
+on:
+  push:
+    paths:
+      - '.github/workflows/sync-live-v1335.yml'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync tested combat commentary files
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/gunpowderstudios/BOD3D-TEST/main/js/combat.js -o js/combat.js
+          curl -fsSL https://raw.githubusercontent.com/gunpowderstudios/BOD3D-TEST/main/css/dark-combat.css -o css/dark-combat.css
+      - name: Bump LIVE to v13.35 and refresh cache keys
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text()
+          s=re.sub(r'data-build-version="v[0-9.]+"','data-build-version="v13.35"',s,count=1)
+          s=re.sub(r'js/combat\.js\?cache=[^"\']+','js/combat.js?cache=20260810-v1335',s,count=1)
+          p.write_text(s)
+      - name: Remove obsolete one-shot workflows
+        run: |
+          find .github/workflows -maxdepth 1 -type f -name '*.yml' ! -name 'sync-live-v1335.yml' -delete
+          find .github/workflows -maxdepth 1 -type f -name '*.yaml' ! -name 'sync-live-v1335.yml' -delete
+      - name: Commit clean LIVE v13.35
+        run: |
+          git config user.name "Gunpowder"
+          git config user.email "38918114+gunpowderstudios@users.noreply.github.com"
+          git add js/combat.js css/dark-combat.css index.html .github/workflows
+          git commit -m "Promote tested combat commentary and clean workflows v13.35"
+          git push
