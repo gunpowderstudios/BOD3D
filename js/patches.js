@@ -88,3 +88,11 @@ window.RESPAWN_CAMERA_DELAY_MS=2000;window.RESPAWN_CENTER_ON_START=true;
   return deck;
  };
 })();
+
+// ==================== Larger desktop sidebar logo (v13.42) ====================
+(function(){
+ const style=document.createElement('style');
+ style.id='bodDesktopSidebarLogoV1342';
+ style.textContent='@media (min-width:901px){#brandHeader .brandLogo,#brandHeader img{width:80%!important;max-width:none!important;max-height:none!important;height:auto!important;object-fit:contain!important;margin:2px auto 8px!important;}}';
+ document.head.appendChild(style);
+})();
