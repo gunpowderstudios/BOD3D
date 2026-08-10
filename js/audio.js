@@ -37,8 +37,8 @@
   const RADIO_CANDIDATES=[
     {
       number:1,
-      file:'./assets/radio/01-rock-track1.mp3',
-      title:'Rock Track 1',
+      file:'./assets/radio/01-welcome-to-the-dungeon.mp3',
+      title:'Welcome to the Dungeon',
       artist:'',
       artistUrl:'',
       licence:'',
