@@ -56,15 +56,65 @@
     style.id='bodDesktopLayoutStyles';
     style.textContent=`
       @media (min-width:901px){
-        #charSelect .heroSelectContent{width:100%!important;left:0!important;right:0!important;justify-items:center!important;align-items:center!important;padding-bottom:22px!important}
-        #charSelect .heroStage{justify-self:center!important;margin-left:auto!important;margin-right:auto!important}
-        #charSelect .heroInfoPanel{position:relative!important;left:auto!important;right:auto!important;transform:none!important;justify-self:center!important;width:min(820px,86vw)!important;margin:-8px auto 106px!important;padding:10px 28px 10px!important;text-align:center!important}
-        #charSelect .heroInfoPanel h1,#charSelect .selectedHeroDesc,#charSelect .heroStatRow,#charSelect .heroSpecialBlock{text-align:center!important}
-        #charSelect .heroStatRow{grid-template-columns:repeat(3,1fr)!important}
-        #charSelect .heroSpecialBlock{margin-bottom:0!important}
-        #charSelect .heroDots{position:absolute!important;left:50%!important;top:calc(100% + 12px)!important;transform:translateX(-50%)!important;margin:0!important}
-        #charSelect #chooseHeroBtn{position:fixed!important;left:50vw!important;right:auto!important;top:auto!important;bottom:32px!important;transform:translateX(-50%)!important;width:min(420px,52vw)!important;min-height:58px!important;margin:0!important;padding:11px 24px!important;background:#a71924!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid #fff!important;border-radius:2px!important;box-shadow:0 4px 12px rgba(0,0,0,.72)!important;font-size:20px!important;z-index:620!important}
-        #charSelect #chooseHeroBtn:hover:not(:disabled),#charSelect #chooseHeroBtn:focus:not(:disabled){background:#cf2630!important;color:#fff!important;-webkit-text-fill-color:#fff!important;transform:translateX(-50%)!important}
+        #charSelect .heroSelectContent{
+          width:100%!important;
+          left:0!important;
+          right:0!important;
+          justify-items:center!important;
+          align-items:center!important;
+          grid-template-rows:minmax(300px,1fr) auto!important;
+          padding:12px clamp(12px,3vw,48px) 18px!important;
+        }
+        #charSelect .heroStage{
+          justify-self:center!important;
+          margin:0 auto!important;
+        }
+        #charSelect .heroInfoPanel{
+          position:relative!important;
+          left:auto!important;
+          right:auto!important;
+          transform:none!important;
+          justify-self:center!important;
+          display:flex!important;
+          flex-direction:column!important;
+          align-items:center!important;
+          width:min(680px,82vw)!important;
+          margin:-12px auto 0!important;
+          padding:8px 28px 12px!important;
+          text-align:center!important;
+        }
+        #charSelect .heroInfoPanel h1{order:1!important;width:100%!important;margin:0!important;text-align:center!important}
+        #charSelect .selectedHeroDesc{order:2!important;width:100%!important;text-align:center!important;margin:2px 0 7px!important}
+        #charSelect .heroStatRow{order:3!important;width:100%!important;grid-template-columns:repeat(3,1fr)!important;margin:0 auto 7px!important;text-align:center!important}
+        #charSelect .heroSpecialBlock{order:4!important;width:100%!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;margin:2px 0 8px!important}
+        #charSelect .heroDots{order:5!important;position:static!important;left:auto!important;top:auto!important;transform:none!important;margin:2px auto 8px!important;justify-content:center!important}
+        #charSelect #chooseHeroBtn{
+          order:6!important;
+          position:static!important;
+          left:auto!important;
+          right:auto!important;
+          top:auto!important;
+          bottom:auto!important;
+          transform:none!important;
+          width:min(420px,72%)!important;
+          min-height:54px!important;
+          margin:0 auto!important;
+          padding:10px 24px!important;
+          background:#050505!important;
+          color:#fff!important;
+          -webkit-text-fill-color:#fff!important;
+          border:2px solid #fff!important;
+          border-radius:2px!important;
+          box-shadow:0 4px 12px rgba(0,0,0,.72)!important;
+          font-size:19px!important;
+          z-index:auto!important;
+        }
+        #charSelect #chooseHeroBtn:hover:not(:disabled),#charSelect #chooseHeroBtn:focus:not(:disabled){
+          background:#a71924!important;
+          color:#fff!important;
+          -webkit-text-fill-color:#fff!important;
+          transform:none!important;
+        }
       }
       #desktopDungeonRadio{display:none!important}
     `;
