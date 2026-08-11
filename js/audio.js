@@ -56,63 +56,15 @@
     style.id='bodDesktopLayoutStyles';
     style.textContent=`
       @media (min-width:901px){
-        #charSelect .heroSelectContent{
-          width:100%!important;
-          left:0!important;
-          right:0!important;
-          justify-items:center!important;
-          align-items:center!important;
-          padding-bottom:22px!important;
-        }
-        #charSelect .heroStage{
-          justify-self:center!important;
-          margin-left:auto!important;
-          margin-right:auto!important;
-        }
-        #charSelect .heroInfoPanel{
-          position:relative!important;
-          left:auto!important;
-          right:auto!important;
-          transform:none!important;
-          justify-self:center!important;
-          width:min(820px,86vw)!important;
-          margin:-8px auto 106px!important;
-          padding:10px 28px 10px!important;
-          text-align:center!important;
-        }
+        #charSelect .heroSelectContent{width:100%!important;left:0!important;right:0!important;justify-items:center!important;align-items:center!important;padding-bottom:22px!important}
+        #charSelect .heroStage{justify-self:center!important;margin-left:auto!important;margin-right:auto!important}
+        #charSelect .heroInfoPanel{position:relative!important;left:auto!important;right:auto!important;transform:none!important;justify-self:center!important;width:min(820px,86vw)!important;margin:-8px auto 106px!important;padding:10px 28px 10px!important;text-align:center!important}
         #charSelect .heroInfoPanel h1,#charSelect .selectedHeroDesc,#charSelect .heroStatRow,#charSelect .heroSpecialBlock{text-align:center!important}
         #charSelect .heroStatRow{grid-template-columns:repeat(3,1fr)!important}
         #charSelect .heroSpecialBlock{margin-bottom:0!important}
-        #charSelect .heroDots{
-          position:absolute!important;
-          left:50%!important;
-          top:calc(100% + 12px)!important;
-          transform:translateX(-50%)!important;
-          margin:0!important;
-        }
-        #charSelect #chooseHeroBtn{
-          position:absolute!important;
-          left:50%!important;
-          top:calc(100% + 42px)!important;
-          transform:translateX(-50%)!important;
-          width:min(420px,52vw)!important;
-          min-height:58px!important;
-          margin:0!important;
-          padding:11px 24px!important;
-          background:#a71924!important;
-          color:#fff!important;
-          -webkit-text-fill-color:#fff!important;
-          border:2px solid #fff!important;
-          border-radius:2px!important;
-          box-shadow:0 4px 12px rgba(0,0,0,.72)!important;
-          font-size:20px!important;
-        }
-        #charSelect #chooseHeroBtn:hover:not(:disabled),#charSelect #chooseHeroBtn:focus:not(:disabled){
-          background:#cf2630!important;
-          color:#fff!important;
-          -webkit-text-fill-color:#fff!important;
-          transform:translateX(-50%)!important;
-        }
+        #charSelect .heroDots{position:absolute!important;left:50%!important;top:calc(100% + 12px)!important;transform:translateX(-50%)!important;margin:0!important}
+        #charSelect #chooseHeroBtn{position:fixed!important;left:50vw!important;right:auto!important;top:auto!important;bottom:32px!important;transform:translateX(-50%)!important;width:min(420px,52vw)!important;min-height:58px!important;margin:0!important;padding:11px 24px!important;background:#a71924!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid #fff!important;border-radius:2px!important;box-shadow:0 4px 12px rgba(0,0,0,.72)!important;font-size:20px!important;z-index:620!important}
+        #charSelect #chooseHeroBtn:hover:not(:disabled),#charSelect #chooseHeroBtn:focus:not(:disabled){background:#cf2630!important;color:#fff!important;-webkit-text-fill-color:#fff!important;transform:translateX(-50%)!important}
       }
       #desktopDungeonRadio{display:none!important}
     `;
