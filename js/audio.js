@@ -61,8 +61,8 @@
       '<div class="radioTransport"><button type="button" onclick="BODRadioPrevious()" aria-label="Previous track">◀</button><button type="button" onclick="BODRadioTogglePlay()">'+(radioPaused?'PLAY':'PAUSE')+'</button><button type="button" onclick="BODRadioNext()" aria-label="Next track">▶</button></div>'+
       '<button type="button" class="radioChoose" onclick="BODRadioToggleList()">Choose Track ('+availableRadioTracks.length+') '+(radioListOpen?'▲':'▼')+'</button>'+
       '<div class="radioTrackList '+(radioListOpen?'open':'')+'">'+list+'</div>'+
-      '<div class="radioJoin" style="margin-top:18px;padding-top:14px;border-top:1px solid #555;text-align:center;font-size:11px;line-height:1.35;opacity:.82">'+
-       '<div style="color:#E9BB00;font-size:12px;font-weight:900;letter-spacing:.06em;margin-bottom:6px">JOIN DUNGEON RADIO</div>'+
+      '<div class="radioJoin" style="margin-top:18px;padding-top:14px;border-top:1px solid #555;text-align:center;font-size:13px;line-height:1.35;opacity:.82">'+
+       '<div style="color:#E9BB00;font-size:14px;font-weight:900;letter-spacing:.06em;margin-bottom:6px">JOIN DUNGEON RADIO</div>'+
        '<div style="font-weight:800;margin-bottom:5px">Got a rock track you’d like featured on Dungeon Radio?</div>'+
        '<div>We’re looking for progressive rock that fits the style and atmosphere of the tracks already playing. Let us use it in the game and we’ll link back to you and your music! We can’t feature everything we receive, but we’d love to hear yours.</div>'+
        '<div style="margin-top:7px"><b>Send us your track: <a href="mailto:info@gunpowderstudios.co.uk">info@gunpowderstudios.co.uk</a></b></div>'+
