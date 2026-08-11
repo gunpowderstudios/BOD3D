@@ -54,12 +54,92 @@
     const track=currentRadioTrack();
     const status=musicVolume<=0?'Muted':(radioPaused?'Paused':'Now Playing');
     const artist=track?.artist||'';
-    return '<button type="button" class="desktopRadioSkip" onclick="BODRadioPrevious()" aria-label="Previous Dungeon Radio track">◀◀</button>'+
+    return '<button type="button" class="desktopRadioSkip" onclick="BODRadioPrevious()" aria-label="Previous Dungeon Radio track">◀</button>'+
       '<div class="desktopRadioText"><div class="desktopRadioTitle">DUNGEON RADIO</div><div class="desktopRadioNow">'+status+': <b>'+(track?track.title:'No tracks uploaded')+'</b></div>'+(artist?'<div class="desktopRadioArtist">'+artist+'</div>':'')+'</div>'+
-      '<button type="button" class="desktopRadioSkip" onclick="BODRadioNext()" aria-label="Next Dungeon Radio track">▶▶</button>';
+      '<button type="button" class="desktopRadioSkip" onclick="BODRadioNext()" aria-label="Next Dungeon Radio track">▶</button>';
   }
   function installDesktopRadio(){let panel=document.getElementById('desktopDungeonRadio');if(!panel){panel=document.createElement('div');panel.id='desktopDungeonRadio';panel.setAttribute('aria-label','Dungeon Radio now playing');document.body.appendChild(panel);}refreshDesktopRadio();return panel;}
   function refreshDesktopRadio(){const panel=document.getElementById('desktopDungeonRadio');if(!panel)return;panel.innerHTML=desktopRadioHTML();panel.hidden=!(!startScreenVisible()&&dungeonWanted&&window.matchMedia('(min-width:901px)').matches&&!endingActive);}
+
+  function installDesktopLayoutStyles(){
+    if(document.getElementById('bodDesktopLayoutStyles'))return;
+    const style=document.createElement('style');
+    style.id='bodDesktopLayoutStyles';
+    style.textContent=`
+      @media (min-width:901px){
+        #charSelect .heroSelectContent{padding-bottom:22px!important}
+        #charSelect .heroInfoPanel{
+          position:relative!important;
+          width:min(820px,86vw)!important;
+          margin-top:-8px!important;
+          margin-bottom:106px!important;
+          padding:10px 28px 10px!important;
+          text-align:center!important;
+        }
+        #charSelect .heroInfoPanel h1,#charSelect .selectedHeroDesc,#charSelect .heroStatRow,#charSelect .heroSpecialBlock{text-align:center!important}
+        #charSelect .heroStatRow{grid-template-columns:repeat(3,1fr)!important}
+        #charSelect .heroSpecialBlock{margin-bottom:0!important}
+        #charSelect .heroDots{
+          position:absolute!important;
+          left:50%!important;
+          top:calc(100% + 12px)!important;
+          transform:translateX(-50%)!important;
+          margin:0!important;
+        }
+        #charSelect #chooseHeroBtn{
+          position:absolute!important;
+          left:50%!important;
+          top:calc(100% + 42px)!important;
+          transform:translateX(-50%)!important;
+          width:min(420px,52vw)!important;
+          min-height:58px!important;
+          margin:0!important;
+          padding:11px 24px!important;
+          background:#a71924!important;
+          color:#fff!important;
+          -webkit-text-fill-color:#fff!important;
+          border:2px solid #fff!important;
+          border-radius:2px!important;
+          box-shadow:0 4px 12px rgba(0,0,0,.72)!important;
+          font-size:20px!important;
+        }
+        #charSelect #chooseHeroBtn:hover:not(:disabled),#charSelect #chooseHeroBtn:focus:not(:disabled){
+          background:#cf2630!important;
+          color:#fff!important;
+          -webkit-text-fill-color:#fff!important;
+          transform:translateX(-50%)!important;
+        }
+        #desktopDungeonRadio{
+          position:fixed!important;
+          left:8px!important;
+          top:50px!important;
+          right:auto!important;
+          bottom:auto!important;
+          z-index:600!important;
+          width:296px!important;
+          min-height:78px!important;
+          padding:8px 9px!important;
+          display:grid!important;
+          grid-template-columns:30px 1fr 30px!important;
+          align-items:center!important;
+          gap:6px!important;
+          background:rgba(0,0,0,.92)!important;
+          border:1px solid rgba(255,255,255,.7)!important;
+          border-radius:3px!important;
+          color:#fff!important;
+          text-align:center!important;
+          box-shadow:0 5px 16px rgba(0,0,0,.65)!important;
+        }
+        #desktopDungeonRadio[hidden]{display:none!important}
+        #desktopDungeonRadio .desktopRadioTitle{color:#e32636!important;font:900 13px/1.05 "Alegreya Sans",Arial,sans-serif!important;letter-spacing:.07em!important;margin-bottom:4px!important}
+        #desktopDungeonRadio .desktopRadioNow{color:#fff!important;font:500 12px/1.2 "Alegreya Sans",Arial,sans-serif!important;white-space:normal!important}
+        #desktopDungeonRadio .desktopRadioArtist{color:#fff!important;font:400 11px/1.15 "Alegreya Sans",Arial,sans-serif!important;opacity:.8!important;margin-top:3px!important}
+        #desktopDungeonRadio .desktopRadioSkip{width:30px!important;height:34px!important;min-width:30px!important;min-height:34px!important;padding:0!important;border:0!important;background:transparent!important;color:#fff!important;box-shadow:none!important;font-size:17px!important}
+        #desktopDungeonRadio .desktopRadioSkip:hover{background:transparent!important;color:#e32636!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   function radioPanelHTML(){
     const track=currentRadioTrack();
@@ -88,7 +168,7 @@
   function syncToScreen(){if(endingActive){refreshDesktopRadio();return;}if(startScreenVisible()){stopDungeonAmbience();startDistantMonstersAmbience();}else{stopDistantMonstersAmbience();startDungeonAmbience();}refreshDesktopRadio();}
   function leavePage(){pageActive=false;distantAudio?.pause();pauseDungeonLayers();endAudio?.pause();}
   function returnToPage(){pageActive=!document.hidden;if(!pageActive)return;setTimeout(()=>{if(endingActive&&musicVolume>0)ensureEndMusic().play().catch(()=>{});else syncToScreen();},80);}
-  function start(){discoverRadioTracks();installSoundButton();installDesktopRadio();const charSelect=document.getElementById('charSelect');if(charSelect)new MutationObserver(syncToScreen).observe(charSelect,{attributes:true,attributeFilter:['class','style','hidden']});window.addEventListener('resize',refreshDesktopRadio,{passive:true});syncToScreen();}
+  function start(){installDesktopLayoutStyles();discoverRadioTracks();installSoundButton();installDesktopRadio();const charSelect=document.getElementById('charSelect');if(charSelect)new MutationObserver(syncToScreen).observe(charSelect,{attributes:true,attributeFilter:['class','style','hidden']});window.addEventListener('resize',refreshDesktopRadio,{passive:true});syncToScreen();}
   document.addEventListener('visibilitychange',()=>{if(document.hidden)leavePage();else returnToPage();},true);window.addEventListener('pagehide',leavePage,true);window.addEventListener('pageshow',returnToPage,true);window.addEventListener('focus',returnToPage,true);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
