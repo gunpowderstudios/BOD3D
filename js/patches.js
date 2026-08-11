@@ -96,3 +96,71 @@ window.RESPAWN_CAMERA_DELAY_MS=2000;window.RESPAWN_CENTER_ON_START=true;
  style.textContent='@media (min-width:901px){#brandHeader .brandLogo,#brandHeader img{width:80%!important;max-width:none!important;max-height:none!important;height:auto!important;object-fit:contain!important;margin:2px auto 8px!important;}}';
  document.head.appendChild(style);
 })();
+
+// ==================== Compact hero select + desktop radio (v13.43) ====================
+(function(){
+ const style=document.createElement('style');
+ style.id='bodHeroSelectCompactV1343';
+ style.textContent=`
+@media (min-width:901px){
+  .heroInfoPanel{
+    width:min(960px,82vw)!important;
+    margin-top:-6px!important;
+    padding:8px 18px 10px!important;
+    display:grid!important;
+    grid-template-columns:minmax(390px,1.45fr) minmax(250px,.9fr) 190px!important;
+    grid-template-areas:"title title title" "desc desc desc" "stats special button"!important;
+    column-gap:18px!important;
+    row-gap:3px!important;
+    align-items:center!important;
+  }
+  .heroInfoPanel h1{grid-area:title!important;font-size:clamp(28px,2.2vw,36px)!important;line-height:1!important;margin:0!important}
+  .selectedHeroDesc{grid-area:desc!important;font-size:clamp(15px,1.15vw,18px)!important;line-height:1.1!important;margin:0 0 4px!important}
+  .heroStatRow{grid-area:stats!important;margin:0!important;padding:5px 0!important;gap:4px!important}
+  .heroStat strong{font-size:clamp(21px,1.7vw,27px)!important}
+  .heroStat small{font-size:10px!important}
+  .heroSpecialBlock{grid-area:special!important;margin:0!important;padding:2px 0 2px 18px!important;border-left:1px solid rgba(255,255,255,.6)!important}
+  .heroSpecialBlock small{font-size:10px!important}
+  .heroSpecialBlock strong{font-size:clamp(19px,1.55vw,24px)!important}
+  .heroSpecialBlock span{font-size:clamp(13px,1.05vw,16px)!important;line-height:1.12!important}
+  .chooseHeroBtn{grid-area:button!important;margin:0!important;min-height:54px!important;padding:8px 14px!important;font-size:16px!important}
+  #desktopDungeonRadio{
+    position:fixed!important;
+    right:152px!important;
+    bottom:18px!important;
+    z-index:560!important;
+    width:min(360px,30vw)!important;
+    min-width:300px!important;
+    min-height:66px!important;
+    padding:7px 8px!important;
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) 42px!important;
+    gap:7px!important;
+    align-items:center!important;
+    background:rgba(0,0,0,.92)!important;
+    border:1px solid rgba(255,255,255,.7)!important;
+    color:#fff!important;
+    box-shadow:0 6px 18px rgba(0,0,0,.55)!important;
+    text-align:center!important;
+    pointer-events:auto!important;
+  }
+  #desktopDungeonRadio[hidden]{display:none!important}
+  #desktopDungeonRadio .desktopRadioSkip{
+    width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;
+    margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:#fff!important;
+    box-shadow:none!important;font-size:18px!important;line-height:1!important;
+  }
+  #desktopDungeonRadio .desktopRadioSkip:hover{background:transparent!important;opacity:.72!important}
+  .desktopRadioText{min-width:0!important;color:#fff!important;line-height:1.08!important}
+  .desktopRadioTitle{color:#e32636!important;font:900 13px/1 "Alegreya Sans",Arial,sans-serif!important;letter-spacing:.06em!important;margin-bottom:3px!important}
+  .desktopRadioNow{color:#fff!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .desktopRadioArtist{color:#fff!important;font-size:11px!important;margin-top:3px!important;opacity:.9!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+}
+@media (min-width:901px) and (max-width:1120px){
+  #desktopDungeonRadio{right:130px!important;width:300px!important;min-width:280px!important}
+  .heroInfoPanel{width:min(900px,88vw)!important;grid-template-columns:minmax(350px,1.35fr) minmax(220px,.85fr) 170px!important}
+}
+@media (max-width:900px){#desktopDungeonRadio{display:none!important}}
+`;
+ document.head.appendChild(style);
+})();
