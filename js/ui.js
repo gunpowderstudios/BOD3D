@@ -2,9 +2,9 @@
 // Started in TEST v12.68 with the proven mobile character drawer behaviour.
 // Additional UI patches will move here only after separate verification.
 
-// Live v13.44 — mobile combat heart visibility fix promoted from TEST.
+// Live v13.48 — approved TEST UI fixes promoted to Live.
 (function(){
-  const version='v13.44';
+  const version='v13.48';
   function sync(){
     document.documentElement.dataset.buildVersion=version;
     const visible=document.getElementById('visibleBuildVersion');
@@ -14,7 +14,36 @@
   setTimeout(sync,500);
 })();
 
-// BOD3D-TEST v11.41 — mobile character drawer scroll/close behaviour
+// v13.45 — remove the stray desktop divider beside Special Ability and
+// enlarge the small HEALTH / AP / COMBAT / SPECIAL ABILITY labels.
+(function(){
+  const style=document.createElement('style');
+  style.id='bodHeroSelectPolishV1345';
+  style.textContent=`
+    .heroStat small,
+    .heroSpecialBlock small{
+      font-size:13px!important;
+      line-height:1.05!important;
+      letter-spacing:.08em!important;
+      font-weight:800!important;
+    }
+    @media (min-width:901px){
+      .heroSpecialBlock{
+        border-left:0!important;
+        padding-left:0!important;
+      }
+    }
+    @media (max-width:900px){
+      .heroStat small,
+      .heroSpecialBlock small{
+        font-size:12px!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// Mobile character drawer scroll/close behaviour
 (function(){
   function install(){
     const sheet=document.getElementById('side');
@@ -85,8 +114,7 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 
-// Consolidated in TEST v12.73: vertical health-heart HUD for desktop and mobile.
-// Live v13.44: mobile exploration hearts are hidden whenever combatActive is present.
+// Vertical health-heart HUD. On mobile, hide exploration hearts during combat.
 (function () {
   'use strict';
 
