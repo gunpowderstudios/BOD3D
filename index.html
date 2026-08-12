@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-build-version="v13.38">
+<html lang="en" data-build-version="v13.59">
 <head>
 <script>
 // v13.14: retire legacy BOD3D PWA/service-worker caches that can pin old builds.
@@ -113,7 +113,7 @@ Changelog:
 - v2.8: Fixed uploaded PNG tile rotation in placement preview and on the map.
 - v2.9: Combat log now resets to “Ready to fight!” whenever a new monster encounter begins.
 -->
-<link rel="stylesheet" href="css/main.css?v=12.83">
+<link rel="stylesheet" href="css/main.css?v=13.59">
 <link rel="stylesheet" href="css/combat.css?v=12.78">
 <link rel="stylesheet" href="css/mobile.css?v=12.78">
 <!--
@@ -434,7 +434,7 @@ Changes:
 <!-- v12.61: Prevented cancelled placement from shuffling the reserved EXIT into the active stack, keeping it last after 40–50 floors; Ring guardian assignment now waits until at least 20 floor tiles are laid. -->
 <!-- v12.62: Sized the Red Dragon by its horizontal base footprint: 60 mm across on a 50 mm dungeon tile, allowing a deliberate 5 mm overlap on each side without changing other miniatures. -->
 <!-- v12.63: Increased the Red Dragon’s 60 mm base footprint by 30%, to approximately 78 mm across on a 50 mm dungeon tile. -->
-<link rel="stylesheet" href="css/patches.css?v=13.36">
+<link rel="stylesheet" href="css/patches.css?v=13.59">
 <!-- v12.79: Changed the post-monster two-item reward chooser to a high-contrast black panel with white text, borders and buttons so white spell symbols remain visible. -->
 <!-- v12.80: Standard game popups now use black panels with white text and controls; parchment remains reserved for the intro and narrative ending scrolls. -->
 <!-- v12.81: Excluded the parchment intro and ending scrolls from dark popup styling and added the uploaded illustrated Enter the dungeon button to the intro scroll. -->
@@ -522,6 +522,7 @@ Changes:
       <div class="cluster"><span class="badge" id="deckBadge">Tiles</span><span class="badge" id="monsterBadge">Monsters</span><span class="badge" id="itemBadge">Items</span></div>
       <div class="cluster"><button id="zoomOut">−</button><button id="centreBtn">Centre</button><button id="zoomIn">+</button><button id="viewBtn">3D View</button><button id="northUpBtn">North Up</button><button id="questLogBtn">Quest Log</button><button id="menuBtn">☰ Menu</button></div>
     </div>
+    <div id="questObjective">Your quest — Find the Ring, defeat the Red Dragon and exit the dungeon!</div>
     <div id="viewport"><canvas id="threeBoard"></canvas><div id="camera3d"><div id="world"></div></div></div>
     <div id="mobileDpad" aria-label="Movement controls">
       <button class="dpadBtn dpadN" data-dir="N" aria-label="North">N</button>
@@ -748,7 +749,7 @@ Changes:
 
 <script src="js/patches.js?v=12.78"></script>
 <script src="js/audio.js?v=13.19"></script>
-<script src="js/ui.js?v=12.78"></script>
+<script src="js/ui.js?v=13.59"></script>
 <script src="js/analytics.js?v=12.88"></script>
 </body>
 </html>

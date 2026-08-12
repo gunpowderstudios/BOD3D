@@ -2,9 +2,9 @@
 // Started in TEST v12.68 with the proven mobile character drawer behaviour.
 // Additional UI patches will move here only after separate verification.
 
-// Live v13.48 — approved TEST UI fixes promoted to Live.
+// Live v13.59 — approved TEST UI changes promoted to Live.
 (function(){
-  const version='v13.48';
+  const version='v13.59';
   function sync(){
     document.documentElement.dataset.buildVersion=version;
     const visible=document.getElementById('visibleBuildVersion');

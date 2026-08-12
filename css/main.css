@@ -32,6 +32,31 @@ button:disabled{opacity:.45;cursor:not-allowed;}
 #homeFullscreenBtn{position:fixed;z-index:520}
 .controlIcon{display:block;width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 #topbar{right:52px}
+#questObjective{
+  position:absolute;
+  left:50%;
+  top:56px;
+  z-index:19;
+  transform:translateX(-50%);
+  width:min(720px,calc(100% - 120px));
+  color:rgba(255,255,255,.82);
+  font-size:14px;
+  line-height:1.2;
+  font-weight:600;
+  letter-spacing:.02em;
+  text-align:center;
+  text-shadow:0 1px 4px #000,0 0 5px #000;
+  pointer-events:none;
+}
+@media(max-width:800px){
+  #questObjective{
+    top:51px;
+    width:calc(100% - 130px);
+    font-size:12px;
+    line-height:1.15;
+  }
+  body.combatActive #questObjective{display:none!important;}
+}
 #viewport{position:absolute;inset:0;overflow:hidden;cursor:grab;touch-action:none;perspective:1200px}#viewport.dragging{cursor:grabbing}
 #camera3d{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 50%;pointer-events:none}
 #camera3d.view3d{transform:rotateX(var(--viewTilt,55deg)) rotateZ(var(--viewSpin,-3deg));}
