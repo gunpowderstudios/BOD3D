@@ -98,6 +98,11 @@
   line-height:1.1!important;
 }
 
+@media(min-width:901px){
+  #modal.introScrollModal .card:has(.testerWarningScroll)>#modalButtons{
+    transform:translateY(clamp(24px,5vh,40px))!important;
+  }
+}
 @media(max-height:760px) and (min-width:901px){
   #modal:has(.testerWarningScroll){padding:5px 12px!important}
   #modal .card:has(.testerWarningScroll){

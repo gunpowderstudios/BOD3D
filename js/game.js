@@ -1263,13 +1263,13 @@ function openMenu(){
   showModal('Menu','Game and display options.',[
     {text:'Resume',fn:closeModal},
     {text:'Rules',fn:()=>{closeModal();openRules();}},
-    {text:'The Short Story',fn:()=>{closeModal();openShortStory();}},
+    {text:'A Short Story',fn:()=>{closeModal();openShortStory();}},
     {text:'About',fn:()=>{closeModal();openAbout();}},
     {text:'New Game',cls:'red',fn:()=>{closeModal();if(confirm('Start a new dungeon?'))showCharSelect();}}
   ]);
 }
 
-function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal','aboutModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.dataset.backdropClose=buttons.some(x=>String(x.text||'').trim()==='Close')?'1':'0';if(!modal.dataset.backdropCloseWired){modal.dataset.backdropCloseWired='1';modal.addEventListener('click',event=>{if(event.target===modal&&modal.dataset.backdropClose==='1')closeModal();});}modal.classList.add('open');}
+function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal','aboutModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',1500)}
 function log(msg,cls){const d=document.createElement('div');d.className='logline '+(cls||'');d.textContent=msg;document.getElementById('log').appendChild(d);document.getElementById('log').scrollTop=99999;}
