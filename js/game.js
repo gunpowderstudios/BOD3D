@@ -1235,6 +1235,7 @@ function openRules(){
       <div><b style="color:#E9BA00">Your Quest</b><br>Find the <b>Ring</b>, defeat the <b>Red Dragon</b> and exit the dungeon!</div>
       <div><b style="color:#E9BA00">Explore the Dungeon</b><br>Use the <b>N, S, E and W</b> controls to move. When there is no dungeon tile in that direction, you will draw and place a new one. The dungeon is different every game.</div>
       <div><b style="color:#E9BA00">Fight Monsters</b><br>Enter a tile containing a monster and combat begins. Roll your dice, use your weapons and items, and reduce the monster to <b>0 Health</b> before it does the same to you.</div>
+      <div><b style="color:#E9BA00">Action Points (AP)</b><br>AP are used <b>only during combat</b>. Some weapons, items and spells cost AP to use. If you run out of AP, you can still fight, but you’ll be limited to <b>melee attacks</b>.</div>
       <div><b style="color:#E9BA00">Find Treasure</b><br>Defeated monsters may reward you with weapons, armour, spells, potions and other useful items. Equip the ones that best suit your adventurer.</div>
       <div><b style="color:#E9BA00">Find the Ring</b><br>Somewhere in the dungeon is the <b>Ring</b>. You must find and collect it before you can complete your quest.</div>
       <div><b style="color:#E9BA00">Defeat the Red Dragon</b><br>The Dragon guards the Exit. Find the Ring, defeat the Dragon and reach the Exit to escape the dungeon.</div>
