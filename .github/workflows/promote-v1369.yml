@@ -1,0 +1,100 @@
+name: BOD3D LIVE v13.69 approved TEST changes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/promote-v1369.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Promote approved v13.69 changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, found {count}')
+              return text.replace(old, new, 1)
+
+          game_path = Path('js/game.js')
+          game = game_path.read_text()
+          game = replace_once(
+              game,
+              "{text:'The Short Story',fn:()=>{closeModal();openShortStory();}},",
+              "{text:'A Short Story',fn:()=>{closeModal();openShortStory();}},",
+              'short story menu label'
+          )
+          old_modal = "function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal','aboutModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.dataset.backdropClose=buttons.some(x=>String(x.text||'').trim()==='Close')?'1':'0';if(!modal.dataset.backdropCloseWired){modal.dataset.backdropCloseWired='1';modal.addEventListener('click',event=>{if(event.target===modal&&modal.dataset.backdropClose==='1')closeModal();});}modal.classList.add('open');}"
+          new_modal = "function showModal(title,body,buttons){const modal=document.getElementById('modal');modal.classList.remove('modalEdge','questLogModal','rewardChoiceModal','introScrollModal','endingScrollModal','aboutModal');document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;const mb=document.getElementById('modalButtons');mb.innerHTML='';buttons.forEach(x=>addBtn(mb,x.text,x.cls,x.fn));const edgeInfo=buttons.length===1&&/^(Close|Continue)$/.test(buttons[0].text||'')&&String(body||'').length<360;modal.classList.toggle('modalEdge',edgeInfo);modal.classList.add('open');}"
+          game = replace_once(game, old_modal, new_modal, 'remove backdrop close handler')
+          game_path.write_text(game)
+
+          css_path = Path('css/patches.css')
+          css = css_path.read_text()
+          old_css = "  line-height:1.1!important;\n}\n\n@media(max-height:760px) and (min-width:901px){"
+          new_css = "\n".join([
+              "  line-height:1.1!important;",
+              "}",
+              "",
+              "@media(min-width:901px){",
+              "  #modal.introScrollModal .card:has(.testerWarningScroll)>#modalButtons{",
+              "    transform:translateY(clamp(24px,5vh,40px))!important;",
+              "  }",
+              "}",
+              "@media(max-height:760px) and (min-width:901px){"
+          ])
+          css = replace_once(css, old_css, new_css, 'desktop intro button spacing')
+          css_path.write_text(css)
+
+          index_path = Path('index.html')
+          index = index_path.read_text()
+          index = replace_once(index, 'data-build-version="v13.63"', 'data-build-version="v13.69"', 'build version')
+          index = replace_once(index, 'css/patches.css?v=13.59', 'css/patches.css?v=13.69', 'patches css cache')
+          index = replace_once(index, 'js/game.js?cache=20260813-live-v1363', 'js/game.js?cache=20260813-live-v1369', 'game cache')
+          index = replace_once(index, 'js/ui.js?v=13.63', 'js/ui.js?v=13.69', 'ui cache')
+          if 'noindex' in index.lower() or 'nofollow' in index.lower():
+              raise SystemExit('LIVE safety check: TEST-only robots directive detected')
+          index_path.write_text(index)
+
+          ui_path = Path('js/ui.js')
+          ui = ui_path.read_text()
+          ui = replace_once(ui, '// Live v13.63 — approved The Short Story menu promoted to Live.', '// Live v13.69 — approved TEST v13.69: stable popups, A Short Story label, and lower intro button.', 'ui version comment')
+          ui = replace_once(ui, "const version='v13.63';", "const version='v13.69';", 'ui version')
+          ui_path.write_text(ui)
+
+          workflow = Path('.github/workflows/promote-v1369.yml')
+          if workflow.exists():
+              workflow.unlink()
+
+          final_game = game_path.read_text()
+          final_css = css_path.read_text()
+          final_index = index_path.read_text()
+          final_ui = ui_path.read_text()
+          assert "{text:'A Short Story',fn:()=>{closeModal();openShortStory();}}," in final_game
+          assert 'backdropClose' not in final_game
+          assert 'translateY(clamp(24px,5vh,40px))' in final_css
+          assert 'data-build-version="v13.69"' in final_index
+          assert 'js/game.js?cache=20260813-live-v1369' in final_index
+          assert 'css/patches.css?v=13.69' in final_index
+          assert 'js/ui.js?v=13.69' in final_index
+          assert "const version='v13.69';" in final_ui
+          PY
+          git diff --check
+
+      - name: Commit validated LIVE v13.69
+        run: |
+          git config user.name "BOD3D LIVE updater"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "v13.69: promote approved TEST changes to live"
+          git push
