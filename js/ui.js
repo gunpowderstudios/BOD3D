@@ -2,9 +2,9 @@
 // Started in TEST v12.68 with the proven mobile character drawer behaviour.
 // Additional UI patches will move here only after separate verification.
 
-// Live v13.62 — approved Action Points rule promoted to Live.
+// Live v13.63 — approved The Short Story menu promoted to Live.
 (function(){
-  const version='v13.62';
+  const version='v13.63';
   function sync(){
     document.documentElement.dataset.buildVersion=version;
     const visible=document.getElementById('visibleBuildVersion');

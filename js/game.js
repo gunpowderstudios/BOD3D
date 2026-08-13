@@ -1243,10 +1243,27 @@ function openRules(){
       <div style="text-align:center"><b>One life, one chance and one more forgotten hero!</b></div>
     </div>`;
 }
+function openShortStory(){
+  showModal('THE SHORT STORY','',[{text:'Close',fn:closeModal}]);
+  const body=document.getElementById('modalBody');
+  if(!body)return;
+  const wrap=document.createElement('div');
+  wrap.style.cssText='max-height:min(62dvh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;line-height:1.4;padding:2px 6px 4px;white-space:normal;display:grid;gap:8px';
+  const paragraphs=Array.isArray(window.BOD3D_SHORT_STORY)?window.BOD3D_SHORT_STORY:[];
+  paragraphs.forEach(text=>{
+    const row=document.createElement('div');
+    row.textContent=text;
+    wrap.appendChild(row);
+  });
+  body.innerHTML='';
+  body.appendChild(wrap);
+}
+
 function openMenu(){
   showModal('Menu','Game and display options.',[
     {text:'Resume',fn:closeModal},
     {text:'Rules',fn:()=>{closeModal();openRules();}},
+    {text:'The Short Story',fn:()=>{closeModal();openShortStory();}},
     {text:'About',fn:()=>{closeModal();openAbout();}},
     {text:'New Game',cls:'red',fn:()=>{closeModal();if(confirm('Start a new dungeon?'))showCharSelect();}}
   ]);
@@ -2980,6 +2997,7 @@ renderCharSelect();
     'You awaken on a cold stone floor. Your weapons and possessions are gone.',
     'All that remains is your backpack—and somewhere in the darkness, something is moving.'
   ];
+  window.BOD3D_SHORT_STORY = paragraphs.slice();
 
   function appendStory(scroll) {
     if (!scroll || scroll.classList.contains('endingScroll')) return;
