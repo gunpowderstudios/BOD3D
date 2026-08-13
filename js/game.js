@@ -1228,14 +1228,24 @@ function openAbout(){
       <div style="font-size:12px;opacity:.72">Our tech wizards are always learning, so if you see any bugs (that you can’t slay), please email us at <a href="mailto:info@gunpowderstudios.co.uk">info@gunpowderstudios.co.uk</a>.</div>
     </div>`;
 }
+function openRules(){
+  showModal('HOW TO PLAY','',[{text:'Close',fn:closeModal}]);
+  document.getElementById('modalBody').innerHTML=`
+    <div style="max-height:min(62dvh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:left;line-height:1.35;padding:2px 6px 4px;white-space:normal">
+      <div><b style="color:#E9BA00">Your Quest</b><br>Find the <b>Ring</b>, defeat the <b>Red Dragon</b> and exit the dungeon!</div>
+      <div><b style="color:#E9BA00">Explore the Dungeon</b><br>Use the <b>N, S, E and W</b> controls to move. When there is no dungeon tile in that direction, you will draw and place a new one. The dungeon is different every game.</div>
+      <div><b style="color:#E9BA00">Fight Monsters</b><br>Enter a tile containing a monster and combat begins. Roll your dice, use your weapons and items, and reduce the monster to <b>0 Health</b> before it does the same to you.</div>
+      <div><b style="color:#E9BA00">Find Treasure</b><br>Defeated monsters may reward you with weapons, armour, spells, potions and other useful items. Equip the ones that best suit your adventurer.</div>
+      <div><b style="color:#E9BA00">Find the Ring</b><br>Somewhere in the dungeon is the <b>Ring</b>. You must find and collect it before you can complete your quest.</div>
+      <div><b style="color:#E9BA00">Defeat the Red Dragon</b><br>The Dragon guards the Exit. Find the Ring, defeat the Dragon and reach the Exit to escape the dungeon.</div>
+      <div><b style="color:#E9BA00">Death</b><br>Lose all your Health and your adventure may be over — although a few special items might save your skin!</div>
+      <div style="text-align:center"><b>One life, one chance and one more forgotten hero!</b></div>
+    </div>`;
+}
 function openMenu(){
   showModal('Menu','Game and display options.',[
     {text:'Resume',fn:closeModal},
-    {text:'North Up',fn:()=>{
-      closeModal();
-      window.BOD3D?.northUp?.();
-      resetCameraHeroTracking();
-    }},
+    {text:'Rules',fn:()=>{closeModal();openRules();}},
     {text:'About',fn:()=>{closeModal();openAbout();}},
     {text:'New Game',cls:'red',fn:()=>{closeModal();if(confirm('Start a new dungeon?'))showCharSelect();}}
   ]);
