@@ -1,0 +1,28 @@
+name: BOD3D LIVE dropped-item popup fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/live-dropped-items-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Promote tested dropped-item popup style
+        run: |
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpjc3MgPSBQYXRoKCJjc3MvcGF0Y2hlcy5jc3MiKQpzID0gY3NzLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQptYXJrZXIgPSAiLyogdjEzLjczIOKAlCBkcm9wcGVkLWl0ZW0gcG9wdXAgY2FyZHMgbWF0Y2ggdGhlIGJsYWNrL3doaXRlIG1vZGFsIHRoZW1lLiAqLyIKaWYgbWFya2VyIGluIHM6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJEcm9wcGVkLWl0ZW0gcG9wdXAgc3R5bGUgYWxyZWFkeSBwcmVzZW50IikKCmJsb2NrID0gcidnJwoKLyp2MTMuNzMg4oCUI GRyb3BwZWQtaXRlbSBwb3B1cCBjYXJkcyBtYXRjaCB0aGUgYmxhY2svd2hpdGUgbW9kYWwgdGhlbWUuICovCiNtb2RhbCAudGlsZUl0ZW1DYXJkewogIGJhY2tncm91bmQ6IzAwMCFpbXBvcnRhbnQ7CiAgY29sb3I6I2ZmZiFpbXBvcnRhbnQ7CiAgYm9yZGVyLWNvbG9yOiNmZmYhaW1wb3J0YW50OwogIGJveC1zaGFkb3c6bm9uZSFpbXBvcnRhbnQ7Cn0KI21vZGFsIC50aWxlSXRlbUNhcmQgYiwKI21vZGFsIC50aWxlSXRlbUNhcmQgc3Ryb25nLAojbW9kYWwgLnRpbGVJdGVtQ2FyZCAuc21hbGx7CiAgY29sb3I6I2ZmZiFpbXBvcnRhbnQ7Cn0KI21vZGFsIC50aWxlSXRlbUNhcmQgYnV0dG9uewogIGJhY2tncm91bmQ6IzAwMCFpbXBvcnRhbnQ7CiAgY29sb3I6I2ZmZiFpbXBvcnRhbnQ7CiAgYm9yZGVyLWNvbG9yOiNmZmYhaW1wb3J0YW50OwogIGJveC1zaGFkb3c6MnB4IDJweCAwICM3NzchaW1wb3J0YW50Owp9CiNtb2RhbCAudGlsZUl0ZW1DYXJkIGJ1dHRvbjpob3Zlcjpub3QoOmRpc2FibGVkKSwKI21vZGFsIC50aWxlSXRlbUNhcmQgYnV0dG9uOmZvY3VzLXZpc2libGV7CiAgYmFja2dyb3VuZDojZmZmIWltcG9ydGFudDsKICBjb2xvcjojMDAwIWltcG9ydGFudDsKfQonJycKY3NzLndyaXRlX3RleHQocy5yc3RyaXAoKSArIGJsb2NrICsgIlxuIiwgZW5jb2Rpbmc9InV0Zi04IikKCmluZGV4ID0gUGF0aCgiaW5kZXguaHRtbCIpCmggPSBpbmRleC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKaWYgJ2RhdGEtYnVpbGQtdmVyc2lvbj0idjEzLjcyIicgbm90IGluIGg6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJFeHBlY3RlZCBMSVZFIHYxMy43MiBidWlsZCBtYXJrZXIgbm90IGZvdW5kIikKaCA9IGgucmVwbGFjZSgnZGF0YS1idWlsZC12ZXJzaW9uPSJ2MTMuNzIiJywgJ2RhdGEtYnVpbGQtdmVyc2lvbj0idjEzLjczIicsIDEpCgpvbGRfcmVmID0gJ2Nzcy9wYXRjaGVzLmNzcz92PTEzLjY5JwppZiBvbGRfcmVmIG5vdCBpbiBoOgogICAgcmFpc2UgU3lzdGVtRXhpdCgiRXhwZWN0ZWQgbGl2ZSBwYXRjaGVzLmNzcyBjYWNoZSByZWZlcmVuY2Ugbm90IGZvdW5kIikKaCA9IGgucmVwbGFjZShvbGRfcmVmLCAnY3NzL3BhdGNoZXMuY3NzP3Y9MTMuNzMnLCAxKQoKaW5kZXgud3JpdGVfdGV4dChoLCBlbmNvZGluZz0idXRmLTgiKQo=' | base64 -d > /tmp/update.py
+          python3 /tmp/update.py
+      - name: Commit LIVE popup fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html css/patches.css
+          git commit -m "Fix dropped item popup colours in live"
+          git push origin main
