@@ -17,8 +17,51 @@ jobs:
           ref: main
       - name: Update files
         run: |
-          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKZ2FtZSA9IFBhdGgoImpzL2dhbWUuanMiKQpzID0gZ2FtZS5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKCnMsIG4gPSByZS5zdWJuKAogICAgciJkb2N1bWVudFwu dGl0bGU9J1BsYXkgQmFnIG9mIER1bmdlb24gM0QgRnJlZSBPbmxpbmUgXFx8IEd1bnBvd2RlciBTdHVkaW9zJzsiLnJlcGxhY2UoIiAiLCIiKSwKICAgICJkb2N1bWVudC50aXRsZT0nUGxheSBCYWcgb2YgRHVuZ2VvbiAzRCBGcmVlIE9ubGluZSDigJMgT3BlbiBTb3VyY2UgRHVuZ2VvbiBDcmF3bGVyJzsiLAogICAgcywKICAgIGNvdW50PTEsCikKaWYgbiAhPSAxOgogICAgcmFpc2UgU3lzdGVtRXhpdChmIkV4cGVjdGVkIG9uZSBvbGQgZG9jdW1lbnQgdGl0bGUsIGZvdW5kIHtufSIpCgpuZXdfYWJvdXQgPSAiIiIgICAgICA8ZGl2IHN0eWxlPSJmb250LXNpemU6MjBweDtmb250LXdlaWdodDpib2xkIj5PcGVuIFNvdXJjZSDigJQgTWFrZSBZb3VyIE93biBBZHZlbnR1cmU8L2Rpdj4KICAgICAgPGRpdj48Yj5CT0QzROKAmXMgY29kZSBpcyBvcGVuIHNvdXJjZS48L2I+IEhhdmUgYSBwbGF5LCBwZWVrIGluc2lkZSB0aGUgY29kZSBhbmQgbGVhcm4gaG93IGl0IHdvcmtzIOKAlCBvciBmb3JrL2Rvd25sb2FkIGl0IGFuZCBjcmVhdGUgeW91ciBvd24gZHVuZ2VvbiBhZHZlbnR1cmUuPC9kaXY+CiAgICAgIDxkaXY+PGEgaHJlZj0iaHR0cHM6Ly9naXRodWIuY29tL2d1bnBvd2RlcnN0dWRpb3MvQk9EM0QiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vb3BlbmVyIG5vcmVmZXJyZXIiPjxiPlZpZXcgLyBkb3dubG9hZCBCT0QzRCBvbiBHaXRIdWI8L2I+PC9hPjxicj48YSBocmVmPSJodHRwczovL2dpdGh1Yi5jb20vZ3VucG93ZGVyc3R1ZGlvcy9CT0QzRC9ibG9iL21haW4vTElDRU5TRSIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9vcGVuZXIgbm9yZWZlcnJlciI+TUlUIGNvZGUgbGljZW5jZTwvYT4gwrcgPGEgaHJlZj0iaHR0cHM6Ly9naXRodWIuY29tL2d1bnBvd2RlcnN0dWRpb3MvQk9EM0QvYmxvYi9tYWluL0ZBTi1DT05URU5ULUxJQ0VOU0UubWQiIHRhcmdldD0iX2JsYW5rIiByZWw9Im5vb3BlbmVyIG5vcmVmZXJyZXIiPkZhbiBDb250ZW50IExpY2VuY2U8L2E+PC9kaXY+CiAgICAgIDxkaXYgc3R5bGU9ImZvbnQtc2l6ZToxM3B4O29wYWNpdHk6LjgyIj5UaGUgSFRNTCwgQ1NTIGFuZCBKYXZhU2NyaXB0IGNvZGUgaXMgTUlULWxpY2Vuc2VkLiBCYWcgb2YgRHVuZ2VvbiBhcnR3b3JrLCBjaGFyYWN0ZXJzLCBsb2dvcywgM0QgbW9kZWxzLCBhdWRpbyBhbmQgb3RoZXIgY3JlYXRpdmUgYXNzZXRzIHJlbWFpbiBwcm90ZWN0ZWQgYnkgR3VucG93ZGVyIFN0dWRpb3MuIEZyZWUgbm9uLWNvbW1lcmNpYWwgZmFuIGFkdmVudHVyZXMgdXNpbmcgdGhlIHN1cHBsaWVkIEJPRDNEIGFzc2V0cyBhcmUgd2VsY29tZSB1bmRlciB0aGUgRmFuIENvbnRlbnQgTGljZW5jZS48L2Rpdj4iIiIKCnBhdHRlcm4gPSByJ1xz ezZ9PGRpdiBzdHlsZT1cXD8iZm9udC1zaXplOjIwcHg7Zm9udC13ZWlnaHQ6Ym9sZFxcPyI+Tm9uLWNvbW1lcmNpYWwgdXNlPC9kaXY+XG5cc3s2fTxkaXY+Qk9EM0TigJlzIHNvdXJjZSBjb2RlIG1heSBiZSBkb3dubG9hZGVkLio/PC9kaXY+Jy5yZXBsYWNlKCIgIiwiIikKcyw gbiA9IHJlLnN1Ym4ocGF0dGVybiwgbmV3X2Fib3V0LCBzLCBjb3VudD0xKQppZiBuICE9IDE6CiAgICBwYXR0ZXJuMiA9IHInXHMqPGRpdlt ePl0qPk5vbi1jb21tZXJjaWFsIHVzZTwvZGl2PlxzKjxkaXY+Qk9EM0TigJlzIHNvdXJjZSBjb2RlIG1heSBiZSBkb3dubG9hZGVkLio/PC9kaXY+Jy5yZXBsYWNlKCIgIiwiIikKICAgIHMsIG4gPSByZS5zdWJuKHBhdHRlcm4yLCAiXG4iICsgbmV3X2Fib3V0LCBzLCBjb3VudD0xLCBmbGFncz1yZS5TKQppZiBuICE9IDE6CiAgICByYWlzZSBTeXN0ZW1FeGl0KGYiRXhwZWN0ZWQgb25lIG9sZCBBYm91dCBsaWNlbnNpbmcgYmxvY2ssIGZvdW5kIHtufSIpCgpnYW1lLndyaXRlX3RleHQocywgZW5jb2Rpbmc9InV0Zi04IikKCmluZGV4ID0gUGF0aCgiaW5kZXguaHRtbCIpCmggPSBpbmRleC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKZm9yIG9sZCwgbmV3IGluIFsKICAgICgnZGF0YS1idWlsZC12ZXJzaW9uPSJ2MTMuNzEiJywgJ2RhdGEtYnVpbGQtdmVyc2lvbj0idjEzLjcyIicsKSwKICAgICgnanMvZ2FtZS5qcz9jYWNoZT0yMDI2MDgxMy1saXZlLXYxMzY5JywgJ2pzL2dhbWUuanM/Y2FjaGU9MjAyNjA4MTUtbGl2ZS12MTM3MicpLAogICAgKCdqcy91aS5qcz92PTEzLjY5JywgJ2pzL3VpLmpzP3Y9MTMuNzInKSwKXToKICAgIGlmIG9sZCBub3QgaW4gaDoKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KGYiRXhwZWN0ZWQgaW5kZXggdGV4dCBub3QgZm91bmQ6IHtvbGR9IikKICAgIGggPSBoLnJlcGxhY2Uob2xkLCBuZXcsIDEpCmluZGV4LndyaXRlX3RleHQoaCwgZW5jb2Rpbmc9InV0Zi04IikKCnVpID0gUGF0aCgianMvdWkuanMiKQp1ID0gdWkucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCnUsIG4gPSByZS5zdWJuKAogICAgciIvLyBMaXZlIHYxM1wuNjkg4oCUIGFwcHJvdmVkIFRFU1QgdjEzXC42OTogc3RhYmxlIHBvcHVwcywgQSBTaG9ydCBTdG9yeSBsYWJlbCwgYW5kIGxvd2VyIGludHJvIGJ1dHRvblwuXG4\(ZnVuY3Rpb25cKFwpXFtcbl0gIGNvbnN0IHZlcnNpb249J3YxM1wuNjknOyIucmVwbGFjZSgiWyIsIiIpLAogICAgIi8vIEJ1aWxkIHZlcnNpb24gZm9sbG93cyBpbmRleC5odG1sIHNvIHRoZSB2aXNpYmxlIGxhYmVsIGNhbm5vdCBvdmVyd3JpdGUgbmV3ZXIgcmVsZWFzZXMuXG4oZnVuY3Rpb24oKXt cbiAgY29uc3QgdmVyc2lvbj1kb2N1bWVudC5kb2N1bWVudEVsZW1lbnQuZGF0YXNldC5idWlsZFZlcnNpb258fCdkZXZlbG9wbWVudCc7IiwKICAgIHUsCiAgICBjb3VudD0xLAp pCmlmIG4gIT0gMToKICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJFeHBlY3RlZCBVSSB2ZXJzaW9uIGJsb2NrLCBmb3VuZCB7bn0iKQp1aS53cml0ZV90ZXh0KHUsIGVuY29kaW5nPSJ1dGYtOCIpCg==' | tr -d ' ' | base64 -d > /tmp/bod3d_update.py
-          python3 /tmp/bod3d_update.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          game = Path('js/game.js')
+          s = game.read_text(encoding='utf-8')
+
+          old_title = "document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';"
+          new_title = "document.title='Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler';"
+          if old_title not in s:
+              raise SystemExit('Old document title not found')
+          s = s.replace(old_title, new_title, 1)
+
+          new_about = '''      <div style="font-size:20px;font-weight:bold">Open Source — Make Your Own Adventure</div>
+                <div><b>BOD3D’s code is open source.</b> Have a play, peek inside the code and learn how it works — or fork/download it and create your own dungeon adventure.</div>
+                <div><a href="https://github.com/gunpowderstudios/BOD3D" target="_blank" rel="noopener noreferrer"><b>View / download BOD3D on GitHub</b></a><br><a href="https://github.com/gunpowderstudios/BOD3D/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT code licence</a> · <a href="https://github.com/gunpowderstudios/BOD3D/blob/main/FAN-CONTENT-LICENSE.md" target="_blank" rel="noopener noreferrer">Fan Content Licence</a></div>
+                <div style="font-size:13px;opacity:.82">The HTML, CSS and JavaScript code is MIT-licensed. Bag of Dungeon artwork, characters, logos, 3D models, audio and other creative assets remain protected by Gunpowder Studios. Free non-commercial fan adventures using the supplied BOD3D assets are welcome under the Fan Content Licence.</div>'''
+
+          pattern = r'<div[^>]*>Non-commercial use</div>\s*<div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit\. Commercial use requires written permission from Gunpowder Studios\. Our company name, game names, logos, trademarks and 3D models are not included in this permission\.</div>'
+          s, count = re.subn(pattern, new_about, s, count=1)
+          if count != 1:
+              raise SystemExit(f'Old About licensing block not found: {count}')
+          game.write_text(s, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          for old, new in [
+              ('data-build-version="v13.71"', 'data-build-version="v13.72"'),
+              ('js/game.js?cache=20260813-live-v1369', 'js/game.js?cache=20260815-live-v1372'),
+              ('js/ui.js?v=13.69', 'js/ui.js?v=13.72'),
+          ]:
+              if old not in h:
+                  raise SystemExit(f'Index text not found: {old}')
+              h = h.replace(old, new, 1)
+          index.write_text(h, encoding='utf-8')
+
+          ui = Path('js/ui.js')
+          u = ui.read_text(encoding='utf-8')
+          old_ui = "// Live v13.69 — approved TEST v13.69: stable popups, A Short Story label, and lower intro button.\n(function(){\n  const version='v13.69';"
+          new_ui = "// Build version follows index.html so the visible label cannot overwrite newer releases.\n(function(){\n  const version=document.documentElement.dataset.buildVersion||'development';"
+          if old_ui not in u:
+              raise SystemExit('UI version block not found')
+          u = u.replace(old_ui, new_ui, 1)
+          ui.write_text(u, encoding='utf-8')
+          PY
       - name: Commit
         run: |
           git config user.name github-actions[bot]
