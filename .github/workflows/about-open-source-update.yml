@@ -1,0 +1,71 @@
+name: One-shot About open-source update
+
+on:
+  push:
+    paths:
+      - '.github/workflows/about-open-source-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-about:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update About and version
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          game = Path('js/game.js')
+          s = game.read_text(encoding='utf-8')
+
+          old_title = "document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';"
+          new_title = "document.title='Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler';"
+          if old_title not in s:
+              raise SystemExit('Expected old document title not found')
+          s = s.replace(old_title, new_title, 1)
+
+          old_about = '''      <div style=\"font-size:20px;font-weight:bold\">Non-commercial use</div>
+      <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>'''
+          new_about = '''      <div style=\"font-size:20px;font-weight:bold\">Open Source — Make Your Own Adventure</div>
+      <div><b>BOD3D’s code is open source.</b> Have a play, peek inside the code and learn how it works — or fork/download it and create your own dungeon adventure.</div>
+      <div><a href=\"https://github.com/gunpowderstudios/BOD3D\" target=\"_blank\" rel=\"noopener noreferrer\"><b>View / download BOD3D on GitHub</b></a><br><a href=\"https://github.com/gunpowderstudios/BOD3D/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener noreferrer\">MIT code licence</a> · <a href=\"https://github.com/gunpowderstudios/BOD3D/blob/main/FAN-CONTENT-LICENSE.md\" target=\"_blank\" rel=\"noopener noreferrer\">Fan Content Licence</a></div>
+      <div style=\"font-size:13px;opacity:.82\">The HTML, CSS and JavaScript code is MIT-licensed. Bag of Dungeon artwork, characters, logos, 3D models, audio and other creative assets remain protected by Gunpowder Studios. Free non-commercial fan adventures using the supplied BOD3D assets are welcome under the Fan Content Licence.</div>'''
+          if old_about not in s:
+              raise SystemExit('Expected old About licensing block not found')
+          s = s.replace(old_about, new_about, 1)
+          game.write_text(s, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          replacements = {
+              'data-build-version="v13.71"': 'data-build-version="v13.72"',
+              'js/game.js?cache=20260813-live-v1369': 'js/game.js?cache=20260815-live-v1372',
+              'js/ui.js?v=13.69': 'js/ui.js?v=13.72',
+          }
+          for old, new in replacements.items():
+              if old not in h:
+                  raise SystemExit(f'Expected index text not found: {old}')
+              h = h.replace(old, new, 1)
+          index.write_text(h, encoding='utf-8')
+
+          ui = Path('js/ui.js')
+          u = ui.read_text(encoding='utf-8')
+          old = "// Live v13.69 — approved TEST v13.69: stable popups, A Short Story label, and lower intro button.\n(function(){\n  const version='v13.69';"
+          new = "// Build version follows index.html so the visible label cannot overwrite newer releases.\n(function(){\n  const version=document.documentElement.dataset.buildVersion||'development';"
+          if old not in u:
+              raise SystemExit('Expected UI version block not found')
+          u = u.replace(old, new, 1)
+          ui.write_text(u, encoding='utf-8')
+          PY
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html js/game.js js/ui.js
+          git commit -m "Update About with BOD3D open-source information"
+          git push origin main
