@@ -2,9 +2,9 @@
 // Started in TEST v12.68 with the proven mobile character drawer behaviour.
 // Additional UI patches will move here only after separate verification.
 
-// Live v13.69 — approved TEST v13.69: stable popups, A Short Story label, and lower intro button.
+// Build version follows index.html so the visible label cannot overwrite newer releases.
 (function(){
-  const version='v13.69';
+  const version=document.documentElement.dataset.buildVersion||'development';
   function sync(){
     document.documentElement.dataset.buildVersion=version;
     const visible=document.getElementById('visibleBuildVersion');

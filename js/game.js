@@ -4,7 +4,7 @@
 const VERSION=document.documentElement.dataset.buildVersion||'development';
 // The build version has one source: index.html's data-build-version attribute.
 // The logo reads the same value directly from the page, avoiding cache mismatches.
-document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';
+document.title='Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler';
 
 // Developer tools are available only on TEST and local development builds.
 // The same code can be promoted safely: LIVE disables every activation route automatically.
@@ -1221,8 +1221,10 @@ function openAbout(){
       <div><b>BOD3D</b> is based on the <b>Bag of Dungeon</b> board game for <b>1–4 players</b>.</div>
       <div>Special thanks to <a href="https://freesound.org/" target="_blank" rel="noopener noreferrer">Freesound.org</a> for providing some of the game’s fun sound effects!</div>
       <div>All 3D models remain the copyright of <b>Gunpowder Studios</b> and were sculpted by <a href="https://www.etsy.com/uk/shop/RussLawModelMaker" target="_blank" rel="noopener noreferrer">Russ Law</a>. You can purchase our models from <a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">Gunpowder Studios</a>, or contact Russ through his Etsy shop to commission your own custom model.</div>
-      <div style="font-size:20px;font-weight:bold">Non-commercial use</div>
-      <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>
+            <div style="font-size:20px;font-weight:bold">Open Source — Make Your Own Adventure</div>
+      <div><b>BOD3D’s code is open source.</b> Have a play, peek inside the code and learn how it works — or fork/download it and create your own dungeon adventure.</div>
+      <div><a href="https://github.com/gunpowderstudios/BOD3D" target="_blank" rel="noopener noreferrer"><b>View / download BOD3D on GitHub</b></a><br><a href="https://github.com/gunpowderstudios/BOD3D/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT code licence</a> · <a href="https://github.com/gunpowderstudios/BOD3D/blob/main/FAN-CONTENT-LICENSE.md" target="_blank" rel="noopener noreferrer">Fan Content Licence</a></div>
+      <div style="font-size:13px;opacity:.82">The HTML, CSS and JavaScript code is MIT-licensed. Bag of Dungeon artwork, characters, logos, 3D models, audio and other creative assets remain protected by Gunpowder Studios. Free non-commercial fan adventures using the supplied BOD3D assets are welcome under the Fan Content Licence.</div>
       <div>Visit our website to see the full range:<br><a href="https://www.gunpowderstudios.co.uk/" target="_blank" rel="noopener noreferrer">www.gunpowderstudios.co.uk</a></div>
       <div><b>Thanks for playing. Your journey continues over at our website.</b><br>© Gunpowder Studios Ltd. All rights reserved.</div>
       <div style="font-size:12px;opacity:.72">Our tech wizards are always learning, so if you see any bugs (that you can’t slay), please email us at <a href="mailto:info@gunpowderstudios.co.uk">info@gunpowderstudios.co.uk</a>.</div>
