@@ -1,71 +1,28 @@
-name: One-shot About open-source update
+name: BOD3D About Update
 
 on:
   push:
     paths:
-      - '.github/workflows/about-open-source-update.yml'
+      - .github/workflows/about-open-source-update.yml
 
 permissions:
   contents: write
 
 jobs:
-  update-about:
+  update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Update About and version
+      - name: Update files
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          game = Path('js/game.js')
-          s = game.read_text(encoding='utf-8')
-
-          old_title = "document.title='Play Bag of Dungeon 3D Free Online | Gunpowder Studios';"
-          new_title = "document.title='Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler';"
-          if old_title not in s:
-              raise SystemExit('Expected old document title not found')
-          s = s.replace(old_title, new_title, 1)
-
-          old_about = '''      <div style=\"font-size:20px;font-weight:bold\">Non-commercial use</div>
-      <div>BOD3D’s source code may be downloaded, adapted and shared for non-commercial purposes with appropriate credit. Commercial use requires written permission from Gunpowder Studios. Our company name, game names, logos, trademarks and 3D models are not included in this permission.</div>'''
-          new_about = '''      <div style=\"font-size:20px;font-weight:bold\">Open Source — Make Your Own Adventure</div>
-      <div><b>BOD3D’s code is open source.</b> Have a play, peek inside the code and learn how it works — or fork/download it and create your own dungeon adventure.</div>
-      <div><a href=\"https://github.com/gunpowderstudios/BOD3D\" target=\"_blank\" rel=\"noopener noreferrer\"><b>View / download BOD3D on GitHub</b></a><br><a href=\"https://github.com/gunpowderstudios/BOD3D/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener noreferrer\">MIT code licence</a> · <a href=\"https://github.com/gunpowderstudios/BOD3D/blob/main/FAN-CONTENT-LICENSE.md\" target=\"_blank\" rel=\"noopener noreferrer\">Fan Content Licence</a></div>
-      <div style=\"font-size:13px;opacity:.82\">The HTML, CSS and JavaScript code is MIT-licensed. Bag of Dungeon artwork, characters, logos, 3D models, audio and other creative assets remain protected by Gunpowder Studios. Free non-commercial fan adventures using the supplied BOD3D assets are welcome under the Fan Content Licence.</div>'''
-          if old_about not in s:
-              raise SystemExit('Expected old About licensing block not found')
-          s = s.replace(old_about, new_about, 1)
-          game.write_text(s, encoding='utf-8')
-
-          index = Path('index.html')
-          h = index.read_text(encoding='utf-8')
-          replacements = {
-              'data-build-version="v13.71"': 'data-build-version="v13.72"',
-              'js/game.js?cache=20260813-live-v1369': 'js/game.js?cache=20260815-live-v1372',
-              'js/ui.js?v=13.69': 'js/ui.js?v=13.72',
-          }
-          for old, new in replacements.items():
-              if old not in h:
-                  raise SystemExit(f'Expected index text not found: {old}')
-              h = h.replace(old, new, 1)
-          index.write_text(h, encoding='utf-8')
-
-          ui = Path('js/ui.js')
-          u = ui.read_text(encoding='utf-8')
-          old = "// Live v13.69 — approved TEST v13.69: stable popups, A Short Story label, and lower intro button.\n(function(){\n  const version='v13.69';"
-          new = "// Build version follows index.html so the visible label cannot overwrite newer releases.\n(function(){\n  const version=document.documentElement.dataset.buildVersion||'development';"
-          if old not in u:
-              raise SystemExit('Expected UI version block not found')
-          u = u.replace(old, new, 1)
-          ui.write_text(u, encoding='utf-8')
-          PY
-      - name: Commit update
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpnYW1lID0gUGF0aCgianMvZ2FtZS5qcyIpCnMgPSBnYW1lLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQoKb2xkX3RpdGxlID0gImRvY3VtZW50LnRpdGxlPSdQbGF5IEJhZyBvZiBEdW5nZW9uIDNEIEZyZWUgT25saW5lIHwgR3VucG93ZGVyIFN0dWRpb3MnOyIKbmV3X3RpdGxlID0gImRvY3VtZW50LnRpdGxlPSdQbGF5IEJhZyBvZiBEdW5nZW9uIDNEIEZyZWUgT25saW5lIOKAkyBPcGVuIFNvdXJjZSBEdW5nZW9uIENyYXdsZXInOyIKaWYgb2xkX3RpdGxlIG5vdCBpbiBzOgogICAgcmFpc2UgU3lzdGVtRXhpdCgiRXhwZWN0ZWQgb2xkIGRvY3VtZW50IHRpdGxlIG5vdCBmb3VuZCIpCnMgPSBzLnJlcGxhY2Uob2xkX3RpdGxlLCBuZXdfdGl0bGUsIDEpCgpvbGRfYWJvdXQgPSAiIiIgICAgICA8ZGl2IHN0eWxlPVxcImZvbnQtc2l6ZToyMHB4O2ZvbnQtd2VpZ2h0OmJvbGRcXCI+Tm9uLWNvbW1lcmNpYWwgdXNlPC9kaXY+CiAgICAgIDxkaXY+Qk9EM0TigJlzIHNvdXJjZSBjb2RlIG1heSBiZSBkb3dubG9hZGVkLCBhZGFwdGVkIGFuZCBzaGFyZWQgZm9yIG5vbi1jb21tZXJjaWFsIHB1cnBvc2VzIHdpdGggYXBwcm9wcmlhdGUgY3JlZGl0LiBDb21tZXJjaWFsIHVzZSByZXF1aXJlcyB3cml0dGVuIHBlcm1pc3Npb24gZnJvbSBHdW5wb3dkZXIgU3R1ZGlvcy4gT3VyIGNvbXBhbnkgbmFtZSwgZ2FtZSBuYW1lcywgbG9nb3MsIHRyYWRlbWFya3MgYW5kIDNEIG1vZGVscyBhcmUgbm90IGluY2x1ZGVkIGluIHRoaXMgcGVybWlzc2lvbi48L2Rpdj4iIiIKbmV3X2Fib3V0ID0gIiIiICAgICAgPGRpdiBzdHlsZT1cImZvbnQtc2l6ZToyMHB4O2ZvbnQtd2VpZ2h0OmJvbGRcIj5PcGVuIFNvdXJjZSDigJQgTWFrZSBZb3VyIE93biBBZHZlbnR1cmU8L2Rpdj4KICAgICAgPGRpdj48Yj5CT0QzROKAmXMgY29kZSBpcyBvcGVuIHNvdXJjZS48L2I+IEhhdmUgYSBwbGF5LCBwZWVrIGluc2lkZSB0aGUgY29kZSBhbmQgbGVhcm4gaG93IGl0IHdvcmtzIOKAlCBvciBmb3JrL2Rvd25sb2FkIGl0IGFuZCBjcmVhdGUgeW91ciBvd24gZHVuZ2VvbiBhZHZlbnR1cmUuPC9kaXY+CiAgICAgIDxkaXY+PGEgaHJlZj1cImh0dHBzOi8vZ2l0aHViLmNvbS9ndW5wb3dkZXJzdHVkaW9zL0JPRDNEXCIgdGFyZ2V0PVwiX2JsYW5rXCIgcmVsPVwibm9vcGVuZXIgbm9yZWZlcnJlclwiPjxiPlZpZXcgLyBkb3dubG9hZCBCT0QzRCBvbiBHaXRIdWI8L2I+PC9hPjxicj48YSBocmVmPVwiaHR0cHM6Ly9naXRodWIuY29tL2d1bnBvd2RlcnN0dWRpb3MvQk9EM0QvYmxvYi9tYWluL0xJQ0VOU0VcIiB0YXJnZXQ9XCJfYmxhbmtcIiByZWw9XCJub29wZW5lciBub3JlZmVycmVyXCI+TUlUIGNvZGUgbGljZW5jZTwvYT4gwrcgPGEgaHJlZj1cImh0dHBzOi8vZ2l0aHViLmNvbS9ndW5wb3dkZXJzdHVkaW9zL0JPRDNEL2Jsb2IvbWFpbi9GQU4tQ09OVEVOVC1MSUNFTlNFLm1kXCIgdGFyZ2V0PVwiX2JsYW5rXCIgcmVsPVwibm9vcGVuZXIgbm9yZWZlcnJlclwiPkZhbiBDb250ZW50IExpY2VuY2U8L2E+PC9kaXY+CiAgICAgIDxkaXYgc3R5bGU9XCJmb250LXNpemU6MTNweDtvcGFjaXR5Oi44MlwiPlRoZSBIVE1MLCBDU1MgYW5kIEphdmFTY3JpcHQgY29kZSBpcyBNSVQtbGljZW5zZWQuIEJhZyBvZiBEdW5nZW9uIGFydHdvcmssIGNoYXJhY3RlcnMsIGxvZ29zLCAzRCBtb2RlbHMsIGF1ZGlvIGFuZCBvdGhlciBjcmVhdGl2ZSBhc3NldHMgcmVtYWluIHByb3RlY3RlZCBieSBHdW5wb3dkZXIgU3R1ZGlvcy4gRnJlZSBub24tY29tbWVyY2lhbCBmYW4gYWR2ZW50dXJlcyB1c2luZyB0aGUgc3VwcGxpZWQgQk9EM0QgYXNzZXRzIGFyZSB3ZWxjb21lIHVuZGVyIHRoZSBGYW4gQ29udGVudCBMaWNlbmNlLjwvZGl2PiIiIgppZiBvbGRfYWJvdXQgbm90IGluIHM6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCJFeHBlY3RlZCBvbGQgQWJvdXQgbGljZW5zaW5nIGJsb2NrIG5vdCBmb3VuZCIpCnMgPSBzLnJlcGxhY2Uob2xkX2Fib3V0LCBuZXdfYWJvdXQsIDEpCmdhbWUud3JpdGVfdGV4dChzLCBlbmNvZGluZz0idXRmLTgiKQoKaW5kZXggPSBQYXRoKCJpbmRleC5odG1sIikKaCA9IGluZGV4LnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQpyZXBsYWNlbWVudHMgPSB7CiAgICAnZGF0YS1idWlsZC12ZXJzaW9uPSJ2MTMuNzEiJzogJ2RhdGEtYnVpbGQtdmVyc2lvbj0idjEzLjcyIicsCiAgICAnanMvZ2FtZS5qcz9jYWNoZT0yMDI2MDgxMy1saXZlLXYxMzY5JzogJ2pzL2dhbWUuanM/Y2FjaGU9MjAyNjA4MTUtbGl2ZS12MTM3MicsCiAgICAnanMvdWkuanM/dj0xMy42OSc6ICdqcy91aS5qcz92PTEzLjcyJywKfQpmb3Igb2xkLCBuZXcgaW4gcmVwbGFjZW1lbnRzLml0ZW1zKCk6CiAgICBpZiBvbGQgbm90IGluIGg6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdChmIkV4cGVjdGVkIGluZGV4IHRleHQgbm90IGZvdW5kOiB7b2xkfSIpCiAgICBoID0gaC5yZXBsYWNlKG9sZCwgbmV3LCAxKQppbmRleC53cml0ZV90ZXh0KGgsIGVuY29kaW5nPSJ1dGYtOCIpCgp1aSA9IFBhdGgoImpzL3VpLmpzIikKdSA9IHVpLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQpvbGQgPSAiLy8gTGl2ZSB2MTMuNjkg4oCUIGFwcHJvdmVkIFRFU1QgdjEzLjY5OiBzdGFibGUgcG9wdXBzLCBBIFNob3J0IFN0b3J5IGxhYmVsLCBhbmQgbG93ZXIgaW50cm8gYnV0dG9uLlxuKGZ1bmN0aW9uKCl7XG4gIGNvbnN0IHZlcnNpb249J3YxMy42OSc7IgpuZXcgPSAiLy8gQnVpbGQgdmVyc2lvbiBmb2xsb3dzIGluZGV4Lmh0bWwgc28gdGhlIHZpc2libGUgbGFiZWwgY2Fubm90IG92ZXJ3cml0ZSBuZXdlciByZWxlYXNlcy5cbihmdW5jdGlvbigpe1xuICBjb25zdCB2ZXJzaW9uPWRvY3VtZW50LmRvY3VtZW50RWxlbWVudC5kYXRhc2V0LmJ1aWxkVmVyc2lvbnx8J2RldmVsb3BtZW50JzsiCmlmIG9sZCBub3QgaW4gdToKICAgIHJhaXNlIFN5c3RlbUV4aXQoIkV4cGVjdGVkIFVJIHZlcnNpb24gYmxvY2sgbm90IGZvdW5kIikKdSA9IHUucmVwbGFjZShvbGQsIG5ldywgMSkKdWkud3JpdGVfdGV4dCh1LCBlbmNvZGluZz0idXRmLTgiKQo=' | base64 -d > /tmp/bod3d_update.py
+          python3 /tmp/bod3d_update.py
+      - name: Commit
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html js/game.js js/ui.js
-          git commit -m "Update About with BOD3D open-source information"
+          git commit -m 'Update About with BOD3D open-source information'
           git push origin main
