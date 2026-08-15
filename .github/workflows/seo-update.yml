@@ -1,0 +1,46 @@
+name: One-shot BOD3D SEO update
+
+on:
+  push:
+    paths:
+      - '.github/workflows/seo-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-seo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Update BOD3D SEO metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          replacements = {
+              'data-build-version="v13.69"': 'data-build-version="v13.70"',
+              '<title>Play Bag of Dungeon 3D Free Online | Gunpowder Studios</title>': '<title>Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler</title>',
+              '<meta name="description" content="Play Bag of Dungeon 3D free online. Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />': '<meta name="description" content="Play Bag of Dungeon 3D free online – an open-source fantasy dungeon crawler. Explore randomly generated dungeons, battle monsters, escape the Red Dragon, or download the code and create your own adventures." />',
+              '<meta property="og:title" content="Play Bag of Dungeon 3D Free Online" />': '<meta property="og:title" content="Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler" />',
+              '<meta property="og:description" content="Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />': '<meta property="og:description" content="Play free, explore randomly generated dungeons, battle monsters, or download the open-source code and create your own adventures." />',
+              '<meta name="twitter:title" content="Play Bag of Dungeon 3D Free Online" />': '<meta name="twitter:title" content="Play Bag of Dungeon 3D Free Online – Open Source Dungeon Crawler" />',
+              '<meta name="twitter:description" content="Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon." />': '<meta name="twitter:description" content="Play free, explore randomly generated dungeons, battle monsters, or download the open-source code and create your own adventures." />',
+              '"description": "A free solo browser dungeon adventure based on the Bag of Dungeon board game. Explore a randomly generated dungeon, battle monsters, find the Ring of Creation and escape past the Red Dragon."': '"description": "A free open-source fantasy dungeon crawler based on the Bag of Dungeon board game. Explore randomly generated dungeons, battle monsters, escape the Red Dragon, or download the code and create your own adventures."'
+          }
+          for old, new in replacements.items():
+              if old not in s:
+                  raise SystemExit(f'Expected text not found: {old}')
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit SEO update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Update BOD3D SEO for open-source adventures"
+          git push origin main
