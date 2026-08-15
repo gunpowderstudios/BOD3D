@@ -1837,3 +1837,28 @@ body.combatActive #combatBtns button:not(.lethalIconBtn){
  @keyframes combatCommentaryIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 }
 @media(max-width:900px){.combatLatestCommentary{display:none!important}}
+
+/* v13.73 — dropped-item popup cards match the black/white modal theme. */
+#modal .tileItemCard{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#fff!important;
+  box-shadow:none!important;
+}
+#modal .tileItemCard b,
+#modal .tileItemCard strong,
+#modal .tileItemCard .small{
+  color:#fff!important;
+}
+#modal .tileItemCard button{
+  background:#000!important;
+  color:#fff!important;
+  border-color:#fff!important;
+  box-shadow:2px 2px 0 #777!important;
+}
+#modal .tileItemCard button:hover:not(:disabled),
+#modal .tileItemCard button:focus-visible{
+  background:#fff!important;
+  color:#000!important;
+}
+
