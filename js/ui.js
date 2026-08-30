@@ -196,7 +196,7 @@
     hint.id='bodTouchCameraHint';
     hint.setAttribute('role','status');
     hint.style.cssText='position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:9999;max-width:min(88vw,500px);padding:10px 34px 10px 14px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.35);border-radius:8px;color:#fff;font-size:16px;line-height:1.3;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.45);pointer-events:auto;';
-    hint.innerHTML='<span>Lay tiles to explore. Zoom, rotate (one finger) or pan (two fingers)!</span><button type="button" aria-label="Close camera hint" style="position:absolute;right:5px;top:3px;width:28px;height:28px;border:0;background:transparent;color:#fff;font-size:22px;line-height:26px;cursor:pointer;padding:0;">×</button>';
+    hint.innerHTML='<span>Lay tiles to explore, rotate, zoom, pan or click the map if you get lost. Good luck.</span><button type="button" aria-label="Close camera hint" style="position:absolute;right:5px;top:3px;width:28px;height:28px;border:0;background:transparent;color:#fff;font-size:22px;line-height:26px;cursor:pointer;padding:0;">×</button>';
     hint.querySelector('button')?.addEventListener('click',removeHint);
     const host=document.getElementById('viewport')||document.getElementById('threeBoard')||document.body;
     if(getComputedStyle(host).position==='static')host.style.position='relative';
