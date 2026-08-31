@@ -175,3 +175,17 @@ window.RESPAWN_CAMERA_DELAY_MS=2000;window.RESPAWN_CENTER_ON_START=true;
   return deck;
  };
 })();
+
+// ==================== Intro: remove duplicate Enter the Dungeon button (v13.74) ====================
+(function(){
+ function removeDuplicateIntroButton(){
+  const modal=document.getElementById('modal');
+  if(!modal||!modal.classList.contains('introScrollModal')||!modal.querySelector('.testerWarningScroll'))return;
+  const buttons=[...modal.querySelectorAll('button')].filter(button=>(button.textContent||'').trim().toLowerCase()==='enter the dungeon');
+  if(buttons.length<2)return;
+  buttons.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top);
+  buttons.slice(1).forEach(button=>button.style.setProperty('display','none','important'));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeDuplicateIntroButton,{once:true});else removeDuplicateIntroButton();
+ new MutationObserver(removeDuplicateIntroButton).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class']});
+})();
