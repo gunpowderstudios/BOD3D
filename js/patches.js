@@ -176,9 +176,9 @@ window.RESPAWN_CAMERA_DELAY_MS=2000;window.RESPAWN_CENTER_ON_START=true;
  };
 })();
 
-// ==================== Intro: keep one visible Enter the Dungeon button (v13.75) ====================
+// ==================== Intro: keep one visible Enter the Dungeon button + spacing (v13.76) ====================
 (function(){
- function removeDuplicateIntroButton(){
+ function fixIntroButton(){
   const modal=document.getElementById('modal');
   if(!modal||!modal.classList.contains('introScrollModal')||!modal.querySelector('.testerWarningScroll'))return;
   const buttons=[...modal.querySelectorAll('button')].filter(button=>{
@@ -186,10 +186,12 @@ window.RESPAWN_CAMERA_DELAY_MS=2000;window.RESPAWN_CENTER_ON_START=true;
    const style=getComputedStyle(button);
    return style.display!=='none'&&style.visibility!=='hidden'&&button.getClientRects().length>0;
   });
-  if(buttons.length<2)return;
+  if(!buttons.length)return;
   buttons.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top);
+  const keep=buttons[0];
+  keep.style.setProperty('margin-top','20px','important');
   buttons.slice(1).forEach(button=>button.remove());
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeDuplicateIntroButton,{once:true});else removeDuplicateIntroButton();
- new MutationObserver(removeDuplicateIntroButton).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class']});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fixIntroButton,{once:true});else fixIntroButton();
+ new MutationObserver(fixIntroButton).observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['class']});
 })();
