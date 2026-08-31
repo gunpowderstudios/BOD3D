@@ -221,3 +221,68 @@
     const timer=setInterval(()=>{if(install()||++tries>200)clearInterval(timer);},50);
   }
 })();
+
+// Intro choice: players can enter immediately or continue reading the short story.
+(function(){
+  if(window.__bodInlineDungeonEntryInstalled)return;
+  window.__bodInlineDungeonEntryInstalled=true;
+
+  const style=document.createElement('style');
+  style.id='bodInlineDungeonEntryStyles';
+  style.textContent=`
+    #modal.introScrollModal #modalButtons{
+      display:none!important;
+    }
+    .testerWarningScroll .introEnterDungeonButton{
+      display:block;
+      width:100%;
+      margin:20px 0 26px;
+      padding:13px 18px;
+      border:3px solid #fff;
+      border-radius:4px;
+      background:#9f2020;
+      color:#fff;
+      box-shadow:none;
+      font-size:20px;
+      line-height:1.15;
+      font-weight:800;
+      text-align:center;
+      cursor:pointer;
+    }
+    .testerWarningScroll .introEnterDungeonButton:hover,
+    .testerWarningScroll .introEnterDungeonButton:focus-visible{
+      background:#b72828;
+      color:#fff;
+    }
+  `;
+  document.head.appendChild(style);
+
+  function installButton(){
+    const modal=document.getElementById('modal');
+    if(!modal?.classList.contains('introScrollModal'))return;
+    const scroll=modal.querySelector('.testerWarningScroll');
+    if(!scroll||scroll.querySelector('.introEnterDungeonButton'))return;
+
+    const storyHeading=scroll.querySelector('.testerStoryHeading');
+    if(!storyHeading)return;
+
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='introEnterDungeonButton';
+    button.textContent='Enter the Dungeon';
+    button.setAttribute('aria-label','Enter the Dungeon and skip the short story');
+    button.addEventListener('click',()=>{
+      if(typeof closeModal==='function')closeModal();
+      else modal.classList.remove('open');
+    });
+    storyHeading.before(button);
+  }
+
+  function start(){
+    installButton();
+    new MutationObserver(installButton).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
