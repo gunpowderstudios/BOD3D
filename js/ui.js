@@ -259,7 +259,8 @@
       color:#fff!important;
       overflow:auto!important;
     }
-    #modal.introScrollModal .testerWarningScroll>div:first-child{
+    #modal.introScrollModal .testerWarningScroll>div:first-child,
+    #modal.introScrollModal .testerWarningScroll span[style*="color"]{
       color:#fff!important;
     }
     #modal.introScrollModal .card:has(.testerWarningScroll)>#modalButtons,
@@ -293,12 +294,12 @@
     #modal.introScrollModal #modalButtons{display:none!important;}
     .testerWarningScroll .introEnterDungeonButton{
       display:block;width:100%;margin:20px 0 26px;padding:13px 18px;
-      border:2px solid #fff;border-radius:4px;background:#000;color:#fff;
+      border:2px solid #fff;border-radius:4px;background:#a62020;color:#fff;
       box-shadow:none;font-size:20px;line-height:1.15;font-weight:800;
       text-align:center;cursor:pointer;
     }
     .testerWarningScroll .introEnterDungeonButton:hover,
-    .testerWarningScroll .introEnterDungeonButton:focus-visible{background:#fff;color:#000;}
+    .testerWarningScroll .introEnterDungeonButton:focus-visible{background:#741515;color:#fff;}
   `;
   document.head.appendChild(style);
 
