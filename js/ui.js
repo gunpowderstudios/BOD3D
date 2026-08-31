@@ -175,7 +175,7 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start, { once: true });
+    document.addEventListener('DOMContentLoaded', start, { once:true });
   } else {
     start();
   }
@@ -222,6 +222,66 @@
   }
 })();
 
+// Match TEST: plain white intro/end text on black.
+(function(){
+  if(document.getElementById('bodPlainStoryPanels'))return;
+  const style=document.createElement('style');
+  style.id='bodPlainStoryPanels';
+  style.textContent=`
+    #modal.introScrollModal .card:has(.testerWarningScroll),
+    #modal.endingScrollModal .card{
+      width:min(760px,calc(100vw - 30px))!important;
+      max-width:760px!important;
+      height:auto!important;
+      max-height:min(82dvh,760px)!important;
+      aspect-ratio:auto!important;
+      padding:28px 30px 24px!important;
+      border:1px solid rgba(255,255,255,.65)!important;
+      border-radius:6px!important;
+      background:#000!important;
+      background-image:none!important;
+      box-shadow:0 12px 36px rgba(0,0,0,.72)!important;
+      color:#fff!important;
+      overflow:auto!important;
+    }
+    #modal.introScrollModal .testerWarningScroll,
+    #modal.endingScrollModal #modalBody,
+    #modal.endingScrollModal #modalBody *{
+      background:transparent!important;
+      color:#fff!important;
+      font-family:"Alegreya Sans",Arial,sans-serif!important;
+      text-shadow:none!important;
+    }
+    #modal.introScrollModal .testerWarningScroll{
+      height:auto!important;
+      min-height:0!important;
+      padding:0!important;
+      color:#fff!important;
+      overflow:auto!important;
+    }
+    #modal.introScrollModal .testerWarningScroll>div:first-child{
+      color:#fff!important;
+    }
+    #modal.introScrollModal .card:has(.testerWarningScroll)>#modalButtons,
+    #modal.endingScrollModal #modalButtons{
+      position:static!important;
+      transform:none!important;
+      width:100%!important;
+      margin-top:18px!important;
+      padding:0!important;
+    }
+    @media(max-width:900px){
+      #modal.introScrollModal .card:has(.testerWarningScroll),
+      #modal.endingScrollModal .card{
+        width:calc(100vw - 20px)!important;
+        max-height:calc(100dvh - 20px)!important;
+        padding:22px 18px 18px!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 // Intro choice: players can enter immediately or continue reading the short story.
 (function(){
   if(window.__bodInlineDungeonEntryInstalled)return;
@@ -230,30 +290,15 @@
   const style=document.createElement('style');
   style.id='bodInlineDungeonEntryStyles';
   style.textContent=`
-    #modal.introScrollModal #modalButtons{
-      display:none!important;
-    }
+    #modal.introScrollModal #modalButtons{display:none!important;}
     .testerWarningScroll .introEnterDungeonButton{
-      display:block;
-      width:100%;
-      margin:20px 0 26px;
-      padding:13px 18px;
-      border:3px solid #fff;
-      border-radius:4px;
-      background:#9f2020;
-      color:#fff;
-      box-shadow:none;
-      font-size:20px;
-      line-height:1.15;
-      font-weight:800;
-      text-align:center;
-      cursor:pointer;
+      display:block;width:100%;margin:20px 0 26px;padding:13px 18px;
+      border:2px solid #fff;border-radius:4px;background:#000;color:#fff;
+      box-shadow:none;font-size:20px;line-height:1.15;font-weight:800;
+      text-align:center;cursor:pointer;
     }
     .testerWarningScroll .introEnterDungeonButton:hover,
-    .testerWarningScroll .introEnterDungeonButton:focus-visible{
-      background:#b72828;
-      color:#fff;
-    }
+    .testerWarningScroll .introEnterDungeonButton:focus-visible{background:#fff;color:#000;}
   `;
   document.head.appendChild(style);
 
@@ -262,10 +307,8 @@
     if(!modal?.classList.contains('introScrollModal'))return;
     const scroll=modal.querySelector('.testerWarningScroll');
     if(!scroll||scroll.querySelector('.introEnterDungeonButton'))return;
-
     const storyHeading=scroll.querySelector('.testerStoryHeading');
     if(!storyHeading)return;
-
     const button=document.createElement('button');
     button.type='button';
     button.className='introEnterDungeonButton';
@@ -282,7 +325,6 @@
     installButton();
     new MutationObserver(installButton).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
   }
-
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
