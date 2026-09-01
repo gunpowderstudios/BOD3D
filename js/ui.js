@@ -329,3 +329,63 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
   else start();
 })();
+
+// LIVE v13.85 — longer standard dungeon: 55–65 floor tiles, 15 monsters and 3 item markers.
+// Keep M2–M12 intact for the Ring system; the additional four monsters are unnumbered encounters.
+(function(){
+  if(window.__bodLongerLiveDungeonInstalled)return;
+  window.__bodLongerLiveDungeonInstalled=true;
+  if(typeof createTileDeck!=='function'||typeof shuffle!=='function')return;
+
+  createTileDeck=function(){
+    const deck=[...Array(15)].map(()=>({kind:'straight'}))
+      .concat(
+        [...Array(14)].map(()=>({kind:'corner'})),
+        [...Array(2)].map(()=>({kind:'t'})),
+        [...Array(5)].map(()=>({kind:'cross'})),
+        [...Array(3)].map(()=>({kind:'spike'})),
+        [{kind:'pool'}]
+      );
+
+    // The original stack contains 40 floors. Add 15–25 more for 55–65 total.
+    const extraCount=15+Math.floor(Math.random()*11);
+    const extraKinds=['straight','straight','corner','corner','t','cross'];
+    for(let i=0;i<extraCount;i++){
+      deck.push({kind:extraKinds[Math.floor(Math.random()*extraKinds.length)]});
+    }
+
+    const ordinaryFloors=()=>deck.filter(tile=>!['spike','pool'].includes(tile.kind));
+
+    // Fifteen monster locations total. Eleven retain M2–M12 numbering for Ring logic.
+    const monsterTiles=shuffle(ordinaryFloors()).slice(0,15);
+    monsterTiles.forEach((tile,index)=>{
+      tile.monsterMarker=true;
+      if(index<11)tile.mNumber=index+2;
+    });
+
+    // Defensive validation: exactly 15 monster tiles and exactly one each of M2–M12.
+    const mTiles=deck.filter(tile=>Number(tile.mNumber)>=2&&Number(tile.mNumber)<=12)
+      .sort((a,b)=>a.mNumber-b.mNumber);
+    const monsterCount=deck.filter(tile=>tile.monsterMarker).length;
+    const validM=mTiles.length===11&&mTiles.every((tile,index)=>tile.mNumber===index+2);
+    if(monsterCount!==15||!validM){
+      deck.forEach(tile=>{delete tile.monsterMarker;delete tile.mNumber;});
+      const retry=shuffle(ordinaryFloors()).slice(0,15);
+      retry.forEach((tile,index)=>{
+        tile.monsterMarker=true;
+        if(index<11)tile.mNumber=index+2;
+      });
+    }
+
+    // Three item locations, never overlapping monsters, traps or the Healing Pool.
+    deck.forEach(tile=>delete tile.itemMarker);
+    const itemLocations=shuffle(ordinaryFloors().filter(tile=>!tile.monsterMarker)).slice(0,3);
+    itemLocations.forEach(tile=>{tile.itemMarker=true;});
+
+    if(deck.filter(tile=>tile.itemMarker).length!==3){
+      throw new Error('Dungeon setup failed: exactly three item markers are required.');
+    }
+
+    return [{kind:'exit'},...shuffle(deck)];
+  };
+})();
